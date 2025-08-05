@@ -1,0 +1,8 @@
+{
+  "last_session": "2025-08-03T20:44:01.052433",
+  "jeremy_instructions": "CRITICAL DEVELOPMENT RULES - NEVER commit to main, ALWAYS create feature branch, run safety checks",
+  "project_focus": "DiagnosticPro MVP 2.0 with MS Pacman themes",
+  "next_startup": "All agents coordinate through CrewAI when 'beastmode' typed",
+  "portal_status": "http://35.225.115.164:8888/interactive-portal.html ready",
+  "git_workflow": "Feature branches only, make safe-commit, fix lint/test errors first"
+}

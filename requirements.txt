@@ -1,0 +1,35 @@
+# Bob Consolidated AI - Updated Dependencies (August 2025)
+
+# Core LangChain Stack - Latest stable versions
+langchain==0.3.1
+langchain-community==0.3.1
+langchain-core==0.3.1
+langchain-experimental==0.3.0
+
+# Updated LangChain-Ollama integration
+langchain-ollama==0.2.0
+
+# LangChain Tools
+duckduckgo-search==6.3.0
+
+# Local LLM Integration
+ollama==0.4.4
+
+# Vector Database & RAG
+langchain-chroma==0.1.4
+chromadb==0.5.23
+sentence-transformers==3.3.1
+
+# CrewAI for multi-agent workflows
+crewai==0.86.0
+crewai-tools==0.17.0
+
+# Advanced Tools
+playwright==1.49.1
+beautifulsoup4==4.12.3
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.32.3
+pydantic==2.10.3
+aiofiles==24.1.0
