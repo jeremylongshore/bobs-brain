@@ -1,25 +1,38 @@
 #!/usr/bin/env python3
 """
 Update Bob's Brain with DiagnosticPro MVP Breakthrough Session
-Critical knowledge for Bob to remember about today's achievements
+SECURE VERSION - Using environment variables for sensitive data
 """
 
+import os
 import chromadb
-import hashlib
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 def add_knowledge_to_bob():
     """Add today's DiagnosticPro breakthrough to Bob's knowledge base"""
 
+    # Get API key from environment (will be None if not set)
+    api_key = os.getenv('OPENROUTER_API_KEY')
+
+    if not api_key or api_key == "YOUR_NEW_OPENROUTER_KEY_HERE":
+        print("⚠️  WARNING: OpenRouter API key not configured in .env file")
+        print("Please get a new API key from https://openrouter.ai/keys")
+        print("Then update the OPENROUTER_API_KEY in your .env file")
+        return False
+
     # Connect to Bob's brain
     client = chromadb.PersistentClient(path='/home/jeremylongshore/.bob_brain/chroma')
     collection = client.get_collection('bob_knowledge')
 
-    # Today's breakthrough knowledge
+    # Today's breakthrough knowledge (without sensitive data)
     breakthrough_knowledge = [
         {
-            "content": "DiagnosticPro MVP BREAKTHROUGH SESSION 2025-08-06: Completed full AI-powered diagnostic platform with REAL OpenRouter GPT-4o Mini integration (not mock responses), dual email system (Gmail API + SMTP fallback), live Google Cloud Run deployment at https://diagnosticpro-mvp-970547573997.us-central1.run.app, and revenue-ready pricing at $4.99-$7.99 per diagnostic.",
+            "content": "DiagnosticPro MVP BREAKTHROUGH SESSION 2025-08-06: Completed full AI-powered diagnostic platform with REAL OpenRouter GPT-4o Mini integration, dual email system (Gmail API + SMTP fallback), live Google Cloud Run deployment at https://diagnosticpro-mvp-970547573997.us-central1.run.app, and revenue-ready pricing at $4.99-$7.99 per diagnostic.",
             "metadata": {
                 "type": "major_achievement",
                 "project": "DiagnosticPro MVP",
@@ -29,7 +42,7 @@ def add_knowledge_to_bob():
             }
         },
         {
-            "content": "DiagnosticPro AI SYSTEM: OpenRouter GPT-4o Mini with API key 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, expert system prompt providing 5-component diagnostic analysis: Most Likely Root Cause (with % probability), Essential Verification Tests, Red Flags (warning signs), Questions to Ask Shop (3-5 expert questions), Fair Cost Estimate Range.",
+            "content": "DiagnosticPro AI SYSTEM: OpenRouter GPT-4o Mini configured with environment variables, expert system prompt providing 5-component diagnostic analysis: Most Likely Root Cause (with % probability), Essential Verification Tests, Red Flags (warning signs), Questions to Ask Shop (3-5 expert questions), Fair Cost Estimate Range.",
             "metadata": {
                 "type": "technical_configuration",
                 "project": "DiagnosticPro MVP",
@@ -38,7 +51,7 @@ def add_knowledge_to_bob():
             }
         },
         {
-            "content": "DiagnosticPro EMAIL SYSTEM: Dual delivery system - Gmail API (primary) with service account, SMTP fallback (secondary) with app password 'dogv dqeh iqnp ltpe' and email jeremylongshore@gmail.com. 100% delivery guarantee through redundant systems. Professional HTML templates with PDF attachments.",
+            "content": "DiagnosticPro EMAIL SYSTEM: Dual delivery system - Gmail API (primary) with service account, SMTP fallback (secondary) with secure app password stored in environment variables. 100% delivery guarantee through redundant systems. Professional HTML templates with PDF attachments.",
             "metadata": {
                 "type": "technical_configuration",
                 "project": "DiagnosticPro MVP",
@@ -88,7 +101,7 @@ def add_knowledge_to_bob():
             )
             print(f"✅ Added to Bob's brain: {knowledge['metadata']['type']}")
         except Exception as e:
-            print(f"⚠️ Warning adding knowledge {i+1}: {e}")
+            print(f"⚠️  Warning adding knowledge {i+1}: {e}")
 
     # Verify Bob's updated knowledge count
     total_items = collection.count()
@@ -100,5 +113,9 @@ def add_knowledge_to_bob():
 
 if __name__ == "__main__":
     print("🧠 Updating Bob's Brain with DiagnosticPro breakthrough...")
-    add_knowledge_to_bob()
-    print("\n✅ Bob now knows about today's revolutionary achievements!")
+    print("📋 Using secure environment variables for sensitive data")
+    success = add_knowledge_to_bob()
+    if success:
+        print("\n✅ Bob now knows about today's revolutionary achievements!")
+    else:
+        print("\n❌ Failed to update Bob's brain - please configure API keys in .env file")
