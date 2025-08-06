@@ -13,16 +13,20 @@ collection = chroma_client.get_collection('bob_knowledge')
 
 def simple_response(text):
     """Generate simple response using RAG system"""
+    # For simple greetings, just respond simply
+    if any(word in text.lower() for word in ["hello", "hi", "hey", "there"]):
+        return "Yes, I'm here!"
+
     # Search knowledge base for relevant information
     results = collection.query(query_texts=[text], n_results=3)
 
     if results['documents'] and results['documents'][0]:
         # Use relevant knowledge to respond
         relevant_info = results['documents'][0][0]
-        return f"Based on what I know: {relevant_info[:400]}..."
+        return relevant_info[:300]
 
-    # Default friendly response without exposing database details
-    return "Hi! I'm Bob, your AI assistant. I'm here to help with your questions and tasks. What can I assist you with today?"
+    # Simple default response
+    return "I'm here to help. What do you need?"
 
 def handle_message(client, request):
     if request.type == "events_api":

@@ -1,0 +1,25 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Bob's brain data
+COPY .bob_brain /app/.bob_brain
+COPY bob_agent /app/bob_agent
+COPY *.py /app/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV BOB_BRAIN_PATH=/app/.bob_brain
+
+# Run Bob's extended brain
+CMD ["python", "bob_agent/simple_bob.py"]

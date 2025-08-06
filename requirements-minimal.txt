@@ -1,0 +1,2 @@
+# Bob Extended Brain - Cloud Run Minimal
+slack-sdk==3.36.0

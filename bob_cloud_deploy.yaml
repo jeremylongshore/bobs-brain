@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: bob-extended-brain
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/cpu-throttling: "false"
+    spec:
+      containers:
+      - image: gcr.io/bobs-house-ai/bob-extended-brain
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SLACK_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: slack-tokens
+              key: bot-token
+        - name: SLACK_APP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: slack-tokens
+              key: app-token
+        - name: FIRESTORE_PROJECT
+          value: bobs-house-ai
+        - name: CLOUD_SQL_CONNECTION
+          value: bobs-house-ai:us-east5:bob-dry-storage
+        - name: POSTGRES_DB
+          value: bob_knowledge
+        - name: POSTGRES_USER
+          value: bob
+        - name: CHROMADB_PATH
+          value: /app/.bob_brain/chroma
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: "1"
+      serviceAccountName: bob-service-account@bobs-house-ai.iam.gserviceaccount.com
