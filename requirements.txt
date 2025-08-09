@@ -1,0 +1,18 @@
+# Bob Unified Agent Requirements
+
+# Core dependencies
+slack_sdk>=3.20.0
+chromadb>=0.4.0
+python-dotenv>=1.0.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Optional: Enhanced features
+openai>=1.0.0  # Optional for enhanced responses
+
+# Development dependencies (optional)
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0

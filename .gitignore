@@ -1,0 +1,47 @@
+# Bob's Brain - Git Ignore
+
+# Environment files
+.env
+*.env
+!.env.template
+
+# Virtual environments
+venv/
+venv_bob/
+__pycache__/
+*.pyc
+*.pyo
+
+# Database files (keep structure, ignore data)
+data/consolidated_db/*.db
+data/vector_store/*.sqlite3
+
+# Logs
+logs/*.log
+*.log
+
+# Temporary files
+.tmp/
+*.tmp
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model files (too large for git)
+*.bin
+*.safetensors
+models/
+
+# API keys and credentials
+*credentials*
+*token*
+*key*
+!*template*
