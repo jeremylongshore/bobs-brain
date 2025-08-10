@@ -11,10 +11,13 @@ import hashlib
 class KnowledgeLoader:
     """Loads critical business knowledge into Bob's brain"""
     
-    def __init__(self, chroma_path='/home/jeremylongshore/.bob_brain/chroma'):
+    def __init__(self, chroma_path='/home/jeremylongshore/bobs-brain/chroma_data'):
         """Initialize connection to existing ChromaDB"""
         self.client = chromadb.PersistentClient(path=chroma_path)
-        self.collection = self.client.get_collection('bob_knowledge')
+        try:
+            self.collection = self.client.get_collection('bob_knowledge')
+        except:
+            self.collection = self.client.create_collection('bob_knowledge')
         
     def load_critical_knowledge(self):
         """Load critical business and technical knowledge"""

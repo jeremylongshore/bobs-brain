@@ -1,0 +1,26 @@
+2025-08-10 14:28:51,466 - BobFirestore - INFO - 🚀 Initializing Bob Firestore Edition
+2025-08-10 14:28:51,537 - BobFirestore - INFO - ✅ Connected to Firestore: diagnostic-pro-mvp/bob-brain
+2025-08-10 14:28:51,579 - BobFirestore - INFO - 📚 Firestore has 5+ Bob knowledge items
+2025-08-10 14:28:51,580 - BobFirestore - INFO - ✅ Vertex AI initialized with Gemini 2.0
+2025-08-10 14:28:51,580 - BobFirestore - INFO - ✅ Bob Firestore initialized with firestore
+2025-08-10 14:49:27,799 - BobFirestore - INFO - 🚀 Initializing Bob Firestore Edition
+2025-08-10 14:49:27,894 - BobFirestore - INFO - ✅ Connected to Firestore: diagnostic-pro-mvp/bob-brain
+2025-08-10 14:49:27,956 - BobFirestore - INFO - 📚 Firestore has 5+ Bob knowledge items
+2025-08-10 14:49:27,957 - BobFirestore - INFO - ✅ Vertex AI initialized with Gemini 2.0
+2025-08-10 14:49:27,957 - BobFirestore - INFO - ✅ Bob Firestore initialized with firestore
+2025-08-10 14:49:27,957 - BobFirestore - INFO - 🚀 Starting Bob Firestore Service...
+2025-08-10 14:49:28,032 - BobFirestore - INFO - 📊 Health: {
+  "status": "healthy",
+  "database": "firestore",
+  "uptime": "0:00:00.075009",
+  "processed_messages": 0,
+  "active_conversations": 0,
+  "knowledge_items": "available",
+  "ai_model": "Vertex AI Gemini 2.0",
+  "jeremy_identified": false,
+  "timestamp": "2025-08-10T14:49:28.032331"
+}
+2025-08-10 14:49:28,298 - slack_sdk.socket_mode.builtin.client - INFO - A new session has been established (session id: 3672d1d6-1047-4b05-b782-87013a58095e)
+2025-08-10 14:49:28,299 - BobFirestore - INFO - ✅ Connected to Slack!
+2025-08-10 14:49:28,301 - slack_sdk.socket_mode.builtin.client - INFO - Starting to receive messages from a new connection (session id: 3672d1d6-1047-4b05-b782-87013a58095e)
+2025-08-10 14:49:35,286 - BobFirestore - INFO - 👋 Shutting down Bob Firestore gracefully...
