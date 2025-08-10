@@ -1,0 +1,8 @@
+# Simplified requirements - let pip resolve dependencies
+flask
+gunicorn
+slack-sdk
+graphiti-core==0.3.18
+google-cloud-aiplatform
+vertexai
+python-dotenv

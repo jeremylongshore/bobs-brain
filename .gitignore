@@ -138,4 +138,4 @@ setup_bob.sh
 
 # Local test scripts
 test_*.py
-verify_*.py
+verify_*.py.env

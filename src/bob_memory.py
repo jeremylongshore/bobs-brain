@@ -52,13 +52,13 @@ class BobMemory:
                 # Use environment variables or defaults
                 uri = neo4j_uri or os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
                 user = neo4j_user or os.environ.get('NEO4J_USER', 'neo4j')
-                password = neo4j_password or os.environ.get('NEO4J_PASSWORD', 'bobpassword')
+                password = neo4j_password or os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
                 
                 # Initialize Graphiti
                 self.graphiti = Graphiti(
-                    neo4j_uri=uri,
-                    neo4j_user=user,
-                    neo4j_password=password
+                    uri=uri,
+                    user=user,
+                    password=password
                 )
                 self.logger.info("✅ Connected to Graphiti knowledge graph")
             except Exception as e:
@@ -93,9 +93,10 @@ class BobMemory:
                 try:
                     # Graphiti extracts entities and relationships automatically
                     self.graphiti.add_episode(
-                        content=content,
-                        source=user_id,
-                        metadata=context
+                        name=f"memory_{episode['episode_id']}",
+                        episode_body=content,
+                        source_description=f"User {user_id}",
+                        reference_time=datetime.now()
                     )
                     self.logger.info(f"📊 Stored in knowledge graph: {content[:50]}...")
                 except Exception as e:
@@ -128,21 +129,20 @@ class BobMemory:
         # Search Graphiti knowledge graph
         if self.graphiti:
             try:
-                # Search with context
+                # Search with query
                 graph_results = self.graphiti.search(
                     query=query,
-                    user_context=user_id,
                     num_results=limit
                 )
                 
                 # Format results
                 for result in graph_results:
                     results.append({
-                        'content': result.get('content', ''),
-                        'relevance': result.get('score', 0),
+                        'content': str(result),  # Convert edge to string
+                        'relevance': 1.0,  # Graphiti doesn't return scores
                         'source': 'graphiti',
-                        'metadata': result.get('metadata', {}),
-                        'relationships': result.get('relationships', [])
+                        'metadata': {},
+                        'relationships': []
                     })
                     
                 self.logger.info(f"📊 Found {len(results)} results in knowledge graph")
@@ -189,24 +189,25 @@ class BobMemory:
             'interests': []
         }
         
-        # Get from Graphiti
+        # Get from Graphiti (search for user-related facts)
         if self.graphiti:
             try:
-                # Get all facts about the user
-                user_facts = self.graphiti.get_entity_facts(user_id)
-                profile['facts'] = user_facts
+                # Search for facts about the user
+                user_facts = self.graphiti.search(
+                    query=f"facts about {user_id}",
+                    num_results=20
+                )
                 
-                # Get relationships
-                relationships = self.graphiti.get_entity_relationships(user_id)
-                profile['relationships'] = relationships
-                
-                # Extract preferences and interests
-                for fact in user_facts:
-                    content = fact.get('content', '').lower()
-                    if 'prefer' in content or 'like' in content:
-                        profile['preferences'].append(fact)
-                    if 'interest' in content or 'hobby' in content:
-                        profile['interests'].append(content)
+                # Convert edges to facts
+                for edge in user_facts:
+                    fact_str = str(edge)
+                    profile['facts'].append(fact_str)
+                    
+                    # Extract preferences and interests
+                    if 'prefer' in fact_str.lower() or 'like' in fact_str.lower():
+                        profile['preferences'].append(fact_str)
+                    if 'interest' in fact_str.lower() or 'hobby' in fact_str.lower():
+                        profile['interests'].append(fact_str)
                         
             except Exception as e:
                 self.logger.error(f"Failed to get user profile from Graphiti: {e}")
