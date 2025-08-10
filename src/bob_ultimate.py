@@ -102,7 +102,8 @@ class BobUltimate:
     
     def setup_logging(self):
         """Configure professional logging"""
-        log_dir = '/home/jeremylongshore/bobs-brain/logs'
+        # Use relative path that works in both local and container
+        log_dir = 'logs' if os.path.exists('/app') else '/home/jeremylongshore/bobs-brain/logs'
         os.makedirs(log_dir, exist_ok=True)
         
         logging.basicConfig(
@@ -132,8 +133,8 @@ class BobUltimate:
     def setup_knowledge_base(self):
         """Initialize ChromaDB with proper path"""
         try:
-            # Use proper bobs-brain directory
-            chroma_path = '/home/jeremylongshore/bobs-brain/chroma_data'
+            # Use relative path that works in both local and container
+            chroma_path = 'chroma_data' if os.path.exists('/app') else '/home/jeremylongshore/bobs-brain/chroma_data'
             os.makedirs(chroma_path, exist_ok=True)
             
             self.chroma_client = chromadb.PersistentClient(path=chroma_path)

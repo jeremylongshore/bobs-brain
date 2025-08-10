@@ -16,10 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create directories for ChromaDB
-RUN mkdir -p chroma_persist knowledge archives
+RUN mkdir -p chroma_data logs
 
 # Expose port
-EXPOSE 5000
+EXPOSE 3000
 
-# Start Bob
-CMD ["python", "src/bob_unified_v2.py"]
+# Start Bob Ultimate
+CMD ["python", "src/bob_ultimate.py"]
