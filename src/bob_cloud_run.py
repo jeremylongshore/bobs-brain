@@ -300,7 +300,15 @@ def health_check():
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
     """Handle Slack events"""
-    # Verify request is from Slack
+    # Parse request first to check for URL verification
+    data = request.get_json()
+    
+    # Handle URL verification challenge (bypass signature check for this)
+    if data.get('type') == 'url_verification':
+        logger.info("Handling Slack URL verification challenge")
+        return jsonify({'challenge': data.get('challenge', '')})
+    
+    # For all other requests, verify signature
     request_body = request.get_data()
     timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
     signature = request.headers.get('X-Slack-Signature', '')
@@ -308,13 +316,6 @@ def slack_events():
     if not bob.verify_slack_request(request_body, timestamp, signature):
         logger.warning("Invalid request signature")
         return make_response("Unauthorized", 401)
-    
-    # Parse request
-    data = request.get_json()
-    
-    # Handle URL verification challenge
-    if data.get('type') == 'url_verification':
-        return jsonify({'challenge': data.get('challenge', '')})
     
     # Handle events
     if data.get('type') == 'event_callback':

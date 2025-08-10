@@ -1,0 +1,31 @@
+2025-08-10 14:28:11,937 - INFO - 🚀 Starting ChromaDB to Firestore Migration
+2025-08-10 14:28:11,937 - INFO - ============================================================
+2025-08-10 14:28:11,944 - INFO - ✅ Connected to Firestore: diagnostic-pro-mvp/bob-brain
+2025-08-10 14:28:12,028 - INFO - ✓ MVP3 collection verified: diagnostic_submissions
+2025-08-10 14:28:12,077 - INFO - ✓ MVP3 collection verified: users
+2025-08-10 14:28:12,116 - INFO - ✓ MVP3 collection verified: sessions
+2025-08-10 14:28:12,147 - INFO - ✓ MVP3 collection verified: payments
+2025-08-10 14:28:12,204 - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-08-10 14:28:12,316 - INFO - ✅ Connected to ChromaDB at /home/jeremylongshore/bobs-brain/chroma_data
+2025-08-10 14:28:12,317 - INFO - 📚 Found 1 collections in ChromaDB
+2025-08-10 14:28:12,317 - INFO - 
+📦 Migrating collection: bob_knowledge
+2025-08-10 14:28:12,385 - INFO - 📊 Found 5 documents in bob_knowledge
+2025-08-10 14:28:12,659 - INFO -   💾 Final batch committed: 5 documents
+2025-08-10 14:28:12,660 - INFO - ✅ Collection bob_knowledge migration complete:
+2025-08-10 14:28:12,660 - INFO -    Total: 5, Migrated: 5, Duplicates: 0, Errors: 0
+2025-08-10 14:28:12,720 - INFO - 📊 Migration report saved to Firestore
+2025-08-10 14:28:12,720 - INFO - 
+============================================================
+2025-08-10 14:28:12,720 - INFO - 📊 MIGRATION COMPLETE - SUMMARY:
+2025-08-10 14:28:12,721 - INFO -   Total Documents Processed: 5
+2025-08-10 14:28:12,721 - INFO -   New Documents Migrated: 5
+2025-08-10 14:28:12,721 - INFO -   Duplicates Skipped: 0
+2025-08-10 14:28:12,721 - INFO -   Errors: 0
+2025-08-10 14:28:12,721 - INFO -   MVP3 Collections Protected: diagnostic_submissions, users, sessions, payments
+2025-08-10 14:28:12,721 - INFO - ============================================================
+2025-08-10 14:28:12,721 - INFO - 
+🔍 Verifying Migration Integrity...
+2025-08-10 14:28:12,774 - INFO - ✓ Firestore documents migrated: 5
+2025-08-10 14:28:12,775 - INFO - ✓ Expected documents: 5
+2025-08-10 14:28:12,775 - INFO - ✅ Migration verification PASSED
