@@ -382,7 +382,7 @@ Provide a helpful, concise response. Be professional but friendly."""
                 self.slack_client.chat_postMessage(
                     channel=channel,
                     text=response,
-                    thread_ts=event.get('thread_ts', event.get('ts'))
+                    thread_ts=event.get('thread_ts')  # Only thread if already in thread
                 )
                 
                 self.logger.info(f"✅ Responded: {response[:50]}...")
