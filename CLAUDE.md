@@ -2,47 +2,74 @@
 **CRITICAL: This is the SINGLE SOURCE OF TRUTH for Bob's Brain project**
 
 ## 🚨 CRITICAL RULES - READ FIRST
-1. **ONLY ONE CLOUD RUN INSTANCE**: There should only be ONE `bobs-brain` service on Cloud Run
-2. **GITHUB IS ALWAYS TRUTH**: Always pull latest from GitHub before making changes
-3. **USE LATEST CODE**: We use `bob_cloud_run.py` for Cloud Run (NOT bob_firestore.py or bob_ultimate.py)
-4. **NO DUPLICATE SERVICES**: Delete any duplicate Cloud Run services immediately
+1. **GITHUB IS ALWAYS TRUTH**: Always pull latest from GitHub before making changes
+2. **CURRENT MODE**: Bob uses Socket Mode (WebSocket) - NOT HTTP mode yet
+3. **GRAPHITI MIGRATION**: In progress - enhancing Bob with knowledge graph memory
+4. **USE CORRECT CODE**: `bob_firestore.py` for Socket Mode (current), `bob_cloud_run.py` needs conversion
 5. **ALWAYS UPDATE GITHUB**: After ANY change, commit and push to GitHub
 
 ## 🤖 BOB'S BRAIN CURRENT STATUS
-**Service:** bobs-brain (ONLY ONE - DELETE ANY DUPLICATES)
-**Project:** bobs-house-ai  
-**Cloud Run URL:** https://bobs-brain-157908567967.us-central1.run.app
-**GitHub:** https://github.com/jeremylongshore/bobs-brain (branch: bobs-brain-birthed)
-**Last Updated:** 2025-08-10T20:25:00Z
-**Current Revision:** bobs-brain-00007-fb7
+**Environment:** Development VM (thebeast - 4 CPU, 15GB RAM)
+**Project:** bobs-house-ai (diagnostic-pro-mvp)  
+**GitHub:** https://github.com/jeremylongshore/bobs-brain (branch: enhance-bob-graphiti)
+**Last Updated:** 2025-08-10T23:15:00Z
+**GCP Credits:** $2,251.82 available (expires 2025-2026)
 
-## ✅ DEPLOYMENT STATUS - LIVE ON CLOUD RUN!
-- **Cloud Run:** ✅ DEPLOYED & RUNNING (Single instance only!)
-- **Slack Tokens:** ✅ CONFIGURED in Cloud Run environment
-- **Vertex AI:** ✅ Working (but DEPRECATED - dies June 2026)
-- **Database:** ✅ Using FIRESTORE (projects/diagnostic-pro-mvp/databases/bob-brain)
-- **Health Check:** https://bobs-brain-157908567967.us-central1.run.app/health
-- **Slack Events:** https://bobs-brain-157908567967.us-central1.run.app/slack/events
+## 📊 ARCHITECTURE TRANSITION IN PROGRESS
+- **Current Mode:** ⚠️ Socket Mode (requires persistent connection)
+- **Target Mode:** HTTP Mode for Cloud Run (conversion needed)
+- **Primary Database:** ✅ Firestore (5 docs migrated from ChromaDB)
+- **Knowledge Graph:** 🚧 Graphiti planned (requires Neo4j)
+- **Vertex AI:** ✅ Working (Gemini 1.5 Flash)
+- **Test Status:** 66.7% passing (Memory ✅, Firestore ✅, Graphiti ❌)
 
 ## 📁 PROJECT STRUCTURE
 ```
 /home/jeremylongshore/bobs-brain/
 ├── src/
-│   ├── bob_cloud_run.py       # ✅ ACTIVE - Cloud Run HTTP server version
-│   ├── bob_firestore.py       # ❌ NOT USED - Socket Mode version
-│   ├── bob_ultimate.py        # ❌ NOT USED - Legacy version
-│   ├── bob_legacy_v2.py       # ❌ NOT USED - Old backup
+│   ├── bob_firestore.py       # ✅ ACTIVE - Socket Mode version (current)
+│   ├── bob_cloud_run.py       # ⚠️ NEEDS CONVERSION - HTTP server version
+│   ├── bob_memory.py          # ✅ NEW - Graphiti/Firestore memory system
+│   ├── bob_base.py            # ✅ NEW - Base model with specializations
+│   ├── bob_ultimate.py        # ❌ DEPRECATED - Legacy version
+│   ├── bob_legacy_v2.py       # ❌ DEPRECATED - Old backup
 │   ├── knowledge_loader.py    # Shared knowledge base loader
 │   └── migrate_to_firestore.py # One-time migration tool
-├── requirements-cloudrun.txt  # ✅ MINIMAL deps for fast builds
-├── requirements.txt           # ❌ HEAVY deps - DO NOT USE for Cloud Run
-├── Dockerfile                 # ✅ Optimized for Cloud Run
-├── SLACK_SETUP.md            # Slack configuration instructions
+├── tests/
+│   ├── test_memory_only.py    # ✅ Memory system tests
+│   ├── test_bob_base.py       # ⚠️ Full test suite
+│   └── run_all_tests.py       # Master test runner
+├── GRAPHITI_MIGRATION_PLAN.md # ✅ Migration strategy document
+├── requirements-cloudrun.txt  # Minimal deps for Cloud Run
+├── requirements.txt           # Full deps including test tools
+├── Dockerfile                 # For Cloud Run deployment
+├── SLACK_SETUP.md            # Slack configuration
 ├── CLAUDE.md                 # THIS FILE - SINGLE SOURCE OF TRUTH
-└── .gitignore                # Protects secrets from GitHub
+└── .gitignore                # Protects secrets
 ```
 
-## 🚀 HOW TO DEPLOY (CORRECT WAY)
+## 🔄 MIGRATION ROADMAP (STEP BY STEP)
+
+### Phase 1: Local Testing (Current)
+1. ✅ Bob running with Socket Mode locally
+2. ✅ Firestore database connected
+3. ✅ Memory system tests passing
+4. 🚧 Fix Graphiti initialization parameters
+5. ⏳ Install Neo4j locally for testing
+
+### Phase 2: Cloud Infrastructure
+1. ⏳ Deploy Neo4j to GCP Compute Engine
+2. ⏳ Convert Bob from Socket Mode to HTTP
+3. ⏳ Test HTTP mode locally with Flask
+4. ⏳ Deploy Bob to Cloud Run
+
+### Phase 3: Data Migration
+1. ⏳ Migrate Firestore docs to Graphiti
+2. ⏳ Import ChromaDB vectors
+3. ⏳ Build knowledge graph relationships
+4. ⏳ Test complete system
+
+## 🚀 HOW TO DEPLOY (FUTURE - AFTER CONVERSION)
 
 ### Prerequisites Check
 ```bash
@@ -107,25 +134,29 @@ python3 test_slack_verification.py
 gcloud run services logs read bobs-brain --region us-central1 --limit 50
 ```
 
-## ⚠️ COMMON PROBLEMS & SOLUTIONS
+## ⚠️ KNOWN ISSUES & FIXES
 
-### Problem: Build takes forever
-**Solution:** Use `requirements-cloudrun.txt` NOT `requirements.txt`
-
-### Problem: Multiple Bob services running
-**Solution:** Delete duplicates, keep only `bobs-brain`
-```bash
-gcloud run services delete [duplicate-name] --region us-central1
+### Issue: Graphiti initialization error
+**Problem:** `Graphiti.__init__() got an unexpected keyword argument 'neo4j_uri'`
+**Fix:** Use host/port parameters instead:
+```python
+# Wrong
+Graphiti(neo4j_uri="bolt://localhost:7687")
+# Correct
+Graphiti(host="localhost", port=7687)
 ```
 
-### Problem: Bob not responding in Slack
-**Solution:** Check Event Subscriptions URL in Slack app settings
+### Issue: Socket Mode vs HTTP confusion
+**Problem:** Cloud Run requires HTTP endpoints, Bob uses Socket Mode
+**Fix:** Need to convert bob_firestore.py to HTTP mode with Flask
 
-### Problem: Signature verification failing
-**Solution:** URL verification is bypassed in bob_cloud_run.py (fixed on 2025-08-10)
+### Issue: Neo4j not available
+**Problem:** Graphiti requires Neo4j database
+**Fix:** Install Neo4j locally or deploy to GCP
 
-### Problem: Code confusion/wrong version
-**Solution:** ALWAYS use bob_cloud_run.py for Cloud Run, pull latest from GitHub
+### Issue: Firestore query needs index
+**Problem:** Temporal queries require composite index
+**Fix:** Create index in Firestore console
 
 ## 📝 DEVELOPMENT WORKFLOW
 
@@ -160,27 +191,48 @@ gcloud run services delete [duplicate-name] --region us-central1
 - ❌ DO NOT use bob_ultimate.py or bob_legacy_v2.py (outdated)
 
 ## 📊 PROJECT HISTORY
-- **2025-08-10:** Fixed Cloud Run deployment with optimized dependencies
-- **2025-08-10:** Fixed Slack URL verification issue
-- **2025-08-10:** Migrated to Firestore from ChromaDB
+- **2025-08-10 23:15:** Updated documentation to reflect actual architecture
+- **2025-08-10 Evening:** Created Graphiti migration plan
+- **2025-08-10 Afternoon:** Built Bob Base Model with specializations
+- **2025-08-10 Morning:** Migrated ChromaDB to Firestore (5 docs)
 - **2025-08-09:** Bob's Brain birthed and initial recovery
-- **Past 3 days:** Bob has been working successfully when properly configured
+- **Current Focus:** Graphiti knowledge graph integration
 
-## 🎯 NEXT SESSION CHECKLIST
-When starting a new session, ALWAYS:
-1. Read this CLAUDE.md file first
-2. Check Cloud Run status: `gcloud run services list --region us-central1 | grep bob`
-3. Pull latest from GitHub: `git pull origin bobs-brain-birthed`
-4. Verify single instance: Delete any duplicate services
-5. Test health: `curl https://bobs-brain-157908567967.us-central1.run.app/health`
+## 🎯 NEXT STEPS CHECKLIST
+
+### Immediate Actions:
+1. ✅ Read this CLAUDE.md file first
+2. Fix Graphiti parameters in bob_memory.py (host/port not neo4j_uri)
+3. Install Neo4j locally for testing
+4. Test Graphiti connection
+5. Convert Socket Mode to HTTP for Cloud Run
+
+### Testing Commands:
+```bash
+# Run memory tests
+python3 tests/test_memory_only.py
+
+# Run all tests
+python3 run_all_tests.py
+
+# Check current Bob
+python3 src/bob_firestore.py  # Requires Slack tokens
+```
 
 ## 🆘 EMERGENCY RECOVERY
 If Bob is completely broken:
-1. The working code is in GitHub: https://github.com/jeremylongshore/bobs-brain
-2. Branch: `bobs-brain-birthed`
-3. Use `bob_cloud_run.py` with `requirements-cloudrun.txt`
-4. Deploy using the command in the deployment section
-5. Update Slack Event URL to Cloud Run endpoint
+1. Working code in GitHub: https://github.com/jeremylongshore/bobs-brain
+2. Current branch: `enhance-bob-graphiti`
+3. Stable branch: `bobs-brain-birthed`
+4. For Socket Mode: Use `bob_firestore.py` with Slack tokens
+5. For testing: Use `tests/test_memory_only.py` (no tokens needed)
+
+## 💡 KEY INSIGHTS
+- Graphiti requires Neo4j (graph database)
+- Socket Mode needs conversion for Cloud Run
+- $2,251.82 GCP credits available (19+ months free)
+- Memory system works with Firestore fallback
+- Test coverage at 66.7% (Graphiti failing due to Neo4j)
 
 ---
 **Remember: This file is the SINGLE SOURCE OF TRUTH. When in doubt, follow this guide.**
