@@ -1,0 +1,30 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/bobs-house-ai/bobs-brain-graphiti', '-f', 'Dockerfile.graphiti', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/bobs-house-ai/bobs-brain-graphiti']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'bobs-brain'
+      - '--image'
+      - 'gcr.io/bobs-house-ai/bobs-brain-graphiti'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '2Gi'
+      - '--port'
+      - '8080'
+
+images:
+  - 'gcr.io/bobs-house-ai/bobs-brain-graphiti'
