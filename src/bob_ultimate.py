@@ -346,21 +346,21 @@ Provide a helpful, concise response. Be professional but friendly."""
             self.cleanup_old_messages()
             
             if request.type == "events_api":
+                # Acknowledge request immediately for Socket Mode
+                client.ack(request.envelope_id)
+                
                 event = request.payload.get("event", {})
                 
                 # Validate event
                 if event.get("type") != "message" or not event.get("text"):
-                    request.ack()
                     return
                 
                 # Skip bot messages
                 if self.is_bot_message(event):
-                    request.ack()
                     return
                 
                 # Skip duplicates
                 if self.is_duplicate(event):
-                    request.ack()
                     return
                 
                 user_text = event.get("text", "").strip()
@@ -368,7 +368,6 @@ Provide a helpful, concise response. Be professional but friendly."""
                 user_id = event.get("user")
                 
                 if not all([user_text, channel, user_id]):
-                    request.ack()
                     return
                 
                 self.logger.info(f"📩 Message from {user_id}: {user_text[:50]}...")
@@ -387,13 +386,16 @@ Provide a helpful, concise response. Be professional but friendly."""
                 )
                 
                 self.logger.info(f"✅ Responded: {response[:50]}...")
-            
-            request.ack()
+            else:
+                # Acknowledge non-event requests
+                client.ack(request.envelope_id)
             
         except Exception as e:
             self.logger.error(f"❌ Event handling error: {e}")
-            if hasattr(request, 'ack'):
-                request.ack()
+            try:
+                client.ack(request.envelope_id)
+            except:
+                pass
     
     def health_check(self) -> Dict:
         """Generate health status"""
