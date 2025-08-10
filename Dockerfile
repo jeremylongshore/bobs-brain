@@ -2,24 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Copy only requirements first for better caching
+COPY requirements-cloudrun.txt .
+RUN pip install --no-cache-dir -r requirements-cloudrun.txt
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy only the necessary files
+COPY src/bob_cloud_run.py src/
+COPY .env* ./
 
-# Copy application code
-COPY . .
-
-# Create directories for ChromaDB
-RUN mkdir -p chroma_data logs
+# Create logs directory
+RUN mkdir -p logs
 
 # Expose port
 EXPOSE 3000
 
-# Start Bob Ultimate
-CMD ["python", "src/bob_ultimate.py"]
+# Start Bob Cloud Run with Flask HTTP server
+CMD ["python", "src/bob_cloud_run.py"]
