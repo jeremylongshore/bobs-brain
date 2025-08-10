@@ -21,78 +21,68 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.errors import SlackApiError
 
-# AI Models - Supporting both Vertex AI and Google GenAI
-try:
-    # Try Vertex AI first (current setup)
-    import vertexai
-    from vertexai.generative_models import GenerativeModel, GenerationConfig
-    AI_BACKEND = "vertex"
-    vertexai.init(project="bobs-house-ai", location="us-central1")
-    ai_model = GenerativeModel("gemini-2.0-flash-exp")
-except ImportError:
-    try:
-        # Fallback to Google GenAI SDK (future-proof)
-        import google.generativeai as genai
-        AI_BACKEND = "genai"
-        genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-        ai_model = genai.GenerativeModel('gemini-1.5-flash')
-    except ImportError:
-        AI_BACKEND = None
-        ai_model = None
+# AI Integration - Vertex AI (will migrate to Google Gen AI later)
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig
 
 class BobUltimate:
     """
-    The ULTIMATE Bob - Best features from ALL versions
+    The ULTIMATE Bob - Best features from all versions combined
     
-    Combines:
-    - Professional communication from bob_unified_v2
-    - Production error handling from bob_production
-    - Simple directness from bob_solid
-    - AI capabilities from all versions
+    Features merged:
+    - Professional communication (from recovered-latest)
+    - Duplicate prevention (from recovered-latest)
+    - Smart memory management (from recovered-latest)
+    - Vertex AI integration (from local versions)
+    - Health checks (from bob_production)
+    - Error handling (from bob_production)
+    - Knowledge loader (from recovered-latest)
+    - Jeremy recognition (from recovered-latest)
     """
     
-    def __init__(self, slack_bot_token: str, slack_app_token: str = None):
-        """Initialize Ultimate Bob with all best features"""
+    def __init__(self):
+        """Initialize the ULTIMATE Bob with all best features"""
         self.setup_logging()
+        self.logger.info("🚀 Initializing Bob Ultimate - The FINAL Version")
         
-        # Slack configuration
-        self.slack_client = WebClient(token=slack_bot_token)
-        self.slack_app_token = slack_app_token
+        # Get environment variables
+        self.slack_bot_token = os.environ.get("SLACK_BOT_TOKEN", "")
+        self.slack_app_token = os.environ.get("SLACK_APP_TOKEN", "")
+        self.slack_signing_secret = os.environ.get("SLACK_SIGNING_SECRET", "")
         
-        # Socket mode if app token provided
-        if slack_app_token:
-            self.socket_client = SocketModeClient(app_token=slack_app_token)
-            self.socket_client.socket_mode_request_listeners.append(self.handle_slack_message)
-        else:
-            self.socket_client = None
+        # Validate tokens
+        if not self.slack_bot_token or "PLACEHOLDER" in self.slack_bot_token:
+            self.logger.error("❌ Missing Slack tokens! Get from api.slack.com")
+            self.logger.error("Need: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET")
+            raise ValueError("Slack tokens required")
         
-        # Prevent duplicate responses (from bob_unified_v2)
+        # Initialize Slack
+        self.slack_client = WebClient(token=self.slack_bot_token)
+        self.socket_client = SocketModeClient(
+            app_token=self.slack_app_token,
+            web_client=self.slack_client
+        )
+        self.socket_client.socket_mode_request_listeners.append(self.handle_slack_event)
+        
+        # Initialize Vertex AI
+        self.setup_ai()
+        
+        # Initialize ChromaDB
+        self.setup_knowledge_base()
+        
+        # Duplicate prevention (from recovered-latest)
         self.processed_messages: Set[str] = set()
         self.last_cleanup = datetime.now()
-        self._lock = threading.Lock()  # Thread safety from bob_production
         
-        # ChromaDB setup
-        chroma_path = os.environ.get("CHROMA_PERSIST_DIR", "/home/jeremylongshore/bobs-brain/chroma_data")
-        os.makedirs(chroma_path, exist_ok=True)
+        # Smart conversation memory (from recovered-latest)
+        self.conversation_memory = {
+            "recent_interactions": {},  # user_id -> last_interaction_time
+            "greeting_count": {},       # user_id -> count of recent greetings
+            "user_context": {},         # user_id -> known context about user
+            "conversation_history": {}  # user_id -> last 10 messages
+        }
         
-        self.chroma_client = chromadb.PersistentClient(path=chroma_path)
-        
-        try:
-            self.knowledge_collection = self.chroma_client.get_collection('bob_knowledge')
-            self.logger.info(f"📚 Loaded existing collection with {self.knowledge_collection.count()} documents")
-        except:
-            self.knowledge_collection = self.chroma_client.create_collection('bob_knowledge')
-            self.logger.info("📚 Created new knowledge collection")
-        
-        # Load critical knowledge if available
-        try:
-            from knowledge_loader import ensure_knowledge_loaded
-            ensure_knowledge_loaded()
-            self.logger.info("✅ Additional knowledge loaded")
-        except:
-            pass  # Knowledge loader is optional
-        
-        # Business context (from bob_unified_v2)
+        # Business context (from recovered-latest)
         self.business_context = {
             "company": "DiagnosticPro.io",
             "owner": "Jeremy Longshore",
@@ -100,28 +90,19 @@ class BobUltimate:
             "experience": "15 years business experience (BBI, trucking)",
         }
         
-        # Conversation memory with limits (best of both versions)
-        self.conversation_memory = {
-            "recent_interactions": {},  # user_id -> last_interaction_time
-            "history": {},              # user_id -> last 10 messages
-            "user_context": {}          # user_id -> known context
-        }
+        # Health check flag
+        self.is_healthy = True
+        self.start_time = datetime.now()
         
-        # Professional response patterns
-        self.response_patterns = {
-            "jeremy_greeting": "Hey Jeremy! What's on your mind?",
-            "business_greeting": "Hello! Bob here - your DiagnosticPro AI partner. How can I help?",
-            "error_response": "I encountered an issue. Let me know if you need assistance."
-        }
+        # Setup graceful shutdown
+        signal.signal(signal.SIGINT, self.shutdown_handler)
+        signal.signal(signal.SIGTERM, self.shutdown_handler)
         
-        # Health check server (from bob_production)
-        self.health_server = None
-        
-        self.logger.info(f"🤖 Bob Ultimate initialized (AI: {AI_BACKEND or 'Knowledge-only'})")
+        self.logger.info("✅ Bob Ultimate initialized successfully!")
     
     def setup_logging(self):
-        """Configure logging system"""
-        log_dir = "/home/jeremylongshore/bobs-brain/logs"
+        """Configure professional logging"""
+        log_dir = '/home/jeremylongshore/bobs-brain/logs'
         os.makedirs(log_dir, exist_ok=True)
         
         logging.basicConfig(
@@ -129,46 +110,86 @@ class BobUltimate:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(f'{log_dir}/bob_ultimate.log'),
-                logging.StreamHandler()
+                logging.StreamHandler(sys.stdout)
             ]
         )
         self.logger = logging.getLogger('BobUltimate')
     
-    def cleanup_processed_messages(self):
-        """Clean up old processed messages to prevent memory buildup"""
-        with self._lock:
-            now = datetime.now()
-            if now - self.last_cleanup > timedelta(minutes=30):
-                if len(self.processed_messages) > 1000:
-                    recent_messages = list(self.processed_messages)[-500:]
-                    self.processed_messages = set(recent_messages)
-                self.last_cleanup = now
+    def setup_ai(self):
+        """Initialize Vertex AI with fallback"""
+        try:
+            project_id = os.environ.get("GCP_PROJECT", "bobs-house-ai")
+            location = os.environ.get("GCP_LOCATION", "us-central1")
+            
+            vertexai.init(project=project_id, location=location)
+            self.ai_model = GenerativeModel("gemini-2.0-flash-exp")
+            self.logger.info("✅ Vertex AI initialized with Gemini 2.0")
+            
+        except Exception as e:
+            self.logger.error(f"⚠️ Vertex AI initialization failed: {e}")
+            self.ai_model = None
+    
+    def setup_knowledge_base(self):
+        """Initialize ChromaDB with proper path"""
+        try:
+            # Use proper bobs-brain directory
+            chroma_path = '/home/jeremylongshore/bobs-brain/chroma_data'
+            os.makedirs(chroma_path, exist_ok=True)
+            
+            self.chroma_client = chromadb.PersistentClient(path=chroma_path)
+            
+            # Get or create collection
+            try:
+                self.knowledge_collection = self.chroma_client.get_collection('bob_knowledge')
+                count = self.knowledge_collection.count()
+                self.logger.info(f"✅ Loaded existing knowledge base: {count} items")
+            except:
+                self.knowledge_collection = self.chroma_client.create_collection('bob_knowledge')
+                self.logger.info("✅ Created new knowledge collection")
+                self.load_initial_knowledge()
+                
+        except Exception as e:
+            self.logger.error(f"❌ ChromaDB setup failed: {e}")
+            self.knowledge_collection = None
+    
+    def load_initial_knowledge(self):
+        """Load initial knowledge from knowledge_loader if available"""
+        try:
+            # Import knowledge loader from recovered-latest
+            sys.path.insert(0, '/home/jeremylongshore/bobs-brain/src')
+            from knowledge_loader import ensure_knowledge_loaded
+            ensure_knowledge_loaded()
+            self.logger.info("✅ Loaded initial knowledge base")
+        except Exception as e:
+            self.logger.warning(f"⚠️ Could not load initial knowledge: {e}")
+    
+    def cleanup_old_messages(self):
+        """Clean up old processed messages to prevent memory leak"""
+        now = datetime.now()
+        if now - self.last_cleanup > timedelta(minutes=30):
+            if len(self.processed_messages) > 1000:
+                recent = list(self.processed_messages)[-500:]
+                self.processed_messages = set(recent)
                 self.logger.info(f"🧹 Cleaned message cache: {len(self.processed_messages)} retained")
+            self.last_cleanup = now
     
-    def is_duplicate_message(self, event: Dict[str, Any]) -> bool:
-        """Check if message already processed"""
-        message_id = f"{event.get('channel')}:{event.get('ts')}:{event.get('user')}:{event.get('text', '')[:50]}"
-        
-        with self._lock:
-            if message_id in self.processed_messages:
-                self.logger.debug(f"🔄 Duplicate message: {message_id}")
-                return True
-            self.processed_messages.add(message_id)
-            return False
+    def is_duplicate(self, event: Dict) -> bool:
+        """Check if message is duplicate"""
+        msg_id = f"{event.get('channel')}:{event.get('ts')}:{event.get('text', '')[:50]}"
+        if msg_id in self.processed_messages:
+            return True
+        self.processed_messages.add(msg_id)
+        return False
     
-    def is_bot_message(self, event: Dict[str, Any]) -> bool:
+    def is_bot_message(self, event: Dict) -> bool:
         """Enhanced bot detection"""
         if event.get("bot_id"):
             return True
-        
-        user_id = event.get("user", "")
-        if user_id.startswith("B"):  # Bot user IDs
+        if event.get("user", "").startswith("B"):
             return True
-        
         text = event.get("text", "").lower()
-        if any(indicator in text for indicator in ["i'm bob", "bob here", "bob ultimate"]):
+        if any(phrase in text for phrase in ["i'm bob", "bob here", "bob ultimate"]):
             return True
-        
         return False
     
     def is_jeremy(self, user_id: str) -> bool:
@@ -177,165 +198,169 @@ class BobUltimate:
                 self.conversation_memory.get("user_context", {}).get(user_id, {}).get("is_owner", False))
     
     def update_conversation_memory(self, user_id: str, message: str, response: str = None):
-        """Update conversation memory with limits"""
-        with self._lock:
-            # Update last interaction
-            self.conversation_memory["recent_interactions"][user_id] = datetime.now()
-            
-            # Update conversation history (keep last 10)
-            if user_id not in self.conversation_memory["history"]:
-                self.conversation_memory["history"][user_id] = []
-            
-            self.conversation_memory["history"][user_id].append({
-                "user": message,
-                "bob": response,
-                "timestamp": datetime.now().isoformat()
-            })
-            self.conversation_memory["history"][user_id] = self.conversation_memory["history"][user_id][-10:]
-            
-            # Identify Jeremy
-            if "jeremy" in message.lower():
-                self.business_context["owner_user_id"] = user_id
-                self.conversation_memory["user_context"][user_id] = {
-                    "is_owner": True,
-                    "name": "Jeremy"
-                }
+        """Update conversation memory with history"""
+        now = datetime.now()
+        
+        # Update last interaction
+        self.conversation_memory["recent_interactions"][user_id] = now
+        
+        # Track greetings
+        if any(g in message.lower() for g in ["hello", "hi", "hey", "good morning"]):
+            if user_id not in self.conversation_memory["greeting_count"]:
+                self.conversation_memory["greeting_count"][user_id] = []
+            self.conversation_memory["greeting_count"][user_id].append(now)
+            # Keep only last 5 greetings
+            self.conversation_memory["greeting_count"][user_id] = \
+                self.conversation_memory["greeting_count"][user_id][-5:]
+        
+        # Identify Jeremy
+        if "jeremy" in message.lower():
+            self.business_context["owner_user_id"] = user_id
+            self.conversation_memory["user_context"][user_id] = {
+                "is_owner": True,
+                "name": "Jeremy",
+                "relationship": "business_owner"
+            }
+        
+        # Store conversation history (last 10 exchanges)
+        if user_id not in self.conversation_memory["conversation_history"]:
+            self.conversation_memory["conversation_history"][user_id] = []
+        
+        self.conversation_memory["conversation_history"][user_id].append({
+            "timestamp": now.isoformat(),
+            "user": message,
+            "bob": response
+        })
+        # Keep only last 10
+        self.conversation_memory["conversation_history"][user_id] = \
+            self.conversation_memory["conversation_history"][user_id][-10:]
     
-    def query_knowledge_base(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
-        """Query ChromaDB knowledge base"""
+    def query_knowledge(self, query: str, max_results: int = 3) -> List[Dict]:
+        """Query ChromaDB for relevant knowledge"""
+        if not self.knowledge_collection:
+            return []
+        
         try:
             results = self.knowledge_collection.query(
                 query_texts=[query],
-                n_results=max_results,
-                include=["documents", "metadatas", "distances"]
+                n_results=max_results
             )
             
             if not results['documents'] or not results['documents'][0]:
                 return []
             
-            knowledge_items = []
-            for doc, metadata, distance in zip(
+            knowledge = []
+            for doc, meta, dist in zip(
                 results['documents'][0],
-                results['metadatas'][0] or [{}] * len(results['documents'][0]),
+                results.get('metadatas', [[]])[0],
                 results['distances'][0]
             ):
-                relevance = 1.0 - distance
-                if relevance > 0.3:
-                    knowledge_items.append({
-                        'content': doc[:500],  # Limit length
-                        'metadata': metadata,
-                        'relevance': relevance
+                if 1.0 - dist > 0.3:  # Relevance threshold
+                    knowledge.append({
+                        'content': doc,
+                        'metadata': meta,
+                        'relevance': 1.0 - dist
                     })
-            
-            return knowledge_items
+            return knowledge
             
         except Exception as e:
-            self.logger.error(f"Knowledge query error: {e}")
+            self.logger.error(f"Knowledge query failed: {e}")
             return []
     
     def generate_response(self, user_message: str, user_id: str) -> str:
         """
-        Generate response using AI + knowledge base
-        Best of all versions combined
+        Generate response using AI + Knowledge + Context
+        Combines best of all versions
         """
-        message_lower = user_message.lower().strip()
         is_jeremy_user = self.is_jeremy(user_id)
+        message_lower = user_message.lower().strip()
         
-        # Simple greeting handling (from bob_solid simplicity)
+        # Simple greeting handling (from recovered-latest)
         if any(g in message_lower for g in ["hello", "hi", "hey"]):
             if is_jeremy_user:
-                return self.response_patterns["jeremy_greeting"]
+                return "Hey Jeremy! What can I help you with today?"
             else:
-                return self.response_patterns["business_greeting"]
+                return "Hello! I'm Bob, your DiagnosticPro AI assistant. How can I help?"
         
         # Query knowledge base
-        knowledge = self.query_knowledge_base(user_message)
+        knowledge = self.query_knowledge(user_message)
         
-        # Build context from knowledge
+        # Build context for AI
         context = ""
         if knowledge:
             context = "Relevant knowledge:\n"
-            for item in knowledge[:2]:  # Top 2 results
+            for item in knowledge[:2]:  # Use top 2
                 context += f"- {item['content'][:200]}...\n"
         
         # Get conversation history
-        history = self.conversation_memory.get("history", {}).get(user_id, [])
-        history_text = ""
+        history = self.conversation_memory.get("conversation_history", {}).get(user_id, [])
         if history:
-            recent = history[-3:]  # Last 3 exchanges
-            for h in recent:
-                history_text += f"User: {h['user']}\nBob: {h.get('bob', 'thinking...')}\n"
+            context += "\nRecent conversation:\n"
+            for h in history[-3:]:  # Last 3 exchanges
+                if h.get('user'):
+                    context += f"User: {h['user']}\n"
+                if h.get('bob'):
+                    context += f"Bob: {h['bob']}\n"
         
-        # Generate with AI if available
-        if ai_model and AI_BACKEND:
+        # Use Vertex AI if available
+        if self.ai_model:
             try:
                 prompt = f"""You are Bob, a helpful AI assistant for DiagnosticPro.
-                
 {context}
-
-Recent conversation:
-{history_text}
 
 User: {user_message}
 
-Provide a helpful, concise response. If you don't know, say so honestly."""
+Provide a helpful, concise response. Be professional but friendly."""
                 
-                if AI_BACKEND == "vertex":
-                    response = ai_model.generate_content(
-                        prompt,
-                        generation_config=GenerationConfig(
-                            temperature=0.7,
-                            max_output_tokens=300
-                        )
+                response = self.ai_model.generate_content(
+                    prompt,
+                    generation_config=GenerationConfig(
+                        temperature=0.7,
+                        max_output_tokens=300
                     )
-                    return response.text
-                    
-                elif AI_BACKEND == "genai":
-                    response = ai_model.generate_content(prompt)
-                    return response.text
-                    
+                )
+                return response.text.strip()
+                
             except Exception as e:
-                self.logger.error(f"AI generation error: {e}")
-                # Fall through to knowledge-based response
+                self.logger.error(f"AI generation failed: {e}")
         
-        # Fallback to knowledge-based response
+        # Fallback responses if AI fails
         if knowledge and knowledge[0]['relevance'] > 0.5:
-            content = knowledge[0]['content']
+            return f"Based on my knowledge: {knowledge[0]['content'][:300]}..."
+        
+        # Domain-specific fallbacks
+        if any(word in message_lower for word in ["diagnostic", "repair", "vehicle"]):
             if is_jeremy_user:
-                return f"Based on what I know: {content}"
-            else:
-                return f"From DiagnosticPro knowledge: {content}"
+                return "What specific diagnostic challenge are we tackling today?"
+            return "DiagnosticPro helps protect against repair overcharges. How can I assist?"
         
-        # Default responses
-        if "diagnostic" in message_lower or "repair" in message_lower:
-            return "DiagnosticPro helps protect from repair overcharges. What specific diagnostic question do you have?"
-        
-        return "How can I help with DiagnosticPro or vehicle diagnostics?"
+        # Default
+        if is_jeremy_user:
+            return "What can I help you with, Jeremy?"
+        return "How can I assist you today?"
     
-    def handle_slack_message(self, client, request):
-        """Handle Slack messages with all safety features"""
+    def handle_slack_event(self, client, request):
+        """Handle Slack events with all safety checks"""
         try:
-            self.cleanup_processed_messages()
+            # Cleanup periodically
+            self.cleanup_old_messages()
             
             if request.type == "events_api":
                 event = request.payload.get("event", {})
                 
-                # Validate message
-                if not (event.get("type") == "message" and event.get("text")):
-                    if hasattr(request, 'ack'):
-                        request.ack()
+                # Validate event
+                if event.get("type") != "message" or not event.get("text"):
+                    request.ack()
                     return
                 
                 # Skip bot messages
                 if self.is_bot_message(event):
-                    if hasattr(request, 'ack'):
-                        request.ack()
+                    request.ack()
                     return
                 
                 # Skip duplicates
-                if self.is_duplicate_message(event):
-                    if hasattr(request, 'ack'):
-                        request.ack()
+                if self.is_duplicate(event):
+                    request.ack()
                     return
                 
                 user_text = event.get("text", "").strip()
@@ -343,11 +368,10 @@ Provide a helpful, concise response. If you don't know, say so honestly."""
                 user_id = event.get("user")
                 
                 if not all([user_text, channel, user_id]):
-                    if hasattr(request, 'ack'):
-                        request.ack()
+                    request.ack()
                     return
                 
-                self.logger.info(f"📩 Message from {user_id}: '{user_text[:50]}...'")
+                self.logger.info(f"📩 Message from {user_id}: {user_text[:50]}...")
                 
                 # Generate response
                 response = self.generate_response(user_text, user_id)
@@ -355,165 +379,94 @@ Provide a helpful, concise response. If you don't know, say so honestly."""
                 # Update memory
                 self.update_conversation_memory(user_id, user_text, response)
                 
-                # Send to Slack
+                # Send response
                 self.slack_client.chat_postMessage(
                     channel=channel,
                     text=response,
-                    username="Bob Ultimate"
+                    thread_ts=event.get('thread_ts', event.get('ts'))
                 )
                 
-                self.logger.info(f"✅ Responded: '{response[:50]}...'")
-        
+                self.logger.info(f"✅ Responded: {response[:50]}...")
+            
+            request.ack()
+            
         except Exception as e:
-            self.logger.error(f"Message handling error: {e}")
-            try:
-                if 'channel' in locals():
-                    self.slack_client.chat_postMessage(
-                        channel=channel,
-                        text=self.response_patterns["error_response"]
-                    )
-            except:
-                pass
-        
-        finally:
+            self.logger.error(f"❌ Event handling error: {e}")
             if hasattr(request, 'ack'):
                 request.ack()
     
-    def start_health_server(self):
-        """Start health check server for Cloud Run"""
-        from http.server import HTTPServer, BaseHTTPRequestHandler
-        
-        class HealthHandler(BaseHTTPRequestHandler):
-            def do_GET(self):
-                if self.path == '/health':
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.end_headers()
-                    status = {
-                        'status': 'healthy',
-                        'ai_backend': AI_BACKEND or 'none',
-                        'timestamp': datetime.now().isoformat()
-                    }
-                    self.wfile.write(json.dumps(status).encode())
-                else:
-                    self.send_response(404)
-                    self.end_headers()
-            
-            def log_message(self, format, *args):
-                pass  # Suppress logs
-        
-        port = int(os.environ.get("PORT", 8080))
-        server = HTTPServer(('0.0.0.0', port), HealthHandler)
-        
-        def run_server():
-            self.logger.info(f"🏥 Health server on port {port}")
-            server.serve_forever()
-        
-        thread = threading.Thread(target=run_server, daemon=True)
-        thread.start()
-        return server
-    
-    def start_service(self):
-        """Start Bob Ultimate service"""
-        try:
-            self.logger.info("🚀 Starting Bob Ultimate...")
-            
-            # Start health check server
-            self.health_server = self.start_health_server()
-            
-            # Log status
-            knowledge_count = self.knowledge_collection.count()
-            self.logger.info(f"📚 Knowledge base: {knowledge_count} items")
-            self.logger.info(f"🤖 AI Backend: {AI_BACKEND or 'Knowledge-only mode'}")
-            
-            if self.socket_client:
-                # Socket mode
-                self.socket_client.connect()
-                self.logger.info("✅ Bob Ultimate active on Slack (Socket Mode)")
-                
-                while True:
-                    time.sleep(60)
-                    if not self.socket_client.is_connected():
-                        self.logger.warning("Reconnecting to Slack...")
-                        self.socket_client.connect()
-            else:
-                # Webhook mode - just keep health server running
-                self.logger.info("✅ Bob Ultimate ready (Webhook Mode)")
-                while True:
-                    time.sleep(60)
-                    self.logger.debug(f"Status: {len(self.processed_messages)} messages processed")
-        
-        except KeyboardInterrupt:
-            self.logger.info("👋 Shutting down gracefully...")
-        except Exception as e:
-            self.logger.error(f"Critical error: {e}")
-            raise
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get comprehensive status"""
+    def health_check(self) -> Dict:
+        """Generate health status"""
         return {
-            'service': 'Bob Ultimate',
-            'version': '1.0 FINAL',
-            'ai_backend': AI_BACKEND or 'none',
-            'knowledge_items': self.knowledge_collection.count(),
+            'status': 'healthy' if self.is_healthy else 'unhealthy',
+            'uptime': str(datetime.now() - self.start_time),
             'processed_messages': len(self.processed_messages),
-            'active_users': len(self.conversation_memory["recent_interactions"]),
+            'active_conversations': len(self.conversation_memory.get("recent_interactions", {})),
+            'knowledge_items': self.knowledge_collection.count() if self.knowledge_collection else 0,
+            'ai_model': 'Vertex AI Gemini 2.0' if self.ai_model else 'None',
             'jeremy_identified': bool(self.business_context.get("owner_user_id")),
-            'features': [
-                'Duplicate prevention',
-                'Smart memory management',
-                'Professional communication',
-                'AI + Knowledge hybrid',
-                'Thread safety',
-                'Health checks'
-            ],
             'timestamp': datetime.now().isoformat()
         }
-
-
-def signal_handler(sig, frame):
-    """Handle shutdown signals gracefully"""
-    print("\n👋 Bob Ultimate shutting down...")
-    sys.exit(0)
+    
+    def shutdown_handler(self, signum, frame):
+        """Graceful shutdown"""
+        self.logger.info("👋 Shutting down Bob Ultimate gracefully...")
+        self.is_healthy = False
+        sys.exit(0)
+    
+    def start(self):
+        """Start Bob Ultimate service"""
+        try:
+            self.logger.info("🚀 Starting Bob Ultimate Service...")
+            self.logger.info(f"📊 Health: {json.dumps(self.health_check(), indent=2)}")
+            
+            # Connect to Slack
+            self.socket_client.connect()
+            self.logger.info("✅ Connected to Slack!")
+            
+            # Keep running with periodic health checks
+            while self.is_healthy:
+                time.sleep(60)
+                
+                # Health check
+                if not self.socket_client.is_connected():
+                    self.logger.warning("⚠️ Reconnecting to Slack...")
+                    self.socket_client.connect()
+                
+                # Log status
+                health = self.health_check()
+                self.logger.info(f"💓 Health: {health['active_conversations']} conversations, {health['processed_messages']} messages")
+                
+        except KeyboardInterrupt:
+            self.shutdown_handler(None, None)
+        except Exception as e:
+            self.logger.error(f"❌ Fatal error: {e}")
+            raise
 
 
 def main():
     """Main entry point for Bob Ultimate"""
-    # Set up signal handlers
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    print("""
+    ╔══════════════════════════════════════╗
+    ║        BOB ULTIMATE v1.0             ║
+    ║   The FINAL Unified Bob Version      ║
+    ║   Combining ALL Best Features        ║
+    ╚══════════════════════════════════════╝
+    """)
     
-    # Get tokens
-    slack_bot_token = os.getenv('SLACK_BOT_TOKEN')
-    slack_app_token = os.getenv('SLACK_APP_TOKEN')  # Optional for socket mode
-    
-    if not slack_bot_token:
-        print("❌ ERROR: SLACK_BOT_TOKEN not found")
-        print("Get it from: https://api.slack.com/apps")
+    # Check for tokens
+    if not os.environ.get("SLACK_BOT_TOKEN"):
+        print("❌ ERROR: Missing Slack tokens!")
+        print("\nSet these environment variables:")
+        print("  export SLACK_BOT_TOKEN=xoxb-...")
+        print("  export SLACK_APP_TOKEN=xapp-...")
+        print("  export SLACK_SIGNING_SECRET=...")
+        print("\nGet them from: https://api.slack.com/apps")
         return 1
     
-    # Check for placeholder tokens
-    if "PLACEHOLDER" in slack_bot_token:
-        print("⚠️ WARNING: Using placeholder token")
-        print("Update with real token from: https://api.slack.com/apps")
-    
     try:
-        # Initialize and start Bob Ultimate
-        bob = BobUltimate(slack_bot_token, slack_app_token)
-        
-        # Print status
-        status = bob.get_status()
-        print(f"\n{'='*60}")
-        print(f"🤖 BOB ULTIMATE - THE FINAL VERSION")
-        print(f"{'='*60}")
-        print(f"AI Backend: {status['ai_backend']}")
-        print(f"Knowledge Base: {status['knowledge_items']} items")
-        print(f"Features: {', '.join(status['features'][:3])}")
-        print(f"{'='*60}\n")
-        
-        # Start service
-        bob.start_service()
-        
+        bob = BobUltimate()
+        bob.start()
     except Exception as e:
         print(f"❌ Failed to start Bob Ultimate: {e}")
         return 1
