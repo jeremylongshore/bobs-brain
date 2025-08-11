@@ -1,0 +1,89 @@
+# Pre-commit hooks configuration
+# Run: pre-commit install to set up
+# Run: pre-commit run --all-files to test
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: check-ast  # Verify Python syntax
+
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+        args: ['--line-length=120']
+
+  # Python import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile', 'black', '--line-length', '120']
+
+  # Python linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ['--max-line-length=120', '--ignore=E203,W503']
+        exclude: 'archive/|deprecated_bobs/'
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: ['-ll', '--skip', 'B101']
+        exclude: 'tests/|archive/|deprecated_bobs/'
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '.git/|.env.example'
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: ['--ignore', 'DL3008', '--ignore', 'DL3009']
+
+# Custom local hooks
+  - repo: local
+    hooks:
+      - id: no-commit-to-main
+        name: Don't commit to main branch
+        entry: bash -c 'if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then echo "Direct commits to main branch are not allowed!"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: check-secrets-custom
+        name: Check for hardcoded secrets
+        entry: bash -c 'grep -r "xoxb-[0-9]\|xapp-[0-9]\|sk-[a-zA-Z0-9]" --include="*.py" --exclude-dir=.git --exclude-dir=archive --exclude-dir=tests src/ && echo "Found hardcoded secrets!" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+
+      - id: requirements-txt-fixer
+        name: Fix requirements.txt
+        entry: bash -c 'if [ -f requirements.txt ]; then sort -u requirements.txt -o requirements.txt; fi'
+        language: system
+        pass_filenames: false
+        files: requirements.*\.txt$

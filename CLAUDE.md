@@ -3,32 +3,33 @@
 **Last Comprehensive Update:** 2025-01-11T21:15:00Z
 
 ## 🚨 CRITICAL RULES - READ FIRST
-1. **VERTEX AI EVERYTHING**: All AI operations through Vertex AI (NO OpenAI)
-2. **GRAPHITI IS THE BRAIN**: Knowledge graph manages all memory and relationships
-3. **GOOGLE CLOUD NATIVE**: Neo4j + Firestore + BigQuery + Vertex AI all on GCP
-4. **PRODUCTION DEPLOYED**: Bob running on Cloud Run with full integration
-5. **USE LATEST CODE**: `bob_final.py` is the definitive production version
-6. **ALWAYS UPDATE GITHUB**: After ANY change, commit and push to GitHub
+1. **NEW GOOGLE GEN AI SDK**: Using google-genai SDK (NOT deprecated vertex AI SDK)
+2. **GEMINI 2.5 FLASH**: GA model working in production
+3. **GRAPHITI IS THE BRAIN**: Knowledge graph manages all memory and relationships
+4. **GOOGLE CLOUD NATIVE**: Neo4j + Firestore + BigQuery + Gen AI all on GCP
+5. **PRODUCTION DEPLOYED**: Bob v4.0 running on Cloud Run with full integration
+6. **USE LATEST CODE**: `bob_production_final.py` is the definitive production version
+7. **ALWAYS UPDATE GITHUB**: After ANY change, commit and push to GitHub
 
 ## 🤖 BOB'S BRAIN CURRENT STATUS
 **Environment:** ✅ PRODUCTION on Cloud Run - FULLY OPERATIONAL
-**Service:** bobs-brain (ALL SYSTEMS INTEGRATED)
-**Project:** bobs-house-ai  
-**Cloud Run URL:** https://bobs-brain-sytrh5wz5q-uc.a.run.app
+**Service:** bobs-brain v4.0 (NEW Google Gen AI SDK)
+**Project:** bobs-house-ai
+**Cloud Run URL:** https://bobs-brain-157908567967.us-central1.run.app
 **GitHub:** https://github.com/jeremylongshore/bobs-brain (branch: enhance-bob-graphiti)
-**Last Updated:** 2025-01-11T21:15:00Z
+**Last Updated:** 2025-01-10T22:10:00Z
 **GCP Credits:** $2,251.82 available (30+ months of runtime)
 **Neo4j Status:** ✅ PRODUCTION on GCP VM (10.128.0.2)
 **Graphiti Status:** ✅ OPERATIONAL (Vertex AI integration pending)
-**Vertex AI Status:** ✅ Gemini 1.5 Flash WORKING
+**Gemini Status:** ✅ gemini-2.5-flash WORKING via NEW SDK
 
 ## 📊 PRODUCTION ARCHITECTURE - CIRCLE OF LIFE
 ```
                         🤖 BOB (Cloud Run)
-                        bob_final.py v3.0
+                   bob_production_final.py v4.0
                              |
-                    [Vertex AI Platform]
-                    Gemini 1.5 Flash Model
+                  [NEW Google Gen AI SDK]
+                   gemini-2.5-flash (GA)
                              |
         ┌────────────────────┼────────────────────┐
         │                    │                    │
@@ -48,7 +49,7 @@
 ```
 
 ### Current Deployment Status:
-- **Cloud Run:** ✅ LIVE with bob_final.py v3.0 (Fixed Gemini model)
+- **Cloud Run:** ✅ LIVE with bob_production_final.py v4.0 (NEW Gen AI SDK)
 - **Neo4j VM:** ✅ Production on GCP (bob-neo4j, e2-standard-4)
 - **Graphiti:** ✅ Connected to Neo4j, ready for Vertex AI embeddings
 - **Vertex AI:** ✅ Gemini 1.5 Flash WORKING (correct model name fixed)
