@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy only what we need
+COPY requirements-gcp.txt .
+RUN pip install --no-cache-dir -r requirements-gcp.txt
+
+# Copy the working version
+COPY src/bob_gcp_native.py src/
+
+# Run WITHOUT Graphiti
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 src.bob_gcp_native:app

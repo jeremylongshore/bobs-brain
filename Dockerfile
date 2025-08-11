@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -8,20 +8,25 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install all dependencies
-COPY requirements-simple.txt .
-RUN pip install --no-cache-dir -r requirements-simple.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    flask \
+    gunicorn \
+    slack-sdk \
+    google-cloud-aiplatform \
+    google-cloud-bigquery \
+    google-cloud-firestore \
+    vertexai \
+    graphiti-core \
+    neo4j \
+    asyncio
 
-# Copy application
-COPY src/bob_http_graphiti.py .
+# Copy the production Bob
+COPY src/bob_final.py src/
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
+# Set environment
 ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD python3 -c "import requests; requests.get('http://localhost:8080/health')" || exit 1
-
-# Use gunicorn for production
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 --log-level info bob_http_graphiti:app
+# Run Bob Final (production version)
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 src.bob_final:app
