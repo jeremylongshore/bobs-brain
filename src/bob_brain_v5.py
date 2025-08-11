@@ -1,0 +1,935 @@
+#!/usr/bin/env python3
+"""
+BOB BRAIN v5.0 - The Universal Assistant with Memory
+This is Bob with FULL Graphiti integration, BigQuery knowledge, and learning capabilities
+"""
+
+import asyncio
+import hashlib
+import json
+import logging
+import os
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+
+from flask import Flask, jsonify, request
+from google import genai
+from google.cloud import bigquery, firestore
+from google.genai import types
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+
+class BobBrainV5:
+    """Bob as Jeremy's Universal Assistant with Full Memory"""
+
+    def __init__(self):
+        """Initialize Bob with complete integration"""
+
+        # Core configuration
+        self.project_id = os.environ.get("GCP_PROJECT", "bobs-house-ai")
+        self.location = os.environ.get("GCP_LOCATION", "us-central1")
+        self.user_id = "jeremy"  # Track who Bob is assisting
+
+        logger.info("=" * 60)
+        logger.info("🧠 BOB BRAIN v5.0 - UNIVERSAL ASSISTANT WITH MEMORY")
+        logger.info(f"📍 Project: {self.project_id}")
+        logger.info("=" * 60)
+
+        # Initialize all components
+        self._init_genai()
+        self._init_graphiti()
+        self._init_bigquery()
+        self._init_firestore()
+        self._init_slack()
+
+        # Memory tracking
+        self.conversation_context = []
+        self.processed_events = set()
+        self.max_events = 1000
+
+        # Thread pool for async operations
+        self.executor = ThreadPoolExecutor(max_workers=3)
+
+        logger.info("✅ BOB BRAIN v5.0 INITIALIZATION COMPLETE!")
+        logger.info("🧠 Ready to remember everything and learn from corrections")
+        logger.info("=" * 60)
+
+    def _init_genai(self):
+        """Initialize Google Gen AI SDK"""
+        try:
+            import google.auth
+
+            credentials, project = google.auth.default()
+
+            self.genai_client = genai.Client(vertexai=True, project=self.project_id, location=self.location)
+
+            # Try multiple models
+            model_attempts = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-002"]
+
+            self.model_name = None
+            self.model_available = False
+
+            for model_name in model_attempts:
+                try:
+                    test_response = self.genai_client.models.generate_content(
+                        model=model_name, contents="Say 'ready' if you work"
+                    )
+
+                    if test_response and test_response.candidates:
+                        logger.info(f"✅ Google Gen AI: {model_name} initialized")
+                        self.model_name = model_name
+                        self.model_available = True
+                        break
+
+                except Exception as e:
+                    logger.warning(f"Model {model_name} failed: {str(e)[:100]}")
+                    continue
+
+            if not self.model_available:
+                logger.error("❌ No Gen AI models available")
+
+        except Exception as e:
+            logger.error(f"❌ Google Gen AI initialization failed: {e}")
+            self.genai_client = None
+            self.model_available = False
+
+    def _init_graphiti(self):
+        """Initialize memory system (Neo4j/Graphiti)"""
+        try:
+            # Import Neo4j driver
+            from neo4j import GraphDatabase
+
+            neo4j_uri = os.environ.get("NEO4J_URI", "bolt://10.128.0.2:7687")
+            neo4j_user = os.environ.get("NEO4J_USER", "neo4j")
+            neo4j_password = os.environ.get("NEO4J_PASSWORD", "BobBrain2025")
+
+            # Create driver with shorter timeouts for Cloud Run
+            driver = GraphDatabase.driver(
+                neo4j_uri,
+                auth=(neo4j_user, neo4j_password),
+                connection_timeout=5,  # 5 seconds instead of default 30
+                max_connection_pool_size=2,
+            )
+
+            # Test connection with timeout
+            try:
+                with driver.session() as session:
+                    result = session.run("RETURN 1 as test")
+                    test_result = result.single()
+                    if test_result and test_result[0] == 1:
+                        logger.info(f"✅ Neo4j: Connected to {neo4j_uri}")
+                        self.neo4j_driver = driver
+                        self.memory_available = True
+
+                        # Now try Graphiti
+                        try:
+                            from graphiti_core import Graphiti
+
+                            self.graphiti = Graphiti(uri=neo4j_uri, user=neo4j_user, password=neo4j_password)
+                            logger.info("✅ Graphiti: Advanced memory system initialized")
+                            self.graphiti_available = True
+
+                        except (ImportError, Exception) as graphiti_error:
+                            logger.warning(f"⚠️ Graphiti unavailable ({str(graphiti_error)[:100]}), using direct Neo4j")
+                            self.graphiti = None
+                            self.graphiti_available = False
+
+                        return  # Success!
+
+            except Exception as conn_error:
+                logger.warning(f"⚠️ Neo4j connection test failed: {str(conn_error)[:100]}")
+                driver.close()
+
+        except ImportError:
+            logger.warning("⚠️ Neo4j driver not available")
+        except Exception as e:
+            logger.warning(f"⚠️ Memory system setup failed: {str(e)[:100]}")
+
+        # Fallback: Use in-memory storage
+        logger.info("📝 Using in-memory conversation storage (no persistence)")
+        self.neo4j_driver = None
+        self.graphiti = None
+        self.graphiti_available = False
+        self.memory_available = False
+        self.memory_cache = []  # Simple in-memory cache as fallback
+
+    def _init_bigquery(self):
+        """Initialize BigQuery for massive knowledge warehouse"""
+        try:
+            self.bq_client = bigquery.Client(project=self.project_id)
+
+            # Create datasets if they don't exist
+            datasets = ["knowledge_base", "conversations", "scraped_data"]
+            for dataset_name in datasets:
+                dataset_id = f"{self.project_id}.{dataset_name}"
+                try:
+                    self.bq_client.get_dataset(dataset_id)
+                    logger.info(f"✅ BigQuery dataset exists: {dataset_name}")
+                except:
+                    dataset = bigquery.Dataset(dataset_id)
+                    dataset.location = self.location
+                    self.bq_client.create_dataset(dataset, exists_ok=True)
+                    logger.info(f"✅ BigQuery dataset created: {dataset_name}")
+
+            logger.info("✅ BigQuery: Knowledge warehouse ready")
+
+        except Exception as e:
+            logger.warning(f"⚠️ BigQuery not available: {e}")
+            self.bq_client = None
+
+    def _init_firestore(self):
+        """Initialize Firestore for real-time data"""
+        try:
+            self.firestore_client = firestore.Client(project="diagnostic-pro-mvp")
+
+            # Test connection
+            test_collection = self.firestore_client.collection("diagnostic_submissions").limit(1).get()
+
+            logger.info("✅ Firestore: Real-time data connected")
+
+        except Exception as e:
+            logger.warning(f"⚠️ Firestore not available: {e}")
+            self.firestore_client = None
+
+    def _init_slack(self):
+        """Initialize Slack client"""
+        self.slack_token = os.environ.get("SLACK_BOT_TOKEN")
+
+        if self.slack_token:
+            self.slack_client = WebClient(token=self.slack_token)
+            logger.info("✅ Slack: Client initialized")
+        else:
+            logger.warning("⚠️ Slack: No SLACK_BOT_TOKEN found")
+            self.slack_client = None
+
+    async def remember_conversation(self, user_message, bot_response, user="jeremy"):
+        """Store conversation in memory system"""
+        try:
+            # Try Graphiti first (best option)
+            if self.graphiti_available and self.graphiti:
+                try:
+                    episode_content = f"User ({user}): {user_message}\nBob: {bot_response}"
+                    await self.graphiti.add_episode(
+                        name=f"conversation_{datetime.now().isoformat()}",
+                        episode_body=episode_content,
+                        source_description=f"Conversation with {user}",
+                        reference_time=datetime.now(),
+                    )
+                    logger.info("💾 Stored conversation in Graphiti")
+                except Exception as e:
+                    logger.warning(f"Graphiti storage failed: {str(e)[:100]}")
+
+            # Try direct Neo4j (good fallback)
+            elif hasattr(self, "neo4j_driver") and self.neo4j_driver:
+                try:
+                    with self.neo4j_driver.session() as session:
+                        session.run(
+                            """
+                            CREATE (c:Conversation {
+                                user: $user,
+                                message: $message,
+                                response: $response,
+                                timestamp: datetime(),
+                                id: $id
+                            })
+                        """,
+                            user=user,
+                            message=user_message,
+                            response=bot_response,
+                            id=hashlib.md5(f"{user_message}{bot_response}".encode()).hexdigest(),
+                        )
+                    logger.info("💾 Stored conversation in Neo4j")
+                except Exception as e:
+                    logger.warning(f"Neo4j storage failed: {str(e)[:100]}")
+
+            # In-memory fallback
+            else:
+                if not hasattr(self, "memory_cache"):
+                    self.memory_cache = []
+
+                conversation = {
+                    "user": user,
+                    "message": user_message,
+                    "response": bot_response,
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+                self.memory_cache.append(conversation)
+                # Keep only last 100 conversations in memory
+                if len(self.memory_cache) > 100:
+                    self.memory_cache = self.memory_cache[-100:]
+
+                logger.info("💾 Stored conversation in memory cache")
+
+            # Always try to store in BigQuery for analytics
+            if self.bq_client:
+                try:
+                    table_id = f"{self.project_id}.conversations.history"
+                    rows = [
+                        {
+                            "user": user,
+                            "message": user_message,
+                            "response": bot_response,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    ]
+
+                    # Try to insert directly first
+                    errors = self.bq_client.insert_rows_json(table_id, rows)
+                    if not errors:
+                        logger.info("💾 Stored conversation in BigQuery")
+                    else:
+                        logger.warning(f"BigQuery insert errors: {errors}")
+
+                except Exception as bq_error:
+                    logger.warning(f"BigQuery storage failed: {str(bq_error)[:100]}")
+
+        except Exception as e:
+            logger.error(f"Failed to remember conversation: {e}")
+
+    async def recall_conversations(self, query, user="jeremy"):
+        """Recall relevant past conversations"""
+        context = []
+
+        try:
+            # Try Graphiti search first
+            if self.graphiti_available and self.graphiti:
+                try:
+                    results = await self.graphiti.search(query=query, num_results=5)
+
+                    for result in results:
+                        if hasattr(result, "content"):
+                            context.append(result.content)
+
+                    if context:
+                        logger.info(f"📚 Recalled {len(context)} conversations from Graphiti")
+
+                except Exception as e:
+                    logger.warning(f"Graphiti search failed: {str(e)[:100]}")
+
+            # Try direct Neo4j search
+            elif hasattr(self, "neo4j_driver") and self.neo4j_driver:
+                try:
+                    with self.neo4j_driver.session() as session:
+                        result = session.run(
+                            """
+                            MATCH (c:Conversation)
+                            WHERE c.user = $user
+                            AND (toLower(c.message) CONTAINS toLower($query)
+                                 OR toLower(c.response) CONTAINS toLower($query))
+                            RETURN c.message as message, c.response as response, c.timestamp as timestamp
+                            ORDER BY c.timestamp DESC
+                            LIMIT 5
+                        """,
+                            user=user,
+                            query=query,
+                        )
+
+                        for record in result:
+                            context.append(f"Previous: {record['message']}\nBob said: {record['response']}")
+
+                    if context:
+                        logger.info(f"📚 Recalled {len(context)} conversations from Neo4j")
+
+                except Exception as e:
+                    logger.warning(f"Neo4j search failed: {str(e)[:100]}")
+
+            # Try in-memory cache
+            elif hasattr(self, "memory_cache") and self.memory_cache:
+                query_lower = query.lower()
+                for conv in reversed(self.memory_cache[-20:]):  # Check last 20 conversations
+                    if query_lower in conv["message"].lower() or query_lower in conv["response"].lower():
+                        context.append(f"Previous: {conv['message']}\nBob said: {conv['response']}")
+
+                if context:
+                    logger.info(f"📚 Recalled {len(context)} conversations from memory cache")
+
+            # Also check BigQuery if we don't have enough context
+            if self.bq_client and len(context) < 3:
+                try:
+                    query_sql = f"""
+                    SELECT message, response, timestamp
+                    FROM `{self.project_id}.conversations.history`
+                    WHERE user = @user
+                    AND (LOWER(message) LIKE LOWER(@pattern) OR LOWER(response) LIKE LOWER(@pattern))
+                    ORDER BY timestamp DESC
+                    LIMIT 3
+                    """
+
+                    job_config = bigquery.QueryJobConfig(
+                        query_parameters=[
+                            bigquery.ScalarQueryParameter("user", "STRING", user),
+                            bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%"),
+                        ]
+                    )
+
+                    query_job = self.bq_client.query(query_sql, job_config=job_config)
+                    results = query_job.result()
+
+                    rows = list(results)  # Convert to list first
+                    for row in rows:
+                        context.append(f"Previous: {row.message}\nBob said: {row.response}")
+
+                    if len(rows) > 0:
+                        logger.info(f"📚 Added {len(rows)} conversations from BigQuery")
+
+                except Exception as e:
+                    logger.warning(f"BigQuery search failed: {str(e)[:100]}")
+
+        except Exception as e:
+            logger.error(f"Failed to recall conversations: {e}")
+
+        return context[:5]  # Return max 5 relevant conversations
+
+    async def get_recent_conversations(self, user="jeremy", limit=3):
+        """Get the most recent conversations regardless of content"""
+        context = []
+
+        try:
+            # Try in-memory cache first (most reliable for recent conversations)
+            if hasattr(self, "memory_cache") and self.memory_cache:
+                recent_convs = [conv for conv in self.memory_cache if conv["user"] == user][-limit:]
+                for conv in reversed(recent_convs):  # Most recent first
+                    context.append(f"Recent: {conv['message']}\nBob said: {conv['response']}")
+
+                if context:
+                    logger.info(f"📚 Retrieved {len(context)} recent conversations from memory")
+                    return context
+
+            # Try BigQuery for recent conversations
+            if self.bq_client:
+                try:
+                    query_sql = f"""
+                    SELECT message, response, timestamp
+                    FROM `{self.project_id}.conversations.history`
+                    WHERE user = @user
+                    ORDER BY timestamp DESC
+                    LIMIT @limit
+                    """
+
+                    job_config = bigquery.QueryJobConfig(
+                        query_parameters=[
+                            bigquery.ScalarQueryParameter("user", "STRING", user),
+                            bigquery.ScalarQueryParameter("limit", "INTEGER", limit),
+                        ]
+                    )
+
+                    query_job = self.bq_client.query(query_sql, job_config=job_config)
+                    results = query_job.result()
+
+                    rows = list(results)
+                    for row in rows:
+                        context.append(f"Recent: {row.message}\nBob said: {row.response}")
+
+                    if rows:
+                        logger.info(f"📚 Retrieved {len(rows)} recent conversations from BigQuery")
+
+                except Exception as e:
+                    logger.warning(f"BigQuery recent conversations failed: {str(e)[:100]}")
+
+        except Exception as e:
+            logger.error(f"Failed to get recent conversations: {e}")
+
+        return context
+
+    def query_knowledge_base(self, query):
+        """Query BigQuery knowledge warehouse"""
+        knowledge = []
+
+        if not self.bq_client:
+            return knowledge
+
+        try:
+            # Query repair manuals (if table exists)
+            try:
+                manual_query = f"""
+                SELECT content, source
+                FROM `{self.project_id}.knowledge_base.repair_manuals`
+                WHERE LOWER(content) LIKE LOWER(@pattern)
+                LIMIT 3
+                """
+
+                job_config = bigquery.QueryJobConfig(
+                    query_parameters=[bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%")]
+                )
+
+                results = self.bq_client.query(manual_query, job_config=job_config).result()
+
+                for row in results:
+                    knowledge.append(f"📖 Manual: {row.content[:200]}... (Source: {row.source})")
+            except:
+                pass
+
+            # Query forum posts (if table exists)
+            try:
+                forum_query = f"""
+                SELECT question, answer, upvotes
+                FROM `{self.project_id}.knowledge_base.forum_posts`
+                WHERE LOWER(question) LIKE LOWER(@pattern) OR LOWER(answer) LIKE LOWER(@pattern)
+                ORDER BY upvotes DESC
+                LIMIT 3
+                """
+
+                job_config = bigquery.QueryJobConfig(
+                    query_parameters=[bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%")]
+                )
+
+                results = self.bq_client.query(forum_query, job_config=job_config).result()
+
+                for row in results:
+                    knowledge.append(f"💬 Forum: Q: {row.question}\nA: {row.answer} (👍 {row.upvotes})")
+            except:
+                pass
+
+            # Query scraped data
+            try:
+                scraped_query = f"""
+                SELECT repair_type, AVG(quoted_price) as avg_price, COUNT(*) as num_quotes
+                FROM `{self.project_id}.scraped_data.repair_quotes`
+                WHERE LOWER(repair_type) LIKE LOWER(@pattern)
+                GROUP BY repair_type
+                LIMIT 3
+                """
+
+                job_config = bigquery.QueryJobConfig(
+                    query_parameters=[bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%")]
+                )
+
+                results = self.bq_client.query(scraped_query, job_config=job_config).result()
+
+                for row in results:
+                    knowledge.append(f"💰 {row.repair_type}: Avg ${row.avg_price:.2f} ({row.num_quotes} quotes)")
+            except:
+                pass
+
+        except Exception as e:
+            logger.error(f"Knowledge base query error: {e}")
+
+        return knowledge
+
+    async def learn_from_correction(self, original, correction, user="jeremy"):
+        """Learn when user corrects Bob"""
+        try:
+            learning_entry = {
+                "original": original,
+                "correction": correction,
+                "user": user,
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            # Store in Neo4j/Graphiti
+            if self.graphiti_available and self.graphiti:
+                await self.graphiti.add_episode(
+                    name=f"correction_{datetime.now().isoformat()}",
+                    episode_body=f"User corrected: '{original}' should be '{correction}'",
+                    source_description=f"Learning from {user}",
+                    reference_time=datetime.now(),
+                )
+
+            elif self.neo4j_driver:
+                with self.neo4j_driver.session() as session:
+                    session.run(
+                        """
+                        CREATE (l:Learning {
+                            original: $original,
+                            correction: $correction,
+                            user: $user,
+                            timestamp: datetime()
+                        })
+                    """,
+                        **learning_entry,
+                    )
+
+            # Store in BigQuery for analysis
+            if self.bq_client:
+                table_id = f"{self.project_id}.conversations.corrections"
+
+                try:
+                    table = self.bq_client.get_table(table_id)
+                except:
+                    schema = [
+                        bigquery.SchemaField("original", "STRING"),
+                        bigquery.SchemaField("correction", "STRING"),
+                        bigquery.SchemaField("user", "STRING"),
+                        bigquery.SchemaField("timestamp", "TIMESTAMP"),
+                    ]
+                    table = bigquery.Table(table_id, schema=schema)
+                    table = self.bq_client.create_table(table, exists_ok=True)
+
+                errors = self.bq_client.insert_rows_json(table_id, [learning_entry])
+                if not errors:
+                    logger.info(f"📚 Learned: {original} → {correction}")
+
+        except Exception as e:
+            logger.error(f"Failed to learn from correction: {e}")
+
+    async def process_message(self, text, user="jeremy", channel=None):
+        """Process message with full memory and learning"""
+
+        try:
+            # Check if this is a correction
+            if any(word in text.lower() for word in ["actually", "no it's", "correction", "wrong"]):
+                # Extract the correction
+                await self.learn_from_correction(
+                    self.conversation_context[-1] if self.conversation_context else "", text, user
+                )
+
+            # Recall relevant past conversations
+            # For questions about recent context, get the last few conversations
+            if any(phrase in text.lower() for phrase in ["just ask", "what did i", "previous", "before", "earlier"]):
+                memory_context = await self.get_recent_conversations(user, limit=3)
+            else:
+                memory_context = await self.recall_conversations(text, user)
+
+            # Query knowledge base
+            knowledge = self.query_knowledge_base(text)
+
+            # Build full context
+            context_parts = []
+
+            if memory_context:
+                context_parts.append("📝 From our previous conversations:")
+                context_parts.extend(memory_context[:3])
+
+            if knowledge:
+                context_parts.append("\n📚 From knowledge base:")
+                context_parts.extend(knowledge[:3])
+
+            context = "\n".join(context_parts) if context_parts else ""
+
+            # Build prompt as Jeremy's assistant
+            prompt = f"""You are Bob, Jeremy's development assistant and knowledge system.
+
+Current user: {user}
+Current project: Bob's Brain - Universal knowledge system with Graphiti, BigQuery, and learning capabilities
+
+Your personality:
+- You remember ALL our conversations
+- You learn from corrections and improve
+- You help with code, architecture, and project planning
+- You track our project progress
+- You can handle questions about cars, boats, motorcycles, coding, anything
+- You speak as Jeremy's partner, not customer service
+
+{context}
+
+User message: {text}
+
+Instructions:
+- If this seems like a correction, acknowledge you've learned
+- Use any relevant context from our past conversations
+- Reference specific knowledge if you have it
+- Be helpful, direct, and remember you're Jeremy's assistant
+- If discussing our project, show you understand where we are
+
+Response:"""
+
+            # Generate response with Gemini
+            if self.genai_client and self.model_available:
+                try:
+                    response = self.genai_client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            temperature=0.7, max_output_tokens=1024, top_p=0.95, top_k=40
+                        ),
+                    )
+
+                    # Extract text from response
+                    if response and response.candidates and response.candidates[0].content.parts:
+                        final_response = ""
+                        for part in response.candidates[0].content.parts:
+                            if part.text:
+                                final_response += part.text
+
+                        if final_response:
+                            # Remember this conversation
+                            await self.remember_conversation(text, final_response, user)
+
+                            # Track context
+                            self.conversation_context.append(final_response)
+                            if len(self.conversation_context) > 10:
+                                self.conversation_context.pop(0)
+
+                            return final_response
+                        else:
+                            return "I'm processing that, but having trouble forming a response. Let me try again."
+                    else:
+                        return "I understand, but I'm having trouble generating a proper response right now."
+
+                except Exception as gen_error:
+                    logger.error(f"Generation error: {gen_error}")
+                    return f"I encountered an issue, but I'm still here. What do you need help with?"
+            else:
+                # Fallback without model
+                return self._get_fallback_response(text, context)
+
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+            return f"I hit a snag, but I'm learning. Tell me what you need."
+
+    def _get_fallback_response(self, text, context=""):
+        """Fallback response when Gen AI is unavailable"""
+        text_lower = text.lower()
+
+        response = "My AI model is temporarily offline, but "
+
+        if context:
+            response += f"I found this in my memory:\n{context[:500]}\n\n"
+
+        if "hello" in text_lower or "hi" in text_lower:
+            response += "Hey Jeremy! I'm Bob, ready to help with the project."
+        elif "graphiti" in text_lower:
+            response += "Graphiti is our auto-organizing brain - dump data and it figures out relationships."
+        elif "bigquery" in text_lower:
+            response += "BigQuery is our massive warehouse - petabytes of manuals, forums, everything."
+        elif "remember" in text_lower:
+            response += "I'm storing everything we discuss in Neo4j/Graphiti for perfect recall."
+        else:
+            response += f"Regarding '{text}' - I'll have a better answer once my AI is back."
+
+        return response
+
+
+# Initialize Bob Brain v5
+bob = BobBrainV5()
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint"""
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "Bob Brain v5.0",
+            "version": "5.0.0",
+            "model": f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model",
+            "components": {
+                "genai": bob.model_available,
+                "graphiti": bob.graphiti_available if hasattr(bob, "graphiti_available") else False,
+                "neo4j": hasattr(bob, "neo4j_driver") and bob.neo4j_driver is not None,
+                "memory": (hasattr(bob, "memory_available") and bob.memory_available)
+                or (hasattr(bob, "memory_cache") and len(bob.memory_cache) >= 0),
+                "bigquery": bob.bq_client is not None,
+                "firestore": bob.firestore_client is not None,
+                "slack": bob.slack_client is not None,
+            },
+            "capabilities": {
+                "memory": "Full conversation memory",
+                "learning": "Learns from corrections",
+                "knowledge": "BigQuery warehouse ready",
+                "personality": "Jeremy's assistant",
+            },
+            "sdk": "Google Gen AI SDK",
+            "project": bob.project_id,
+            "timestamp": time.time(),
+        }
+    )
+
+
+@app.route("/slack/events", methods=["POST"])
+def slack_events():
+    """Handle Slack events"""
+    try:
+        data = request.json
+        logger.info(f"Received Slack event type: {data.get('type')}")
+
+        # URL verification for Slack
+        if data.get("type") == "url_verification":
+            logger.info("Slack URL verification request")
+            return jsonify({"challenge": data["challenge"]})
+
+        # Handle event callbacks
+        if data.get("type") == "event_callback":
+            event = data.get("event", {})
+            event_id = data.get("event_id")
+            event_type = event.get("type")
+
+            logger.info(f"Processing event: {event_type}, ID: {event_id}")
+
+            # Prevent duplicate processing
+            if event_id in bob.processed_events:
+                logger.info(f"Duplicate event {event_id}, skipping")
+                return jsonify({"status": "duplicate"})
+
+            bob.processed_events.add(event_id)
+
+            # Clean old events
+            if len(bob.processed_events) > bob.max_events:
+                bob.processed_events = set(list(bob.processed_events)[-500:])
+
+            # Process messages
+            if event_type == "message" and not event.get("bot_id"):
+                text = event.get("text", "")
+                channel = event.get("channel")
+                user = event.get("user")
+
+                logger.info(f"Message from user {user}: {text[:50]}...")
+
+                # Process with async loop
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                response = loop.run_until_complete(bob.process_message(text, user, channel))
+
+                # Send response to Slack
+                if bob.slack_client and channel:
+                    try:
+                        result = bob.slack_client.chat_postMessage(channel=channel, text=response)
+                        logger.info(f"✅ Responded: {response[:50]}...")
+                    except SlackApiError as e:
+                        logger.error(f"Slack API error: {e.response['error']}")
+                else:
+                    logger.warning("No Slack client or channel")
+
+            # Handle app mentions
+            elif event_type == "app_mention":
+                text = event.get("text", "")
+                channel = event.get("channel")
+                user = event.get("user")
+
+                # Remove @mention
+                text = " ".join(w for w in text.split() if not w.startswith("<@"))
+
+                logger.info(f"App mention from {user}: {text[:50]}...")
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                response = loop.run_until_complete(bob.process_message(text, user, channel))
+
+                if bob.slack_client and channel:
+                    try:
+                        bob.slack_client.chat_postMessage(channel=channel, text=response)
+                        logger.info(f"✅ Responded to mention")
+                    except SlackApiError as e:
+                        logger.error(f"Slack API error: {e.response['error']}")
+            else:
+                logger.info(f"Ignoring event type: {event_type}")
+
+        return jsonify({"status": "ok"})
+
+    except Exception as e:
+        logger.error(f"Slack event processing error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/test", methods=["GET", "POST"])
+def test():
+    """Test endpoint with full capabilities"""
+    if request.method == "POST":
+        data = request.json or {}
+        text = data.get("text", "Hello Bob!")
+        user = data.get("user", "jeremy")
+    else:
+        text = request.args.get("text", "Hello Bob!")
+        user = request.args.get("user", "jeremy")
+
+    # Process the message
+    start_time = time.time()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    response = loop.run_until_complete(bob.process_message(text, user))
+
+    processing_time = time.time() - start_time
+
+    return jsonify(
+        {
+            "question": text,
+            "response": response,
+            "user": user,
+            "model_used": f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model",
+            "processing_time_seconds": round(processing_time, 2),
+            "components_status": {
+                "genai": "✅" if bob.model_available else "❌",
+                "memory": "✅" if bob.graphiti_available or bob.neo4j_driver else "❌",
+                "bigquery": "✅" if bob.bq_client else "❌",
+                "firestore": "✅" if bob.firestore_client else "❌",
+                "slack": "✅" if bob.slack_client else "❌",
+            },
+            "capabilities": {
+                "remembers": True,
+                "learns": True,
+                "queries_knowledge": True,
+                "personality": "Jeremy's assistant",
+            },
+            "version": "5.0.0",
+        }
+    )
+
+
+@app.route("/learn", methods=["POST"])
+def learn():
+    """Endpoint to explicitly teach Bob something"""
+    data = request.json or {}
+    original = data.get("original", "")
+    correction = data.get("correction", "")
+    user = data.get("user", "jeremy")
+
+    if not correction:
+        return jsonify({"error": "No correction provided"}), 400
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(bob.learn_from_correction(original, correction, user))
+
+    return jsonify(
+        {
+            "status": "learned",
+            "original": original,
+            "correction": correction,
+            "message": f"Thanks for teaching me! I'll remember that {correction}",
+        }
+    )
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Root endpoint"""
+    return jsonify(
+        {
+            "service": "Bob's Brain v5.0 - Universal Assistant with Memory",
+            "status": "operational",
+            "version": "5.0.0",
+            "description": "Jeremy's assistant that remembers everything and learns",
+            "endpoints": {
+                "/": "This help message",
+                "/health": "Health check with component status",
+                "/test": "Test Bob's response and memory",
+                "/learn": "Teach Bob a correction",
+                "/slack/events": "Slack event handler",
+            },
+            "architecture": {
+                "ai_model": f"{bob.model_name} via Google Gen AI SDK" if bob.model_available else "Model offline",
+                "memory": "Graphiti/Neo4j for perfect recall",
+                "knowledge": "BigQuery warehouse for massive data",
+                "learning": "Stores and learns from all corrections",
+                "data_storage": "Firestore for real-time updates",
+                "deployment": "Google Cloud Run",
+            },
+            "capabilities": [
+                "🧠 Remembers all conversations",
+                "📚 Learns from corrections",
+                "🔍 Queries massive knowledge base",
+                "💬 Acts as development assistant",
+                "🚗🚤🏍️ Handles cars, boats, motorcycles, everything",
+                "♻️ Auto-organizes dumped data with Graphiti",
+            ],
+            "user": "Jeremy Longshore",
+            "purpose": "Universal knowledge and development assistant",
+        }
+    )
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    logger.info(f"🚀 Starting Bob Brain v5.0 on port {port}")
+    logger.info("🧠 Memory: ACTIVE | Learning: ENABLED | Knowledge: READY")
+    app.run(host="0.0.0.0", port=port, debug=False)

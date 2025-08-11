@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies - NEW Google Gen AI SDK
+# Install Python dependencies - Bob Brain v5.0
 RUN pip install --no-cache-dir \
     flask \
     gunicorn \
@@ -16,16 +16,18 @@ RUN pip install --no-cache-dir \
     google-genai \
     google-auth \
     google-cloud-bigquery \
-    google-cloud-firestore
+    google-cloud-firestore \
+    neo4j \
+    graphiti-core || echo "Graphiti install failed, continuing..."
 
-# Copy the WORKING Bob with NEW SDK
-COPY src/bob_production_final.py src/
+# Copy Bob Brain v5.0 - Universal Assistant with Memory
+COPY src/bob_brain_v5.py src/
 
 # Set environment
 ENV PORT=8080
 ENV PYTHONUNBUFFERED=1
 
-# Run Bob Production Final v4.0
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 src.bob_production_final:app
+# Run Bob Brain v5.0
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 src.bob_brain_v5:app
 # Cache bust: Sun Aug 10 21:27:44 CDT 2025
 # Deploy timestamp: Sun Aug 10 21:44:39 CDT 2025
