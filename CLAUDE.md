@@ -147,9 +147,9 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 
 ### Immediate (Next 48 Hours):
 1. **Complete Graphiti Initialization** - Fix LLM integration for graph memory
-2. **Connect MVP3 Frontend** - Update MVP3 to call Bob's diagnostic endpoints
-3. **Enhance Reddit Scraping** - Fix API authentication issues
-4. **Add Authentication to Forums** - Implement login for premium content
+2. **Enhance Reddit Scraping** - Fix API authentication issues
+3. **Add Authentication to Forums** - Implement login for premium content
+4. **Expand YouTube Scraping** - Add video transcript extraction
 
 ### Short-term (This Week):
 1. **Implement Caching Layer** - Add Redis for frequently accessed data
