@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies - Bob Brain v5.0
+# Install Python dependencies - Bob Brain v5.0 with Circle of Life
 RUN pip install --no-cache-dir \
     flask \
     gunicorn \
@@ -16,12 +16,13 @@ RUN pip install --no-cache-dir \
     google-genai \
     google-auth \
     google-cloud-bigquery \
-    google-cloud-firestore \
+    google-cloud-datastore \
     neo4j \
     graphiti-core || echo "Graphiti install failed, continuing..."
 
-# Copy Bob Brain v5.0 - Universal Assistant with Memory
+# Copy Bob Brain v5.0 with Circle of Life
 COPY src/bob_brain_v5.py src/
+COPY src/circle_of_life.py src/
 
 # Set environment
 ENV PORT=8080

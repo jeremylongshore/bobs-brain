@@ -6,7 +6,6 @@ This is Bob with FULL Graphiti integration, BigQuery knowledge, and learning cap
 
 import asyncio
 import hashlib
-import json
 import logging
 import os
 import time
@@ -15,7 +14,7 @@ from datetime import datetime
 
 from flask import Flask, jsonify, request
 from google import genai
-from google.cloud import bigquery, firestore
+from google.cloud import bigquery, datastore
 from google.genai import types
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -47,7 +46,8 @@ class BobBrainV5:
         self._init_genai()
         self._init_graphiti()
         self._init_bigquery()
-        self._init_firestore()
+        self._init_datastore()
+        self._init_circle_of_life()
         self._init_slack()
 
         # Memory tracking
@@ -173,7 +173,7 @@ class BobBrainV5:
                 try:
                     self.bq_client.get_dataset(dataset_id)
                     logger.info(f"✅ BigQuery dataset exists: {dataset_name}")
-                except:
+                except Exception:
                     dataset = bigquery.Dataset(dataset_id)
                     dataset.location = self.location
                     self.bq_client.create_dataset(dataset, exists_ok=True)
@@ -185,19 +185,43 @@ class BobBrainV5:
             logger.warning(f"⚠️ BigQuery not available: {e}")
             self.bq_client = None
 
-    def _init_firestore(self):
-        """Initialize Firestore for real-time data"""
+    def _init_datastore(self):
+        """Initialize Datastore for MVP3 diagnostic data access"""
         try:
-            self.firestore_client = firestore.Client(project="diagnostic-pro-mvp")
+            self.datastore_client = datastore.Client(project="diagnostic-pro-mvp")
 
-            # Test connection
-            test_collection = self.firestore_client.collection("diagnostic_submissions").limit(1).get()
+            # Test connection by attempting a simple query
+            query = self.datastore_client.query(kind="diagnostic_submissions")
+            query.keys_only()
+            list(query.fetch(limit=1))  # Test connection
 
-            logger.info("✅ Firestore: Real-time data connected")
+            logger.info("✅ Datastore: Connected to MVP3 diagnostic data")
+            self.datastore_available = True
 
         except Exception as e:
-            logger.warning(f"⚠️ Firestore not available: {e}")
-            self.firestore_client = None
+            logger.warning(f"⚠️ Datastore not available: {e}")
+            self.datastore_client = None
+            self.datastore_available = False
+
+    def _init_circle_of_life(self):
+        """Initialize Circle of Life learning system"""
+        try:
+            # Try multiple import methods for compatibility
+            try:
+                import src.circle_of_life as col_module
+            except ImportError:
+                try:
+                    from . import circle_of_life as col_module
+                except ImportError:
+                    import circle_of_life as col_module
+
+            self.circle_of_life = col_module.get_circle_of_life()
+            logger.info("🔄 Circle of Life: Learning system initialized")
+            self.circle_available = True
+        except Exception as e:
+            logger.warning(f"⚠️ Circle of Life not available: {e}")
+            self.circle_of_life = None
+            self.circle_available = False
 
     def _init_slack(self):
         """Initialize Slack client"""
@@ -465,7 +489,7 @@ class BobBrainV5:
 
                 for row in results:
                     knowledge.append(f"📖 Manual: {row.content[:200]}... (Source: {row.source})")
-            except:
+            except Exception:
                 pass
 
             # Query forum posts (if table exists)
@@ -486,7 +510,7 @@ class BobBrainV5:
 
                 for row in results:
                     knowledge.append(f"💬 Forum: Q: {row.question}\nA: {row.answer} (👍 {row.upvotes})")
-            except:
+            except Exception:
                 pass
 
             # Query scraped data
@@ -507,7 +531,7 @@ class BobBrainV5:
 
                 for row in results:
                     knowledge.append(f"💰 {row.repair_type}: Avg ${row.avg_price:.2f} ({row.num_quotes} quotes)")
-            except:
+            except Exception:
                 pass
 
         except Exception as e:
@@ -554,7 +578,7 @@ class BobBrainV5:
 
                 try:
                     table = self.bq_client.get_table(table_id)
-                except:
+                except Exception:
                     schema = [
                         bigquery.SchemaField("original", "STRING"),
                         bigquery.SchemaField("correction", "STRING"),
@@ -592,6 +616,17 @@ class BobBrainV5:
             # Query knowledge base
             knowledge = self.query_knowledge_base(text)
 
+            # Get Circle of Life insights if available
+            circle_insights = None
+            if self.circle_available and self.circle_of_life:
+                try:
+                    circle_insights = await self.circle_of_life.apply_learning(text)
+                    logger.info(
+                        f"🔄 Circle of Life provided {len(circle_insights.get('suggested_solutions', []))} solutions"
+                    )
+                except Exception as e:
+                    logger.warning(f"Circle of Life query failed: {e}")
+
             # Build full context
             context_parts = []
 
@@ -602,6 +637,13 @@ class BobBrainV5:
             if knowledge:
                 context_parts.append("\n📚 From knowledge base:")
                 context_parts.extend(knowledge[:3])
+
+            if circle_insights and circle_insights.get("suggested_solutions"):
+                context_parts.append("\n🔄 From Circle of Life learning:")
+                context_parts.append(f"Problem category: {circle_insights['category']}")
+                context_parts.append(f"Confidence: {circle_insights['confidence']:.1%}")
+                for solution in circle_insights["suggested_solutions"][:2]:
+                    context_parts.append(f"• {solution[:200]}")
 
             context = "\n".join(context_parts) if context_parts else ""
 
@@ -719,7 +761,8 @@ def health():
                 "memory": (hasattr(bob, "memory_available") and bob.memory_available)
                 or (hasattr(bob, "memory_cache") and len(bob.memory_cache) >= 0),
                 "bigquery": bob.bq_client is not None,
-                "firestore": bob.firestore_client is not None,
+                "datastore": hasattr(bob, "datastore_available") and bob.datastore_available,
+                "circle_of_life": hasattr(bob, "circle_available") and bob.circle_available,
                 "slack": bob.slack_client is not None,
             },
             "capabilities": {
@@ -890,37 +933,152 @@ def learn():
     )
 
 
+@app.route("/circle-of-life/metrics", methods=["GET"])
+def circle_metrics():
+    """Get Circle of Life system metrics"""
+    if not (hasattr(bob, "circle_available") and bob.circle_available):
+        return jsonify({"error": "Circle of Life not available"}), 503
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    metrics = loop.run_until_complete(bob.circle_of_life.get_system_metrics())
+
+    return jsonify(metrics)
+
+
+@app.route("/circle-of-life/ingest", methods=["POST"])
+def circle_ingest():
+    """Manually trigger Circle of Life data ingestion"""
+    if not (hasattr(bob, "circle_available") and bob.circle_available):
+        return jsonify({"error": "Circle of Life not available"}), 503
+
+    data = request.json or {}
+    limit = data.get("limit", 10)
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    insights = loop.run_until_complete(bob.circle_of_life.ingest_diagnostic_data(limit=limit))
+
+    return jsonify(
+        {
+            "status": "success",
+            "insights_ingested": len(insights),
+            "message": f"Ingested {len(insights)} diagnostic insights into Circle of Life",
+        }
+    )
+
+
+@app.route("/mvp3/submit-diagnostic", methods=["POST"])
+def mvp3_submit():
+    """Endpoint for MVP3 to submit diagnostic data and get Bob's insights"""
+    data = request.json or {}
+    problem = data.get("problem_description", "")
+    equipment = data.get("equipment_type", "")
+    service = data.get("service_type", "")
+
+    if not problem:
+        return jsonify({"error": "No problem description provided"}), 400
+
+    # Get Bob's insights using Circle of Life
+    response = {"bob_analysis": "", "suggested_solutions": [], "confidence": 0.0, "similar_cases": []}
+
+    if hasattr(bob, "circle_available") and bob.circle_available:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Get Circle of Life insights
+        circle_insights = loop.run_until_complete(bob.circle_of_life.apply_learning(problem))
+
+        response["suggested_solutions"] = circle_insights.get("suggested_solutions", [])
+        response["confidence"] = circle_insights.get("confidence", 0.0)
+        response["similar_cases"] = circle_insights.get("similar_cases", [])
+
+        # Get Bob's AI analysis if available
+        if bob.model_available:
+            full_context = f"Equipment: {equipment}\nService: {service}\nProblem: {problem}"
+            bob_response = loop.run_until_complete(bob.process_message(full_context))
+            response["bob_analysis"] = bob_response
+
+    # Store the diagnostic submission for future learning
+    if hasattr(bob, "datastore_available") and bob.datastore_available:
+        # This would normally be stored in Datastore, but we're just acknowledging it
+        logger.info(f"📝 Received diagnostic from MVP3: {problem[:100]}")
+
+    return jsonify(response)
+
+
+@app.route("/mvp3/feedback", methods=["POST"])
+def mvp3_feedback():
+    """Endpoint for MVP3 to provide feedback on Bob's suggestions"""
+    data = request.json or {}
+    problem = data.get("problem", "")
+    suggested = data.get("suggested_solution", "")
+    actual = data.get("actual_solution", "")
+    success = data.get("success", False)
+    rating = data.get("rating", 0)
+
+    if not all([problem, actual]):
+        return jsonify({"error": "Missing required feedback data"}), 400
+
+    if hasattr(bob, "circle_available") and bob.circle_available:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Record feedback in Circle of Life
+        loop.run_until_complete(bob.circle_of_life.feedback_loop(problem, suggested, actual, success, rating))
+
+        # If unsuccessful, trigger immediate learning
+        if not success:
+            loop.run_until_complete(bob.learn_from_correction(suggested, actual))
+
+        return jsonify(
+            {
+                "status": "feedback_recorded",
+                "message": "Thanks for the feedback! Bob is learning.",
+                "learning_triggered": not success,
+            }
+        )
+
+    return jsonify({"error": "Circle of Life not available"}), 503
+
+
 @app.route("/", methods=["GET"])
 def index():
     """Root endpoint"""
     return jsonify(
         {
-            "service": "Bob's Brain v5.0 - Universal Assistant with Memory",
+            "service": "Bob's Brain v5.0 - Universal Assistant with Circle of Life",
             "status": "operational",
             "version": "5.0.0",
-            "description": "Jeremy's assistant that remembers everything and learns",
+            "description": "Jeremy's assistant with continuous learning from MVP3 diagnostics",
             "endpoints": {
                 "/": "This help message",
                 "/health": "Health check with component status",
                 "/test": "Test Bob's response and memory",
                 "/learn": "Teach Bob a correction",
+                "/circle-of-life/metrics": "Get Circle of Life learning metrics",
+                "/circle-of-life/ingest": "Trigger diagnostic data ingestion",
+                "/mvp3/submit-diagnostic": "Submit diagnostic for Bob's analysis",
+                "/mvp3/feedback": "Provide feedback on Bob's suggestions",
                 "/slack/events": "Slack event handler",
             },
             "architecture": {
                 "ai_model": f"{bob.model_name} via Google Gen AI SDK" if bob.model_available else "Model offline",
                 "memory": "Graphiti/Neo4j for perfect recall",
                 "knowledge": "BigQuery warehouse for massive data",
-                "learning": "Stores and learns from all corrections",
-                "data_storage": "Firestore for real-time updates",
+                "learning": "Circle of Life continuous learning from MVP3",
+                "data_storage": "Datastore for diagnostic insights",
                 "deployment": "Google Cloud Run",
             },
             "capabilities": [
                 "🧠 Remembers all conversations",
                 "📚 Learns from corrections",
                 "🔍 Queries massive knowledge base",
+                "🔄 Circle of Life continuous learning from MVP3",
                 "💬 Acts as development assistant",
                 "🚗🚤🏍️ Handles cars, boats, motorcycles, everything",
                 "♻️ Auto-organizes dumped data with Graphiti",
+                "📊 Pattern recognition from diagnostic data",
             ],
             "user": "Jeremy Longshore",
             "purpose": "Universal knowledge and development assistant",
@@ -930,6 +1088,7 @@ def index():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    logger.info(f"🚀 Starting Bob Brain v5.0 on port {port}")
+    logger.info(f"🚀 Starting Bob Brain v5.0 with Circle of Life on port {port}")
     logger.info("🧠 Memory: ACTIVE | Learning: ENABLED | Knowledge: READY")
+    logger.info("🔄 Circle of Life: Continuous learning from MVP3 diagnostics")
     app.run(host="0.0.0.0", port=port, debug=False)
