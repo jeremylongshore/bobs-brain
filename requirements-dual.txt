@@ -1,0 +1,10 @@
+# Requirements for Bob with Dual Memory System (Firestore + Graphiti)
+flask
+gunicorn
+slack-sdk
+graphiti-core==0.3.18
+google-cloud-firestore
+google-cloud-aiplatform
+vertexai
+python-dotenv
+requests
