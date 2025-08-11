@@ -204,6 +204,28 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 Scrapers (Separate Services) → BigQuery → Bob's Brain (Queries BigQuery)
 ```
 
+## 📁 PROJECT STRUCTURE (CLEANED)
+```
+bobs-brain/
+├── src/                          # Active source code
+│   ├── bob_brain_v5.py          # Main Bob Brain (PRODUCTION)
+│   ├── circle_of_life.py        # ML pipeline module
+│   ├── circle_of_life_scraper.py # Circle scraper service
+│   ├── scraper_cloud_run.py     # Scraper API wrapper
+│   ├── unified_scraper_enhanced.py # 40+ sources scraper
+│   └── unified_scraper_simple.py   # Simple scraper (active)
+├── archive/                      # Archived old code (60+ files)
+│   ├── old_versions/            # Old Bob versions
+│   ├── old_scrapers/            # Deprecated scrapers
+│   └── test_files/              # Old test files
+├── test_complete_system.py      # Main system test
+├── trigger_immediate_scraping.py # Manual scrape trigger
+├── CLAUDE.md                    # Project documentation (THIS FILE)
+├── Dockerfile                   # Bob Brain container
+├── Dockerfile.scraper          # Scraper container
+└── requirements*.txt           # Dependencies
+```
+
 ## 🔧 TECHNICAL STACK
 - **Language:** Python 3.11
 - **Framework:** Flask + Gunicorn
