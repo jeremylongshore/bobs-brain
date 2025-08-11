@@ -539,6 +539,106 @@ class BobBrainV5:
 
         return knowledge
 
+    def query_bobcat_s740_knowledge(self, query):
+        """Query Bobcat S740 specific knowledge from scraped data"""
+        s740_knowledge = []
+        
+        if not self.bq_client:
+            return s740_knowledge
+        
+        try:
+            # Query S740 issues and solutions
+            s740_query = f"""
+            SELECT 
+                problem_type,
+                problem_description,
+                solution,
+                ARRAY_TO_STRING(parts_needed, ', ') as parts,
+                ARRAY_TO_STRING(error_codes, ', ') as codes,
+                difficulty,
+                cost_estimate
+            FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`
+            WHERE LOWER(problem_description) LIKE LOWER(@pattern)
+               OR LOWER(solution) LIKE LOWER(@pattern)
+               OR LOWER(ARRAY_TO_STRING(error_codes, ' ')) LIKE LOWER(@pattern)
+            LIMIT 5
+            """
+            
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=[bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%")]
+            )
+            
+            results = self.bq_client.query(s740_query, job_config=job_config).result()
+            
+            for row in results:
+                knowledge_item = f"🚜 Bobcat S740 {row.problem_type}:\n"
+                knowledge_item += f"Problem: {row.problem_description[:200]}...\n"
+                if row.solution:
+                    knowledge_item += f"Solution: {row.solution[:200]}...\n"
+                if row.codes:
+                    knowledge_item += f"Error Codes: {row.codes}\n"
+                if row.parts:
+                    knowledge_item += f"Parts: {row.parts}\n"
+                knowledge_item += f"Difficulty: {row.difficulty}, Cost: {row.cost_estimate}"
+                
+                s740_knowledge.append(knowledge_item)
+            
+            # Query equipment hacks
+            hack_query = f"""
+            SELECT 
+                hack_type,
+                title,
+                description,
+                benefits,
+                cost
+            FROM `{self.project_id}.skidsteer_knowledge.equipment_hacks`
+            WHERE equipment_model = 'S740'
+              AND (LOWER(description) LIKE LOWER(@pattern)
+                   OR LOWER(benefits) LIKE LOWER(@pattern))
+            LIMIT 3
+            """
+            
+            results = self.bq_client.query(hack_query, job_config=job_config).result()
+            
+            for row in results:
+                hack_item = f"💡 S740 Hack ({row.hack_type}): {row.title}\n"
+                hack_item += f"{row.description[:150]}...\n"
+                if row.benefits:
+                    hack_item += f"Benefits: {row.benefits[:100]}..."
+                
+                s740_knowledge.append(hack_item)
+            
+            # Query maintenance schedules
+            maintenance_query = f"""
+            SELECT 
+                service_type,
+                interval_hours,
+                description,
+                ARRAY_TO_STRING(parts_required, ', ') as parts,
+                dealer_cost,
+                diy_cost
+            FROM `{self.project_id}.skidsteer_knowledge.maintenance_schedules`
+            WHERE equipment_model = 'Bobcat S740'
+              AND LOWER(service_type) LIKE LOWER(@pattern)
+            LIMIT 3
+            """
+            
+            results = self.bq_client.query(maintenance_query, job_config=job_config).result()
+            
+            for row in results:
+                maint_item = f"🔧 S740 Maintenance: {row.service_type} (every {row.interval_hours} hrs)\n"
+                maint_item += f"{row.description}\n"
+                if row.parts:
+                    maint_item += f"Parts: {row.parts}\n"
+                maint_item += f"Cost: Dealer ${row.dealer_cost}, DIY ${row.diy_cost}"
+                
+                s740_knowledge.append(maint_item)
+                
+        except Exception as e:
+            logger.debug(f"S740 knowledge query error: {e}")
+        
+        return s740_knowledge
+
     async def learn_from_correction(self, original, correction, user="jeremy"):
         """Learn when user corrects Bob"""
         try:
@@ -615,6 +715,13 @@ class BobBrainV5:
 
             # Query knowledge base
             knowledge = self.query_knowledge_base(text)
+            
+            # Query Bobcat S740 specific knowledge if relevant
+            s740_knowledge = []
+            if any(word in text.lower() for word in ["bobcat", "s740", "skid", "loader", "hydraulic", "dpf", "def"]):
+                s740_knowledge = self.query_bobcat_s740_knowledge(text)
+                if s740_knowledge:
+                    logger.info(f"🚜 Found {len(s740_knowledge)} Bobcat S740 knowledge items")
 
             # Get Circle of Life insights if available
             circle_insights = None
@@ -637,6 +744,10 @@ class BobBrainV5:
             if knowledge:
                 context_parts.append("\n📚 From knowledge base:")
                 context_parts.extend(knowledge[:3])
+            
+            if s740_knowledge:
+                context_parts.append("\n🚜 Bobcat S740 specific knowledge:")
+                context_parts.extend(s740_knowledge[:3])
 
             if circle_insights and circle_insights.get("suggested_solutions"):
                 context_parts.append("\n🔄 From Circle of Life learning:")
