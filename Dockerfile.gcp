@@ -1,0 +1,23 @@
+# Dockerfile for 100% Google Cloud Platform Bob
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only what's needed for GCP
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy GCP-only requirements
+COPY requirements-gcp.txt .
+RUN pip install --no-cache-dir -r requirements-gcp.txt
+
+# Copy application
+COPY src/bob_gcp_native.py .
+
+# Set environment
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+# Run with gunicorn
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 bob_gcp_native:app

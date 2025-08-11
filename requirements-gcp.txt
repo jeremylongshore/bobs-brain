@@ -1,0 +1,23 @@
+# 100% Google Cloud Platform Dependencies ONLY
+# NO OpenAI, NO Graphiti, NO Neo4j
+
+# Google Cloud Core
+google-cloud-firestore==2.11.1
+google-cloud-bigquery==3.11.4
+google-cloud-aiplatform==1.36.0
+google-generativeai==0.3.0
+vertexai==1.38.0
+
+# Google Cloud ML
+google-cloud-bigquery-storage==2.22.0
+google-cloud-recommendations-ai==0.10.4
+
+# Web Framework
+flask==3.0.0
+gunicorn==21.2.0
+
+# Slack (only external dep needed)
+slack-sdk==3.23.0
+
+# Python utilities
+python-dotenv==1.0.0
