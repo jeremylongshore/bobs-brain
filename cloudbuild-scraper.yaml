@@ -15,10 +15,6 @@ steps:
       - 'push'
       - 'gcr.io/$PROJECT_ID/circle-of-life-scraper'
 
-# Substitutions
-substitutions:
-  _SERVICE_NAME: circle-of-life-scraper
-
 # Options
 options:
   logging: CLOUD_LOGGING_ONLY

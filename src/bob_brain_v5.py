@@ -102,7 +102,7 @@ class BobBrainV5:
             self.model_available = False
 
     def _init_graphiti(self):
-        """Initialize memory system (Neo4j/Graphiti)"""
+        """Initialize memory system (Neo4j/Graphiti with enhanced configuration)"""
         try:
             # Import Neo4j driver
             from neo4j import GraphDatabase
@@ -111,41 +111,75 @@ class BobBrainV5:
             neo4j_user = os.environ.get("NEO4J_USER", "neo4j")
             neo4j_password = os.environ.get("NEO4J_PASSWORD", "BobBrain2025")
 
-            # Create driver with shorter timeouts for Cloud Run
+            # Create driver with optimized settings for VPC connection
             driver = GraphDatabase.driver(
                 neo4j_uri,
                 auth=(neo4j_user, neo4j_password),
-                connection_timeout=5,  # 5 seconds instead of default 30
-                max_connection_pool_size=2,
+                connection_timeout=10,  # Increased for VPC
+                max_connection_pool_size=5,
+                keep_alive=True,
+                max_connection_lifetime=3600,  # 1 hour
+                connection_acquisition_timeout=30,
             )
 
-            # Test connection with timeout
-            try:
-                with driver.session() as session:
-                    result = session.run("RETURN 1 as test")
-                    test_result = result.single()
-                    if test_result and test_result[0] == 1:
-                        logger.info(f"✅ Neo4j: Connected to {neo4j_uri}")
-                        self.neo4j_driver = driver
-                        self.memory_available = True
+            # Test connection with retry logic
+            connected = False
+            for attempt in range(3):
+                try:
+                    with driver.session() as session:
+                        result = session.run("RETURN 1 as test")
+                        test_result = result.single()
+                        if test_result and test_result[0] == 1:
+                            logger.info(f"✅ Neo4j: Connected to {neo4j_uri} via VPC")
+                            self.neo4j_driver = driver
+                            self.memory_available = True
+                            connected = True
+                            break
+                except Exception as e:
+                    logger.warning(f"Neo4j connection attempt {attempt + 1} failed: {str(e)[:50]}")
+                    if attempt < 2:
+                        time.sleep(2)
+            
+            if connected:
+                # Now try Graphiti with Google Gemini support
+                try:
+                    from graphiti_core import Graphiti
+                    from graphiti_core.llm_client import LLMClient
+                    from graphiti_core.embedder import Embedder
+                    
+                    # Configure Graphiti to use Google Gemini
+                    llm_client = LLMClient(
+                        model="gemini-2.5-flash",
+                        provider="google-genai",
+                        temperature=0.0,
+                    )
+                    
+                    embedder = Embedder(
+                        model="text-embedding-004",
+                        provider="google-genai",
+                    )
 
-                        # Now try Graphiti
-                        try:
-                            from graphiti_core import Graphiti
+                    self.graphiti = Graphiti(
+                        uri=neo4j_uri,
+                        user=neo4j_user,
+                        password=neo4j_password,
+                        llm_client=llm_client,
+                        embedder=embedder,
+                    )
+                    
+                    logger.info("✅ Graphiti: Advanced memory with Gemini integration initialized")
+                    self.graphiti_available = True
+                    return  # Success!
 
-                            self.graphiti = Graphiti(uri=neo4j_uri, user=neo4j_user, password=neo4j_password)
-                            logger.info("✅ Graphiti: Advanced memory system initialized")
-                            self.graphiti_available = True
-
-                        except (ImportError, Exception) as graphiti_error:
-                            logger.warning(f"⚠️ Graphiti unavailable ({str(graphiti_error)[:100]}), using direct Neo4j")
-                            self.graphiti = None
-                            self.graphiti_available = False
-
-                        return  # Success!
-
-            except Exception as conn_error:
-                logger.warning(f"⚠️ Neo4j connection test failed: {str(conn_error)[:100]}")
+                except (ImportError, Exception) as graphiti_error:
+                    logger.warning(f"⚠️ Graphiti setup failed: {str(graphiti_error)[:100]}")
+                    logger.info("📝 Using direct Neo4j without Graphiti abstraction")
+                    self.graphiti = None
+                    self.graphiti_available = False
+                    return  # Still have Neo4j
+            
+            # If we get here, Neo4j connection failed
+            if driver:
                 driver.close()
 
         except ImportError:

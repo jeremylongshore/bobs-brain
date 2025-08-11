@@ -24,8 +24,14 @@ logger = logging.getLogger(__name__)
 # Initialize Flask app
 app = Flask(__name__)
 
-# Initialize scraper integration
-scraper_integration = CircleOfLifeScraperIntegration()
+# Initialize scraper integration lazily to avoid startup delays
+scraper_integration = None
+
+def get_scraper():
+    global scraper_integration
+    if scraper_integration is None:
+        scraper_integration = CircleOfLifeScraperIntegration()
+    return scraper_integration
 
 
 @app.route('/health', methods=['GET'])
@@ -55,14 +61,16 @@ def trigger_scraping():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
+        scraper = get_scraper()
+        
         if scrape_type == 'overnight':
             results = loop.run_until_complete(
-                scraper_integration.run_overnight_scraping()
+                scraper.run_overnight_scraping()
             )
         else:
             # Quick scrape for testing
             results = loop.run_until_complete(
-                scraper_integration.skidsteer_scraper.scrape_skidsteer_forums()
+                scraper.skidsteer_scraper.scrape_skidsteer_forums()
             )
         
         loop.close()
@@ -225,7 +233,7 @@ def search_s740_knowledge():
 def setup_scheduler():
     """Set up Cloud Scheduler for overnight runs"""
     try:
-        scraper_integration.setup_cloud_scheduler()
+        get_scraper().setup_cloud_scheduler()
         return jsonify({
             "status": "success",
             "message": "Cloud Scheduler configured for 2 AM daily runs"

@@ -44,6 +44,11 @@ RUN pip install playwright && \
     playwright install-deps chromium
 
 # Copy application code
+COPY src/scraper_cloud_run.py .
+COPY src/unified_scraper.py .
+COPY src/unified_scraper_enhanced.py .
+COPY src/unified_scraper_simple.py .
+COPY src/scraper_simple.py .
 COPY src/circle_of_life.py .
 COPY src/circle_of_life_scraper.py .
 COPY src/forum_scraper.py .
@@ -63,5 +68,5 @@ USER scraper
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Start the Flask app
-CMD ["python", "scraper_api.py"]
+# Start the unified scraper API
+CMD ["python", "scraper_cloud_run.py"]

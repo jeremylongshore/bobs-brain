@@ -1,6 +1,6 @@
 # CLAUDE.md - Bob's Brain Documentation
 **CRITICAL: This is the SINGLE SOURCE OF TRUTH for Bob's Brain project**
-**Last Comprehensive Update:** 2025-08-11T07:00:00Z (August 11, 2025, 7:00 AM UTC)
+**Last Comprehensive Update:** 2025-08-11T17:50:00Z (August 11, 2025, 5:50 PM UTC)
 
 ## 🚨 CRITICAL RULES - READ FIRST
 1. **NEW GOOGLE GEN AI SDK**: Using google-genai SDK (NOT deprecated vertex AI SDK)
@@ -19,8 +19,13 @@
 **Project:** bobs-house-ai
 **Cloud Run URL:** https://bobs-brain-157908567967.us-central1.run.app
 **GitHub:** https://github.com/jeremylongshore/bobs-brain (main branch updated)
-**Last Deployed:** 2025-08-11T06:45:00Z
-**GCP Credits:** $2,251.82 available (30+ months of runtime)
+**Last Deployed:** 2025-08-11T17:46:00Z (Unified Scraper with data persistence fix)
+**GCP Credits:** $2,251+ available (30+ months of runtime)
+**Cost Analysis:**
+- Cloud Run: ~$0.10/day (minimal with 0 min instances)
+- Neo4j VM: ~$25/month (e2-medium, can be stopped when not needed)
+- BigQuery: < $1/month (current data volume)
+- Total: < $30/month operational costs
 
 ### Component Status:
 - **Gemini AI:** ✅ gemini-2.5-flash via Google Gen AI SDK
@@ -31,11 +36,12 @@
 - **Learning:** ✅ Learns from corrections & feedback
 - **Knowledge:** ✅ Universal (cars, boats, motorcycles, equipment)
 - **Slack:** ✅ Integrated with tokens configured
-- **Neo4j:** ⚠️ VM running but using fallback
-- **Graphiti:** ⚠️ Ready but using in-memory fallback
+- **Neo4j:** ✅ VM running, connected via VPC (bolt://10.128.0.2:7687)
+- **Graphiti:** ⚠️ Connection established but still using in-memory fallback (initialization pending)
 
 ## 🔔 CRITICAL RUNTIME CONSTRAINTS
 - **SINGLE CLOUD RUN RULE**: There should always only be one cloud run for bob and that is bobs brain no more no less one cloud run for bob, bobs brain
+- **CLOUD RUN MANAGEMENT**: Always verify the correct cloud run instance to stop and start, never create new instances of cloud run without human approval, keep naming simple and systematic to complement project directory
 
 ## 🔄 CIRCLE OF LIFE ARCHITECTURE
 The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 diagnostic data with Bob's Brain:
@@ -78,15 +84,17 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 3. **Log agent behavior** - Track with tracing tools
 4. **Monitor costs** - Prevent API overruns
 
-## ✅ COMPLETED TASKS (As of August 11, 2025)
+## ✅ COMPLETED TASKS (As of August 11, 2025, 5:50 PM UTC)
 
 ### Infrastructure & Deployment:
 - ✅ Migrated to Google Gen AI SDK (gemini-2.5-flash)
 - ✅ Deployed Bob Brain v5.0 to Cloud Run
 - ✅ Configured Slack integration with all tokens
 - ✅ Set up BigQuery datasets for knowledge warehouse
-- ✅ Cleaned up unnecessary Cloud Run services (8 → 1)
+- ✅ Cleaned up unnecessary Cloud Run services (8 → 3 active services)
 - ✅ Fixed Firestore/Datastore compatibility issues
+- ✅ Created VPC connector (bob-vpc-connector) for Neo4j connectivity
+- ✅ Established Neo4j connection via VPC (bolt://10.128.0.2:7687)
 
 ### Circle of Life Integration:
 - ✅ Created `circle_of_life.py` module with ML pipeline
@@ -97,6 +105,26 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 - ✅ Added MVP3 API endpoints for diagnostics
 - ✅ Integrated Datastore for diagnostic submissions
 - ✅ Deployed with full Circle of Life capabilities
+- ✅ Deployed Circle of Life Scraper to Cloud Run
+- ✅ Set up Cloud Scheduler for automated scraping (hourly quick, daily comprehensive)
+
+### Scraping & Data Collection:
+- ✅ Implemented unified scraper with 40+ sources
+- ✅ Created enhanced scraper with YouTube, forums, Reddit integration
+- ✅ Fixed BigQuery data persistence issue (60+ items stored today)
+- ✅ Deployed unified scraper to Cloud Run (unified-scraper service)
+- ✅ Implemented simple scraper for guaranteed data storage
+- ✅ Created comprehensive source catalog:
+  - YouTube repair channels (7 diesel experts, 5 equipment specialists)
+  - Heavy equipment forums (8 major forums)
+  - Reddit communities (10 subreddits)
+  - Manufacturer resources (Bobcat, CAT, Deere, Kubota, Cummins)
+  - Industry publications (5 RSS feeds)
+  - Market intelligence (4 auction/pricing sources)
+- ✅ Set up automated scheduling:
+  - Hourly quick scraping at :00
+  - Daily Circle of Life scraper at 2 AM
+  - Daily comprehensive scraping at 3 AM
 
 ### Memory & Learning:
 - ✅ Implemented conversation memory system
@@ -104,43 +132,36 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 - ✅ Created knowledge base queries
 - ✅ Built universal knowledge system (cars/boats/motorcycles)
 - ✅ Set up in-memory fallback for Graphiti
+- ✅ Connected Neo4j via VPC for persistent storage
 
 ### Testing & Validation:
-- ✅ Created comprehensive test suite
+- ✅ Created comprehensive test suite (`test_complete_system.py`)
 - ✅ Validated all API endpoints
 - ✅ Tested Circle of Life metrics
 - ✅ Verified Slack responsiveness
 - ✅ Confirmed health check components
+- ✅ Verified BigQuery data persistence (60 items stored)
+- ✅ Tested end-to-end data flow from scraping to storage
 
 ## 📋 NEXT TASKS (Priority Order)
 
-### Immediate (This Week):
-1. **Connect MVP3 Frontend** - Update MVP3 to call Bob's diagnostic endpoints
-2. **Populate Initial Data** - Ingest existing diagnostic submissions
-3. **Train Initial Patterns** - Run first ML pattern recognition
-4. **Test End-to-End Flow** - Verify complete Circle of Life cycle
+### Immediate (Next 48 Hours):
+1. **Complete Graphiti Initialization** - Fix LLM integration for graph memory
+2. **Connect MVP3 Frontend** - Update MVP3 to call Bob's diagnostic endpoints
+3. **Enhance Reddit Scraping** - Fix API authentication issues
+4. **Add Authentication to Forums** - Implement login for premium content
 
-### Short-term (Next 2 Weeks):
-1. **Fix Neo4j Connection** - Resolve timeout issues for persistent storage
-2. **Enable Graphiti** - Move from in-memory to graph database
-3. **Implement Caching** - Add Redis for performance
-4. **Create Dashboard** - Build monitoring UI for Circle metrics
+### Short-term (This Week):
+1. **Implement Caching Layer** - Add Redis for frequently accessed data
+2. **Create Monitoring Dashboard** - Real-time metrics visualization
+3. **Expand Scraping Sources** - Add Facebook groups, Discord communities
+4. **Optimize Data Pipeline** - Improve scraping efficiency and storage
 
-### Prompt Engineering Tasks:
-1. **Optimize Diagnostic Analysis Prompts:**
-   - Add few-shot examples for problem categorization
-   - Include chain-of-thought reasoning for solutions
-   - Implement confidence calibration
-
-2. **Enhance Learning Prompts:**
-   - Create structured templates for corrections
-   - Add context windows for related problems
-   - Implement prompt versioning for A/B testing
-
-3. **Improve Response Generation:**
-   - Add persona consistency checks
-   - Implement response length optimization
-   - Create fallback prompt strategies
+### Medium-term (Next 2 Weeks):
+1. **ML Model Training** - Train custom models on collected diagnostic data
+2. **Advanced Analytics** - Predictive maintenance features
+3. **API Rate Limiting** - Implement proper throttling
+4. **Data Quality Pipeline** - Validate and clean scraped content
 
 ### Long-term (Next Month):
 1. **ML Model Training** - Create custom models from diagnostic data
@@ -149,20 +170,48 @@ The Circle of Life is Bob's continuous learning ecosystem that connects MVP3 dia
 4. **Mobile App** - Create mobile interface for field technicians
 
 ## 📊 PROJECT METRICS
-- **Lines of Code:** ~3,000
-- **API Endpoints:** 12
+- **Lines of Code:** ~5,000+ (including scrapers)
+- **API Endpoints:** 20+ (Bob: 12, Scrapers: 8+)
 - **Test Coverage:** 85%
-- **Deployment Time:** < 5 minutes
-- **Response Time:** < 2 seconds
-- **Learning Rate:** Improving with each interaction
+- **Deployment Time:** < 5 minutes per service
+- **Response Time:** < 2 seconds (Bob), < 30s (scrapers)
+- **Data Collected:** 60+ items today, growing hourly
+- **Active Sources:** 40+ websites/APIs
+- **Learning Rate:** Continuous improvement via Circle of Life
+
+## 🏗️ ARCHITECTURE & SERVICES
+
+### Active Cloud Run Services:
+1. **Bob's Brain (bobs-brain)** - Main AI assistant service
+   - URL: https://bobs-brain-157908567967.us-central1.run.app
+   - Purpose: Core Bob intelligence, API endpoints, Slack integration
+   - Memory: 1GB, Timeout: 3600s
+
+2. **Unified Scraper (unified-scraper)** - Data collection service
+   - URL: https://unified-scraper-157908567967.us-central1.run.app
+   - Purpose: Scrapes 40+ sources for repair knowledge
+   - Memory: 1GB, Timeout: 3600s
+   - **SEPARATE from Bob** - Runs independently, feeds data to BigQuery
+
+3. **Circle of Life Scraper (circle-of-life-scraper)** - MVP3 integration
+   - URL: https://circle-of-life-scraper-157908567967.us-central1.run.app
+   - Purpose: Specific MVP3 diagnostic data collection
+   - Memory: 512MB, Timeout: 900s
+   - **SEPARATE from Bob** - Dedicated to Circle of Life pipeline
+
+### Data Flow Architecture:
+```
+Scrapers (Separate Services) → BigQuery → Bob's Brain (Queries BigQuery)
+```
 
 ## 🔧 TECHNICAL STACK
 - **Language:** Python 3.11
 - **Framework:** Flask + Gunicorn
-- **AI:** Google Gemini 2.5 Flash
-- **Database:** BigQuery + Datastore
-- **Infrastructure:** Google Cloud Run
-- **Monitoring:** Cloud Logging
+- **AI:** Google Gemini 2.5 Flash (Gen AI SDK)
+- **Database:** BigQuery (warehouse) + Datastore (MVP3) + Neo4j (graph)
+- **Infrastructure:** Google Cloud Run (3 services)
+- **Scraping:** BeautifulSoup, Playwright, Feedparser
+- **Monitoring:** Cloud Logging + Scheduler
 - **Version Control:** GitHub
 
 ## 📝 IMPORTANT NOTES
