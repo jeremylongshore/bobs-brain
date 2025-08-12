@@ -968,6 +968,7 @@ def slack_events():
                 response = loop.run_until_complete(bob.process_message(text, user, channel))
 
                 # Send response to Slack
+                logger.info(f"About to send response. Client: {bool(bob.slack_client)}, Channel: {channel}")
                 if bob.slack_client and channel:
                     try:
                         result = bob.slack_client.chat_postMessage(channel=channel, text=response)
@@ -975,7 +976,7 @@ def slack_events():
                     except SlackApiError as e:
                         logger.error(f"Slack API error: {e.response['error']}")
                 else:
-                    logger.warning("No Slack client or channel")
+                    logger.warning(f"No Slack client ({bool(bob.slack_client)}) or channel ({channel})")
 
             # Handle app mentions
             elif event_type == "app_mention":
