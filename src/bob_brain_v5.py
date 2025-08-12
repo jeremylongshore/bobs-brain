@@ -962,40 +962,57 @@ def slack_events():
 
                 logger.info(f"Message from user {user}: {text[:50]}...")
 
-                # Process message in background thread to avoid blocking
-                import threading
-                
-                def process_and_respond():
+                # Process and respond synchronously but quickly
+                try:
+                    # First, acknowledge quickly
+                    if bob.slack_client and channel:
+                        # Send typing indicator or initial acknowledgment
+                        pass  # Slack doesn't have a typing API for bots
+                    
+                    # Process message
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
                     try:
-                        # Process with async loop
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
                         response = loop.run_until_complete(bob.process_message(text, user, channel))
+                    finally:
                         loop.close()
 
-                        # Send response to Slack
-                        logger.info(f"About to send response. Client: {bool(bob.slack_client)}, Channel: {channel}")
-                        if bob.slack_client and channel:
+                    # Send response to Slack immediately
+                    if bob.slack_client and channel:
+                        try:
+                            logger.info(f"Sending to Slack channel {channel}: {response[:100]}")
+                            result = bob.slack_client.chat_postMessage(
+                                channel=channel, 
+                                text=response
+                            )
+                            logger.info(f"✅ Slack API response: ok={result.get('ok')}, ts={result.get('ts')}")
+                            logger.info(f"✅ Successfully sent: {response[:50]}...")
+                        except SlackApiError as e:
+                            logger.error(f"Slack API error: {e.response['error']}")
+                            # Try to at least send an error message
                             try:
-                                logger.info(f"Sending to Slack: {response[:100]}")
-                                result = bob.slack_client.chat_postMessage(
-                                    channel=channel, 
-                                    text=response
+                                bob.slack_client.chat_postMessage(
+                                    channel=channel,
+                                    text="Sorry, I encountered an error processing your message. Please try again."
                                 )
-                                logger.info(f"✅ Responded: {response[:50]}...")
-                                logger.info(f"Slack response: {result.get('ok', 'unknown')}")
-                            except SlackApiError as e:
-                                logger.error(f"Slack API error: {e.response['error']}")
-                            except Exception as e:
-                                logger.error(f"Unexpected error sending to Slack: {str(e)}")
-                    except Exception as e:
-                        logger.error(f"Error in background processing: {str(e)}")
-                
-                # Start background thread
-                thread = threading.Thread(target=process_and_respond)
-                thread.daemon = True
-                thread.start()
-                logger.info("Started background thread for response")
+                            except:
+                                pass
+                        except Exception as e:
+                            logger.error(f"Unexpected error sending to Slack: {str(e)}")
+                    else:
+                        logger.warning(f"Cannot send: slack_client={bool(bob.slack_client)}, channel={channel}")
+                        
+                except Exception as e:
+                    logger.error(f"Error processing message: {str(e)}", exc_info=True)
+                    # Try to send error message to user
+                    if bob.slack_client and channel:
+                        try:
+                            bob.slack_client.chat_postMessage(
+                                channel=channel,
+                                text=f"I encountered an error: {str(e)[:100]}"
+                            )
+                        except:
+                            pass
 
             # Handle app mentions
             elif event_type == "app_mention":
@@ -1008,16 +1025,26 @@ def slack_events():
 
                 logger.info(f"App mention from {user}: {text[:50]}...")
 
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                response = loop.run_until_complete(bob.process_message(text, user, channel))
-
-                if bob.slack_client and channel:
+                try:
+                    # Process message
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
                     try:
-                        bob.slack_client.chat_postMessage(channel=channel, text=response)
-                        logger.info(f"✅ Responded to mention")
-                    except SlackApiError as e:
-                        logger.error(f"Slack API error: {e.response['error']}")
+                        response = loop.run_until_complete(bob.process_message(text, user, channel))
+                    finally:
+                        loop.close()
+
+                    # Send response
+                    if bob.slack_client and channel:
+                        try:
+                            result = bob.slack_client.chat_postMessage(channel=channel, text=response)
+                            logger.info(f"✅ Responded to mention: ok={result.get('ok')}")
+                        except SlackApiError as e:
+                            logger.error(f"Slack API error: {e.response['error']}")
+                        except Exception as e:
+                            logger.error(f"Unexpected error: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error processing mention: {str(e)}")
             else:
                 logger.info(f"Ignoring event type: {event_type}")
 
