@@ -971,10 +971,18 @@ def slack_events():
                 logger.info(f"About to send response. Client: {bool(bob.slack_client)}, Channel: {channel}")
                 if bob.slack_client and channel:
                     try:
-                        result = bob.slack_client.chat_postMessage(channel=channel, text=response)
+                        logger.info(f"Sending to Slack: {response[:100]}")
+                        result = bob.slack_client.chat_postMessage(
+                            channel=channel, 
+                            text=response,
+                            timeout=5  # Add explicit timeout
+                        )
                         logger.info(f"✅ Responded: {response[:50]}...")
+                        logger.info(f"Slack response: {result.get('ok', 'unknown')}")
                     except SlackApiError as e:
                         logger.error(f"Slack API error: {e.response['error']}")
+                    except Exception as e:
+                        logger.error(f"Unexpected error sending to Slack: {str(e)}")
                 else:
                     logger.warning(f"No Slack client ({bool(bob.slack_client)}) or channel ({channel})")
 
