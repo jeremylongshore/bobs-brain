@@ -261,6 +261,83 @@ def search():
         return jsonify({"error": str(e)[:500]}), 500
 
 
+@app.route('/api/process', methods=['POST'])
+def api_process():
+    """Process scraped content - stores in BigQuery and/or Neo4j"""
+    try:
+        data = request.get_json() or {}
+        
+        # Validate required fields
+        if not data.get('url') or not data.get('content'):
+            return jsonify({
+                "error": "Missing required fields: url and content"
+            }), 400
+        
+        # Prepare content for storage
+        content_item = {
+            'url': data.get('url'),
+            'title': data.get('title', 'Untitled'),
+            'content': data.get('content'),
+            'type': data.get('type', data.get('source_type', 'manual')),
+            'topic': data.get('topic', 'general'),
+            'metadata': data.get('metadata', {}),
+            'timestamp': data.get('timestamp', datetime.now().isoformat())
+        }
+        
+        # Store in BigQuery
+        scraper = get_scraper()
+        stored = False
+        
+        if hasattr(scraper, 'store_to_bigquery'):
+            # Use existing storage method
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            stored = loop.run_until_complete(
+                scraper.store_to_bigquery([content_item], 'manual_submission')
+            )
+        else:
+            # Direct BigQuery insert
+            from google.cloud import bigquery
+            client = bigquery.Client(project="bobs-house-ai")
+            
+            table_id = "bobs-house-ai.comprehensive_scraping.all_content"
+            table = client.get_table(table_id)
+            
+            # Add required fields
+            content_item['source'] = 'api_process'
+            content_item['scraped_at'] = datetime.now().isoformat()
+            
+            errors = client.insert_rows_json(table, [content_item])
+            stored = len(errors) == 0
+            
+            if errors:
+                logger.error(f"BigQuery insert errors: {errors}")
+        
+        # Also try to store in Neo4j if router is available
+        neo4j_stored = False
+        try:
+            from scraper_neo4j_router import ScraperIntegration
+            integration = ScraperIntegration()
+            neo4j_stored = integration.process_scraped_data(content_item)
+        except Exception as e:
+            logger.warning(f"Neo4j storage not available: {e}")
+        
+        return jsonify({
+            "status": "processed",
+            "bigquery_stored": stored,
+            "neo4j_stored": neo4j_stored,
+            "url": content_item['url'],
+            "timestamp": content_item['timestamp']
+        })
+        
+    except Exception as e:
+        logger.error(f"Process error: {e}")
+        return jsonify({
+            "error": "Failed to process content",
+            "details": str(e)[:500]
+        }), 500
+
+
 @app.route('/topics', methods=['GET'])
 def topics():
     """Get available topics and counts"""
