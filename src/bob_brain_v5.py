@@ -1039,7 +1039,7 @@ def test():
                 "genai": "✅" if bob.model_available else "❌",
                 "memory": "✅" if bob.graphiti_available or bob.neo4j_driver else "❌",
                 "bigquery": "✅" if bob.bq_client else "❌",
-                "firestore": "✅" if bob.firestore_client else "❌",
+                "datastore": "✅" if bob.datastore_client else "❌",
                 "slack": "✅" if bob.slack_client else "❌",
             },
             "capabilities": {
