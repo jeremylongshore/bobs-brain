@@ -2,7 +2,7 @@
 -- Phase 4: Enterprise-grade schema for unlimited data collection and ecosystem unleashing
 
 -- Create dataset if not exists (run manually if needed)
--- CREATE SCHEMA IF NOT EXISTS `bobs-house-ai.mvp3_diagnostic` 
+-- CREATE SCHEMA IF NOT EXISTS `bobs-house-ai.mvp3_diagnostic`
 -- OPTIONS(
 --   description="MVP3 Diagnostic Ecosystem - Massive Expansion Ready",
 --   location="US"
@@ -13,18 +13,18 @@ CREATE TABLE IF NOT EXISTS `bobs-house-ai.circle_of_life.mvp3_diagnostic_submiss
     -- Core identifiers
     submission_id STRING NOT NULL,
     schema_version STRING NOT NULL,
-    
+
     -- Customer information (from form)
     full_name STRING NOT NULL,
     email STRING NOT NULL,
     phone STRING,
-    
+
     -- Service selection (from form)
     selected_service STRING NOT NULL, -- diagnosis|verification|emergency
     service_price FLOAT64,
     promo_code STRING,
     applied_discount FLOAT64,
-    
+
     -- Equipment details (exactly matching form fields)
     equipment_type STRING NOT NULL,
     equipment_category STRING,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `bobs-house-ai.circle_of_life.mvp3_diagnostic_submiss
     serial_number STRING,
     mileage INT64,
     hours INT64,
-    
+
     -- Problem details (from form)
     error_codes ARRAY<STRING>,
     problem_description STRING NOT NULL,
@@ -44,30 +44,30 @@ CREATE TABLE IF NOT EXISTS `bobs-house-ai.circle_of_life.mvp3_diagnostic_submiss
     frequency STRING,
     shop_quote FLOAT64,
     shop_name STRING,
-    
+
     -- Media attachments
     uploaded_files JSON,
     audio_recording_url STRING,
     captured_images JSON,
-    
+
     -- AI Analysis results
     ai_analysis JSON,
     ai_confidence_score FLOAT64,
     ai_model_used STRING,
     ai_processing_time_ms INT64,
-    
+
     -- Payment information
     payment_status STRING,
     stripe_payment_id STRING,
     payment_amount FLOAT64,
     payment_completed_at TIMESTAMP,
-    
+
     -- Email tracking
     email_sent BOOLEAN,
     email_sent_at TIMESTAMP,
     email_opened BOOLEAN,
     email_opened_at TIMESTAMP,
-    
+
     -- MASSIVE EXPANSION FIELDS
     custom_fields JSON,
     metadata JSON,
@@ -75,24 +75,24 @@ CREATE TABLE IF NOT EXISTS `bobs-house-ai.circle_of_life.mvp3_diagnostic_submiss
     data_source STRING,
     integration_source STRING,
     raw_form_data JSON,
-    
+
     -- Versioning and audit
     form_version STRING,
     api_version STRING,
     client_info JSON,
-    
+
     -- Timestamps
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP,
     processed_at TIMESTAMP,
     archived_at TIMESTAMP,
-    
+
     -- Relationships
     parent_submission_id STRING,
     related_submissions ARRAY<STRING>,
     customer_id STRING,
     session_id STRING,
-    
+
     -- Analytics fields
     utm_source STRING,
     utm_medium STRING,
