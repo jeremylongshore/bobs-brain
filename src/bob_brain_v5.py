@@ -139,21 +139,21 @@ class BobBrainV5:
                     logger.warning(f"Neo4j connection attempt {attempt + 1} failed: {str(e)[:50]}")
                     if attempt < 2:
                         time.sleep(2)
-            
+
             if connected:
                 # Now try Graphiti with Google Gemini support
                 try:
                     from graphiti_core import Graphiti
-                    from graphiti_core.llm_client import LLMClient
                     from graphiti_core.embedder import Embedder
-                    
+                    from graphiti_core.llm_client import LLMClient
+
                     # Configure Graphiti to use Google Gemini
                     llm_client = LLMClient(
                         model="gemini-2.5-flash",
                         provider="google-genai",
                         temperature=0.0,
                     )
-                    
+
                     embedder = Embedder(
                         model="text-embedding-004",
                         provider="google-genai",
@@ -166,7 +166,7 @@ class BobBrainV5:
                         llm_client=llm_client,
                         embedder=embedder,
                     )
-                    
+
                     logger.info("✅ Graphiti: Advanced memory with Gemini integration initialized")
                     self.graphiti_available = True
                     return  # Success!
@@ -177,7 +177,7 @@ class BobBrainV5:
                     self.graphiti = None
                     self.graphiti_available = False
                     return  # Still have Neo4j
-            
+
             # If we get here, Neo4j connection failed
             if driver:
                 driver.close()
@@ -258,15 +258,43 @@ class BobBrainV5:
             self.circle_available = False
 
     def _init_slack(self):
-        """Initialize Slack client"""
+        """Initialize Slack client with optimized timeout settings for Cloud Run"""
         self.slack_token = os.environ.get("SLACK_BOT_TOKEN")
 
         if self.slack_token:
-            self.slack_client = WebClient(token=self.slack_token)
-            logger.info("✅ Slack: Client initialized")
+            # Initialize with higher timeout for Cloud Run networking
+            self.slack_client = WebClient(
+                token=self.slack_token, timeout=30  # Increased timeout from default 10s to 30s
+            )
+            logger.info("✅ Slack: Client initialized with 30s timeout")
         else:
             logger.warning("⚠️ Slack: No SLACK_BOT_TOKEN found")
             self.slack_client = None
+
+    def send_slack_message(self, channel, text, retries=3):
+        """Send message to Slack with retry logic"""
+        if not self.slack_client:
+            logger.warning("Slack client not initialized")
+            return False
+
+        for attempt in range(retries):
+            try:
+                logger.info(f"Attempt {attempt + 1}: Sending to Slack channel {channel}")
+                result = self.slack_client.chat_postMessage(channel=channel, text=text)
+                logger.info(f"✅ Slack message sent successfully: ok={result.get('ok')}, ts={result.get('ts')}")
+                return True
+            except SlackApiError as e:
+                logger.error(f"Slack API error (attempt {attempt + 1}): {e.response['error']}")
+                if attempt == retries - 1:
+                    return False
+                time.sleep(2**attempt)  # Exponential backoff
+            except Exception as e:
+                logger.error(f"Unexpected error sending to Slack (attempt {attempt + 1}): {str(e)}")
+                if attempt == retries - 1:
+                    return False
+                time.sleep(2**attempt)
+
+        return False
 
     async def remember_conversation(self, user_message, bot_response, user="jeremy"):
         """Store conversation in memory system"""
@@ -576,14 +604,14 @@ class BobBrainV5:
     def query_bobcat_s740_knowledge(self, query):
         """Query Bobcat S740 specific knowledge from scraped data"""
         s740_knowledge = []
-        
+
         if not self.bq_client:
             return s740_knowledge
-        
+
         try:
             # Query S740 issues and solutions
             s740_query = f"""
-            SELECT 
+            SELECT
                 problem_type,
                 problem_description,
                 solution,
@@ -597,13 +625,13 @@ class BobBrainV5:
                OR LOWER(ARRAY_TO_STRING(error_codes, ' ')) LIKE LOWER(@pattern)
             LIMIT 5
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[bigquery.ScalarQueryParameter("pattern", "STRING", f"%{query}%")]
             )
-            
+
             results = self.bq_client.query(s740_query, job_config=job_config).result()
-            
+
             for row in results:
                 knowledge_item = f"🚜 Bobcat S740 {row.problem_type}:\n"
                 knowledge_item += f"Problem: {row.problem_description[:200]}...\n"
@@ -614,12 +642,12 @@ class BobBrainV5:
                 if row.parts:
                     knowledge_item += f"Parts: {row.parts}\n"
                 knowledge_item += f"Difficulty: {row.difficulty}, Cost: {row.cost_estimate}"
-                
+
                 s740_knowledge.append(knowledge_item)
-            
+
             # Query equipment hacks
             hack_query = f"""
-            SELECT 
+            SELECT
                 hack_type,
                 title,
                 description,
@@ -631,20 +659,20 @@ class BobBrainV5:
                    OR LOWER(benefits) LIKE LOWER(@pattern))
             LIMIT 3
             """
-            
+
             results = self.bq_client.query(hack_query, job_config=job_config).result()
-            
+
             for row in results:
                 hack_item = f"💡 S740 Hack ({row.hack_type}): {row.title}\n"
                 hack_item += f"{row.description[:150]}...\n"
                 if row.benefits:
                     hack_item += f"Benefits: {row.benefits[:100]}..."
-                
+
                 s740_knowledge.append(hack_item)
-            
+
             # Query maintenance schedules
             maintenance_query = f"""
-            SELECT 
+            SELECT
                 service_type,
                 interval_hours,
                 description,
@@ -656,21 +684,21 @@ class BobBrainV5:
               AND LOWER(service_type) LIKE LOWER(@pattern)
             LIMIT 3
             """
-            
+
             results = self.bq_client.query(maintenance_query, job_config=job_config).result()
-            
+
             for row in results:
                 maint_item = f"🔧 S740 Maintenance: {row.service_type} (every {row.interval_hours} hrs)\n"
                 maint_item += f"{row.description}\n"
                 if row.parts:
                     maint_item += f"Parts: {row.parts}\n"
                 maint_item += f"Cost: Dealer ${row.dealer_cost}, DIY ${row.diy_cost}"
-                
+
                 s740_knowledge.append(maint_item)
-                
+
         except Exception as e:
             logger.debug(f"S740 knowledge query error: {e}")
-        
+
         return s740_knowledge
 
     async def learn_from_correction(self, original, correction, user="jeremy"):
@@ -749,7 +777,7 @@ class BobBrainV5:
 
             # Query knowledge base
             knowledge = self.query_knowledge_base(text)
-            
+
             # Query Bobcat S740 specific knowledge if relevant
             s740_knowledge = []
             if any(word in text.lower() for word in ["bobcat", "s740", "skid", "loader", "hydraulic", "dpf", "def"]):
@@ -778,7 +806,7 @@ class BobBrainV5:
             if knowledge:
                 context_parts.append("\n📚 From knowledge base:")
                 context_parts.extend(knowledge[:3])
-            
+
             if s740_knowledge:
                 context_parts.append("\n🚜 Bobcat S740 specific knowledge:")
                 context_parts.extend(s740_knowledge[:3])
@@ -854,14 +882,14 @@ Response:"""
 
                 except Exception as gen_error:
                     logger.error(f"Generation error: {gen_error}")
-                    return f"I encountered an issue, but I'm still here. What do you need help with?"
+                    return "I encountered an issue, but I'm still here. What do you need help with?"
             else:
                 # Fallback without model
                 return self._get_fallback_response(text, context)
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
-            return f"I hit a snag, but I'm learning. Tell me what you need."
+            return "I hit a snag, but I'm learning. Tell me what you need."
 
     def _get_fallback_response(self, text, context=""):
         """Fallback response when Gen AI is unavailable"""
@@ -968,7 +996,7 @@ def slack_events():
                     if bob.slack_client and channel:
                         # Send typing indicator or initial acknowledgment
                         pass  # Slack doesn't have a typing API for bots
-                    
+
                     # Process message
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
@@ -977,42 +1005,29 @@ def slack_events():
                     finally:
                         loop.close()
 
-                    # Send response to Slack immediately
-                    if bob.slack_client and channel:
-                        try:
-                            logger.info(f"Sending to Slack channel {channel}: {response[:100]}")
-                            result = bob.slack_client.chat_postMessage(
-                                channel=channel, 
-                                text=response
+                    # Send response to Slack with retry logic
+                    if channel:
+                        success = bob.send_slack_message(channel, response)
+                        if not success:
+                            logger.error("Failed to send message to Slack after retries")
+                            # Try to send error message as last resort
+                            bob.send_slack_message(
+                                channel,
+                                "Sorry, I encountered an error sending my response. Please try again.",
+                                retries=1,
                             )
-                            logger.info(f"✅ Slack API response: ok={result.get('ok')}, ts={result.get('ts')}")
-                            logger.info(f"✅ Successfully sent: {response[:50]}...")
-                        except SlackApiError as e:
-                            logger.error(f"Slack API error: {e.response['error']}")
-                            # Try to at least send an error message
-                            try:
-                                bob.slack_client.chat_postMessage(
-                                    channel=channel,
-                                    text="Sorry, I encountered an error processing your message. Please try again."
-                                )
-                            except:
-                                pass
-                        except Exception as e:
-                            logger.error(f"Unexpected error sending to Slack: {str(e)}")
                     else:
-                        logger.warning(f"Cannot send: slack_client={bool(bob.slack_client)}, channel={channel}")
-                        
+                        logger.warning("No channel specified for Slack message")
+
                 except Exception as e:
                     logger.error(f"Error processing message: {str(e)}", exc_info=True)
                     # Try to send error message to user
-                    if bob.slack_client and channel:
-                        try:
-                            bob.slack_client.chat_postMessage(
-                                channel=channel,
-                                text=f"I encountered an error: {str(e)[:100]}"
-                            )
-                        except:
-                            pass
+                    if channel:
+                        bob.send_slack_message(
+                            channel,
+                            f"I encountered an error: {str(e)[:100]}",
+                            retries=1,  # Quick single retry for error messages
+                        )
 
             # Handle app mentions
             elif event_type == "app_mention":
@@ -1034,15 +1049,13 @@ def slack_events():
                     finally:
                         loop.close()
 
-                    # Send response
-                    if bob.slack_client and channel:
-                        try:
-                            result = bob.slack_client.chat_postMessage(channel=channel, text=response)
-                            logger.info(f"✅ Responded to mention: ok={result.get('ok')}")
-                        except SlackApiError as e:
-                            logger.error(f"Slack API error: {e.response['error']}")
-                        except Exception as e:
-                            logger.error(f"Unexpected error: {str(e)}")
+                    # Send response with retry logic
+                    if channel:
+                        success = bob.send_slack_message(channel, response)
+                        if success:
+                            logger.info("✅ Successfully responded to mention")
+                        else:
+                            logger.error("Failed to respond to mention after retries")
                 except Exception as e:
                     logger.error(f"Error processing mention: {str(e)}")
             else:
