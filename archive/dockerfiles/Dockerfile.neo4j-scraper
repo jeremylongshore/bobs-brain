@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    curl \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install requirements
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir neo4j==5.20.* aiohttp==3.9.* playwright==1.43.*
+
+# Install Playwright browsers
+RUN playwright install chromium && \
+    playwright install-deps chromium
+
+# Copy source code
+COPY src/ ./src/
+COPY archive/old_scrapers/skidsteer_scraper.py ./src/
+COPY archive/old_scrapers/forum_scraper.py ./src/
+
+# Set Python path
+ENV PYTHONPATH=/app/src:$PYTHONPATH
+
+# Run the Neo4j scraper
+CMD ["python", "src/neo4j_unified_scraper.py"]
