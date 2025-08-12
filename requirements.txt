@@ -13,7 +13,7 @@ numpy==1.24.3
 pandas==2.0.3
 pydantic==2.5.0
 python-dotenv==1.0.0
-requests==2.31.0
+requests>=2.32.2
 sentence-transformers==3.0.0
 slack-bolt==1.18.0
 slack-sdk==3.31.0
