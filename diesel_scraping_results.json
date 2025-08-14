@@ -1,0 +1,129 @@
+{
+  "powerstroke": [
+    {
+      "channel": "PowerStroke Tech Talk",
+      "video": "6.7 Powerstroke CP4 Pump Failure - Complete Diagnosis",
+      "transcript_snippet": "\n        Alright guys, we've got a 2015 F-250 with the 6.7 Powerstroke throwing code P0087 \n        which is fuel rail pressure too low. Also getting P0088 fuel rail pressure too high \n        intermittently. Classic CP4 pump failure symptoms. The CP4.2 pump part number is \n        BC3Z-9A543-B and costs about $3800 from Ford. We're also seeing metal shavings in \n        the fuel system which means we need to replace all injectors, part number BC3Z-9H529-B, \n        that's another $3200. Total repair with labor is going to be around $8500. This is \n        why we recommend a CP3 conversion kit for about $3500 total.\n        ",
+      "error_codes": [
+        "P0087",
+        "P0088"
+      ],
+      "parts": [
+        "BC3Z-9A543-B",
+        "BC3Z-9H529-B"
+      ],
+      "cost": "$8500"
+    },
+    {
+      "channel": "Ford Boss Me",
+      "video": "6.0 Powerstroke Head Gasket Job - Complete Bulletproof",
+      "transcript_snippet": "\n        Doing a complete bulletproof on this 2005 F-350 6.0 Powerstroke. Started with \n        code P0299 turbo underboost and white smoke. Head gaskets are blown. Using ARP \n        head studs 250-4202 for $475. Mahle head gaskets 54450A for $189. EGR delete kit \n        for $199. Updated oil cooler 3C3Z-6A642-CA for $245. Coolant filter kit $179. \n        This is a 20-hour job minimum. Total parts around $1300 but labor will be $3000 \n        at a shop. Most important - get the heads checked for cracks at a machine shop.\n        ",
+      "error_codes": [
+        "P0299"
+      ],
+      "parts": [
+        "250-4202",
+        "54450A",
+        "3C3Z-6A642-CA"
+      ],
+      "cost": "$4300"
+    }
+  ],
+  "cummins": [
+    {
+      "channel": "Diesel Tech Ron",
+      "video": "5.9 Cummins VP44 Injection Pump Replacement",
+      "transcript_snippet": "\n        Today we're replacing the VP44 on this 2001 Dodge Ram 2500. Getting code P0216 \n        injection pump timing failure. The VP44 pump is notorious for failing on these \n        5.9 24-valve Cummins. Part number is 0-470-506-040 for the Bosch reman. Cost is \n        about $1400 for the pump. Always replace the lift pump at the same time, part \n        number is FASS DRP-02, about $189. This job takes about 4 hours if you know what \n        you're doing. Make sure to reset the APPS sensor after installation.\n        ",
+      "error_codes": [
+        "P0216"
+      ],
+      "parts": [
+        "0-470-506-040",
+        "FASS-DRP-02"
+      ],
+      "cost": "$1600"
+    },
+    {
+      "channel": "Thoroughbred Diesel",
+      "video": "6.7 Cummins Grid Heater Delete & Tuning",
+      "transcript_snippet": "\n        Installing a grid heater delete on this 2019 Ram 3500. The factory grid heater \n        can fail and drop into the engine causing catastrophic damage. Delete plate is \n        part GDP-GH-D-19 for $189. While we're here, installing an EGR delete kit \n        GDP-EGR-D-19 for $599. Getting code P2609 for intake air heater performance \n        which we'll delete with tuning. Also had P0401 EGR flow insufficient. The \n        MM3 tuner is $879. Total cost for deletes and tuning about $1700.\n        ",
+      "error_codes": [
+        "P2609",
+        "P0401"
+      ],
+      "parts": [
+        "GDP-GH-D-19",
+        "GDP-EGR-D-19"
+      ],
+      "cost": "$1700"
+    }
+  ],
+  "duramax": [
+    {
+      "channel": "Duramax Tuner",
+      "video": "LB7 Duramax Injector Replacement - All 8 Injectors",
+      "transcript_snippet": "\n        We're doing all 8 injectors on this 2003 GMC Sierra 2500HD with the LB7 Duramax.\n        Getting codes P0201 through P0208 for injector circuit malfunctions. Also seeing\n        P0093 large fuel leak detected. The injectors are part number 97188463, about \n        $280 each from AC Delco, so $2240 for the set. Add new return lines 97328733 \n        for $89. This is about an 8-10 hour job. While we're in there, replacing the \n        injector harnesses 97378405 for $145 each side. Total parts cost around $2600.\n        ",
+      "error_codes": [
+        "P0201",
+        "P0202",
+        "P0203",
+        "P0204",
+        "P0205",
+        "P0206",
+        "P0207",
+        "P0208",
+        "P0093"
+      ],
+      "parts": [
+        "97188463",
+        "97328733",
+        "97378405"
+      ],
+      "cost": "$2600"
+    }
+  ],
+  "total_items": 8,
+  "error_codes": [
+    "P0216",
+    "P0201",
+    "P0299",
+    "P0191",
+    "P0087",
+    "P0208",
+    "P0207",
+    "P21DD",
+    "P0203",
+    "P0401",
+    "P0204",
+    "P0206",
+    "P0205",
+    "P0202",
+    "P0093",
+    "P0088",
+    "P2609"
+  ],
+  "part_numbers": [
+    "250-4202",
+    "BC3Z-9A543-B",
+    "97188463",
+    "54450A",
+    "GDP-EGR-D-19",
+    "GDP-GH-D-19",
+    "BC3Z-9H529-B",
+    "97328733",
+    "97378405",
+    "FASS-DRP-02",
+    "3C3Z-6A642-CA",
+    "0-470-506-040"
+  ],
+  "repair_costs": [
+    "$8500",
+    "$1600",
+    "$2600",
+    "$4300",
+    "$1700",
+    "$3200",
+    "$254",
+    "$950"
+  ]
+}

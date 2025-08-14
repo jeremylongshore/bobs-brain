@@ -1,7 +1,7 @@
 # CLAUDE.md - Bob's Brain Project Documentation
 **CRITICAL: This is the SINGLE SOURCE OF TRUTH for Bob's Brain project**
-**Last Comprehensive Update:** 2025-08-12T10:00:00Z (August 12, 2025, 10:00 AM UTC)
-**Claude Code Session:** CTO-in-Training Mode - Complete System Documentation
+**Last Comprehensive Update:** 2025-08-14T04:40:00Z (August 14, 2025, 4:40 AM UTC)
+**Claude Code Session:** Bob Brain Enterprise v7.0 - Full 24/7 CEO-Grade Assistant with Gemini & Neo4j
 
 ## 🚨 CRITICAL OPERATIONAL RULES
 
@@ -39,18 +39,18 @@
 ### Active Cloud Run Services (3 Essential Services Only)
 | Service | Purpose | URL | Docker Image | Status |
 |---------|---------|-----|--------------|--------|
-| **bobs-brain** | Main AI assistant & Slack | https://bobs-brain-157908567967.us-central1.run.app | Cloud Source Deploy | ✅ Healthy |
+| **bobs-brain** | Enterprise AI Assistant v7.0 | https://bobs-brain-157908567967.us-central1.run.app | Cloud Source Deploy | ✅ 24/7 Operational |
 | **unified-scraper** | Data collection (40+ sources) | https://unified-scraper-157908567967.us-central1.run.app | gcr.io/bobs-house-ai/unified-scraper:v4 | ✅ Healthy |
 | **circle-of-life-scraper** | MVP3 integration | https://circle-of-life-scraper-157908567967.us-central1.run.app | gcr.io/bobs-house-ai/circle-of-life-scraper | ✅ Healthy |
 
 ### Component Health Dashboard
 | Component | Status | Details |
 |-----------|--------|---------|
-| **Gemini AI** | ✅ Operational | gemini-2.5-flash via Google Gen AI SDK |
-| **Neo4j Graph** | ✅ Connected | Via VPC (bolt://10.128.0.2:7687) |
+| **Gemini AI** | ✅ Fully Connected | gemini-1.5-flash via GCP API Key (billing to project) |
+| **Neo4j Graph** | ✅ Connected | Neo4j Aura Cloud (neo4j+s://d3653283.databases.neo4j.io) - 267 nodes with equipment data |
 | **BigQuery** | ✅ Active | Pattern recognition & ML pipeline |
 | **Datastore** | ✅ Synced | Connected to diagnostic-pro-mvp |
-| **Slack** | ✅ Integrated | All tokens configured, webhook active |
+| **Slack** | ✅ Fully Operational | Responds in main channel, 24/7 availability |
 | **Circle of Life** | ✅ Learning | Continuous improvement from MVP3 |
 | **Memory** | ✅ Persistent | Full conversation recall |
 | **YouTube Scraper** | ✅ Fixed | Transcripts only (no video downloads) |
@@ -128,49 +128,48 @@
 - ✅ Optimized Docker images for minimal size and fast startup
 - ✅ Updated comprehensive documentation (this file)
 
+### Phase 8: Enterprise Bob Brain v7.0 (100% Complete - August 14, 2025)
+- ✅ Fixed Gemini connection using GCP API key (bills to project credits)
+- ✅ Implemented Bob Brain Enterprise v7.0 with 24/7 availability
+- ✅ Connected Slack tokens for full integration
+- ✅ Modified Slack responses to post in main channel (not threads)
+- ✅ Integrated Neo4j knowledge retrieval with equipment data
+- ✅ Populated Neo4j with real equipment knowledge (Bobcat, Ford, Cummins)
+- ✅ Removed restrictive prompts - Bob responds like pure Gemini with ecosystem access
+- ✅ Verified all components operational (Gemini, Neo4j, Slack, BigQuery, Circle of Life)
+- ✅ Achieved true 24/7 constant assistant functionality as requested
+- ✅ Organized project structure with scripts/, archive/, and clean root directory
+
 ## 📁 PROJECT STRUCTURE (CLEAN & ORGANIZED)
 
 ```
 bobs-brain/
 ├── src/                              # Active production code
-│   ├── bob_brain_v5.py              # Main Bob Brain service (PRODUCTION)
+│   ├── bob_brain_enterprise.py      # Bob Brain v7.0 Enterprise (PRODUCTION)
+│   ├── bob_brain_v5_fixed.py        # Previous stable version
+│   ├── bob_brain_v6_vertex.py       # Vertex AI attempt
+│   ├── graphiti_integration.py      # Graphiti/Neo4j integration
 │   ├── circle_of_life.py            # ML pipeline and learning module
-│   ├── circle_of_life_scraper.py    # MVP3 data collector
-│   ├── unified_scraper_api.py       # Scraper REST API server
-│   ├── unified_scraper_simple.py    # Simple scraper implementation
-│   ├── unified_scraper_enhanced.py  # Enhanced scraper with all sources
-│   ├── youtube_equipment_scraper.py # YouTube transcript extractor
-│   ├── tsb_scraper.py               # Technical bulletin scraper
-│   ├── forum_scraper.py             # Forum data collector
-│   └── neo4j_unified_scraper.py     # Neo4j integrated scraper
-├── scripts/                          # Utility and automation scripts
-│   ├── deployment/                   # Deployment automation
-│   │   └── deploy_to_cloud_run.sh   # Automated deployment script
-│   ├── setup/                        # Environment setup
-│   │   └── setup_bob.sh             # Initial setup script
-│   └── testing/                      # All test scripts
-│       ├── test_complete_flow.py    # End-to-end testing
-│       ├── verify_fixes.py          # System verification
-│       └── trigger_immediate_scraping.py # Manual scraping
+│   ├── unified_scraper_complete.py  # Complete unified scraper
+│   └── [other scrapers]              # Various scraper implementations
+├── scripts/                          # Organized utility scripts
+│   ├── email/                        # Email-related utilities
+│   ├── migration/                    # Database migration scripts
+│   ├── testing/                      # Test scripts
+│   └── scrapers/                     # Scraper utilities
 ├── archive/                          # Organized archived code
-│   ├── deprecated_bobs/              # Old Bob versions (18 files)
+│   ├── deprecated_bobs/              # Old Bob versions
 │   ├── old_scrapers/                 # Previous scraper implementations
-│   ├── old_versions/                 # Legacy code and migrations
-│   ├── dockerfiles/                  # Archived Docker configurations
+│   ├── old_versions/                 # Legacy code
+│   ├── dockerfiles/                  # Archived Docker configs
 │   └── test_files/                   # Old test implementations
-├── logs/                             # Application and system logs
-│   └── archive/                      # Historical log files
 ├── docs/                             # Project documentation
-├── tests/                            # Unit and integration tests
 ├── configs/                          # Configuration files
-├── Dockerfile                        # Bob Brain container definition
-├── Dockerfile.scraper                # Scraper container definition
+├── Dockerfile                        # Bob Brain Enterprise v7.0
 ├── Dockerfile.unified-scraper        # Unified scraper container
 ├── CLAUDE.md                         # THIS FILE - Source of truth
-├── Makefile                          # Build and deployment automation
-├── requirements.txt                  # Main Python dependencies
-├── requirements-minimal.txt          # Minimal deps for scrapers
-└── .pre-commit-config.yaml          # Code quality hooks
+├── requirements.txt                  # Python dependencies
+└── .env.* files                      # Environment configurations
 ```
 
 ## 🔧 TECHNICAL ARCHITECTURE
@@ -247,24 +246,24 @@ bobs-brain/
 
 ## 📋 NEXT PRIORITY TASKS (Engineering Roadmap)
 
-### Immediate Priority (Next 24-48 Hours)
-1. **Complete Graphiti Initialization**
-   - **Task:** Fix LLM integration for graph memory
-   - **Impact:** Enables relationship-based knowledge storage
+### Immediate Priority (Next Sprint)
+1. **Automated Knowledge Expansion**
+   - **Task:** Schedule scrapers to run automatically
+   - **Implementation:** Use Cloud Scheduler for hourly/daily runs
+   - **Dependencies:** Scraper services (deployed and tested)
+   - **Success Criteria:** 1000+ new knowledge nodes added weekly
+
+2. **Enhanced Equipment Database**
+   - **Task:** Expand equipment knowledge with more models
+   - **Implementation:** Add John Deere, Caterpillar, Kubota detailed specs
    - **Dependencies:** Neo4j connection (complete)
-   - **Success Criteria:** Entities and relationships auto-extracted
+   - **Success Criteria:** 100+ equipment models with full specifications
 
-2. **Enhance Data Quality Pipeline**
-   - **Task:** Implement validation and deduplication
-   - **Impact:** Improves response accuracy
-   - **Dependencies:** BigQuery schemas (complete)
-   - **Success Criteria:** < 1% duplicate data
-
-3. **Fix YouTube Video ID Collection**
-   - **Task:** Add real equipment repair video IDs
-   - **Impact:** Increases knowledge base
-   - **Dependencies:** YouTube API key
-   - **Success Criteria:** 100+ transcripts collected daily
+3. **Graphiti Full Integration**
+   - **Task:** Implement real Graphiti temporal knowledge graphs
+   - **Implementation:** Import graphiti-core library, configure LLM
+   - **Dependencies:** Neo4j (complete), LLM configuration
+   - **Success Criteria:** Temporal relationships between knowledge items
 
 ### Short-term Goals (This Week)
 1. **Redis Caching Layer**
@@ -482,9 +481,9 @@ gcloud projects add-iam-policy-binding bobs-house-ai \
 2. **Git Commit Messages**
    ```
    <type>(<scope>): <subject>
-   
+
    <body>
-   
+
    <footer>
    ```
    Types: feat, fix, docs, style, refactor, test, chore

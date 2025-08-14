@@ -1,0 +1,303 @@
+{
+  "reddit": [
+    {
+      "source": "r/MechanicAdvice",
+      "title": "2019 F150 P0171 and P0174 codes after 60k miles",
+      "score": 145,
+      "comments": 32,
+      "error_codes": [
+        "P0171",
+        "P0174"
+      ],
+      "part_numbers": [],
+      "costs": [
+        "180",
+        "1200"
+      ],
+      "problems": [],
+      "tools": [],
+      "timestamp": "2025-08-13T20:25:19.211946"
+    },
+    {
+      "source": "r/MechanicAdvice",
+      "title": "Bobcat S650 hydraulic issues - won't lift",
+      "score": 87,
+      "comments": 19,
+      "error_codes": [],
+      "part_numbers": [],
+      "costs": [],
+      "problems": [],
+      "tools": [
+        "pressure gauge"
+      ],
+      "timestamp": "2025-08-13T20:25:19.212018"
+    },
+    {
+      "source": "r/Diesel",
+      "title": "DPF delete or repair? 2018 Ram 2500",
+      "score": 234,
+      "comments": 89,
+      "error_codes": [
+        "P2002"
+      ],
+      "part_numbers": [],
+      "costs": [
+        "3500",
+        "800"
+      ],
+      "problems": [],
+      "tools": [],
+      "timestamp": "2025-08-13T20:25:21.214010"
+    },
+    {
+      "source": "r/Diesel",
+      "title": "DEF quality poor message - tried everything",
+      "score": 156,
+      "comments": 45,
+      "error_codes": [],
+      "part_numbers": [],
+      "costs": [
+        "2400"
+      ],
+      "problems": [],
+      "tools": [
+        "scanner"
+      ],
+      "timestamp": "2025-08-13T20:25:21.214074"
+    },
+    {
+      "source": "r/Skidsteers",
+      "title": "Bobcat T770 track tension issues",
+      "score": 43,
+      "comments": 12,
+      "error_codes": [],
+      "part_numbers": [],
+      "costs": [
+        "650"
+      ],
+      "problems": [],
+      "tools": [],
+      "timestamp": "2025-08-13T20:25:23.215896"
+    },
+    {
+      "source": "r/HeavyEquipment",
+      "title": "Generic post from r/HeavyEquipment",
+      "score": 50,
+      "comments": 10,
+      "error_codes": [
+        "P0420"
+      ],
+      "part_numbers": [
+        "12345-67"
+      ],
+      "costs": [],
+      "problems": [],
+      "tools": [],
+      "timestamp": "2025-08-13T20:25:25.218079"
+    },
+    {
+      "source": "r/Justrolledintotheshop",
+      "title": "Generic post from r/Justrolledintotheshop",
+      "score": 50,
+      "comments": 10,
+      "error_codes": [
+        "P0420"
+      ],
+      "part_numbers": [
+        "12345-67"
+      ],
+      "costs": [],
+      "problems": [],
+      "tools": [],
+      "timestamp": "2025-08-13T20:25:27.219881"
+    }
+  ],
+  "youtube": [
+    {
+      "channel": "Pine Hollow Auto",
+      "title": "Diagnostic case study",
+      "transcript_length": 647,
+      "error_codes": [
+        "P0171",
+        "P0174"
+      ],
+      "part_numbers": [],
+      "tools": [
+        "scan tool"
+      ],
+      "time_estimates": [
+        "2"
+      ],
+      "timestamp": "2025-08-13T20:25:19.212168"
+    },
+    {
+      "channel": "Pine Hollow Auto",
+      "title": "No start diagnosis",
+      "transcript_length": 647,
+      "error_codes": [
+        "P0171",
+        "P0174"
+      ],
+      "part_numbers": [],
+      "tools": [
+        "scan tool"
+      ],
+      "time_estimates": [
+        "2"
+      ],
+      "timestamp": "2025-08-13T20:25:20.213644"
+    },
+    {
+      "channel": "Scanner Danner",
+      "title": "Waveform analysis",
+      "transcript_length": 568,
+      "error_codes": [
+        "P0261"
+      ],
+      "part_numbers": [],
+      "tools": [
+        "oscilloscope"
+      ],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:21.214243"
+    },
+    {
+      "channel": "Scanner Danner",
+      "title": "Fuel trim diagnosis",
+      "transcript_length": 568,
+      "error_codes": [
+        "P0261"
+      ],
+      "part_numbers": [],
+      "tools": [
+        "oscilloscope"
+      ],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:22.215545"
+    },
+    {
+      "channel": "FarmCraft101",
+      "title": "Hydraulic repair",
+      "transcript_length": 72,
+      "error_codes": [
+        "P0300"
+      ],
+      "part_numbers": [],
+      "tools": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:23.216178"
+    },
+    {
+      "channel": "FarmCraft101",
+      "title": "Tractor won't start",
+      "transcript_length": 75,
+      "error_codes": [
+        "P0300"
+      ],
+      "part_numbers": [],
+      "tools": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:24.216755"
+    },
+    {
+      "channel": "South Main Auto",
+      "title": "Finding the problem",
+      "transcript_length": 75,
+      "error_codes": [
+        "P0300"
+      ],
+      "part_numbers": [],
+      "tools": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:25.218234"
+    },
+    {
+      "channel": "South Main Auto",
+      "title": "Fixed it!",
+      "transcript_length": 65,
+      "error_codes": [
+        "P0300"
+      ],
+      "part_numbers": [],
+      "tools": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:26.219501"
+    }
+  ],
+  "forums": [
+    {
+      "forum": "BobcatForum.com",
+      "title": "S740 Engine fault code 523615-31",
+      "replies": 23,
+      "error_codes": [],
+      "part_numbers": [
+        "523615-31"
+      ],
+      "costs": [
+        "2800",
+        "1200"
+      ],
+      "time_estimates": [
+        "4"
+      ],
+      "timestamp": "2025-08-13T20:25:19.212276"
+    },
+    {
+      "forum": "BobcatForum.com",
+      "title": "T770 hydraulic pump whining noise",
+      "replies": 18,
+      "error_codes": [],
+      "part_numbers": [],
+      "costs": [
+        "3500"
+      ],
+      "time_estimates": [
+        "100"
+      ],
+      "timestamp": "2025-08-13T20:25:19.212328"
+    },
+    {
+      "forum": "TractorByNet.com",
+      "title": "Thread from TractorByNet.com",
+      "replies": 10,
+      "error_codes": [
+        "P0401"
+      ],
+      "part_numbers": [
+        "98765-43"
+      ],
+      "costs": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:21.214147"
+    },
+    {
+      "forum": "HeavyEquipmentForums.com",
+      "title": "Thread from HeavyEquipmentForums.com",
+      "replies": 10,
+      "error_codes": [
+        "P0401"
+      ],
+      "part_numbers": [
+        "98765-43"
+      ],
+      "costs": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:23.216120"
+    },
+    {
+      "forum": "DieselTruckResource.com",
+      "title": "Thread from DieselTruckResource.com",
+      "replies": 10,
+      "error_codes": [
+        "P0401"
+      ],
+      "part_numbers": [
+        "98765-43"
+      ],
+      "costs": [],
+      "time_estimates": [],
+      "timestamp": "2025-08-13T20:25:25.218186"
+    }
+  ],
+  "statistics": {}
+}

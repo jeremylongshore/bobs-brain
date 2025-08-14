@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies  
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -14,17 +14,16 @@ COPY requirements-minimal.txt ./
 RUN pip install --no-cache-dir -r requirements-minimal.txt
 
 # Copy source code
-COPY src/unified_scraper_simple.py ./src/
-COPY src/unified_scraper_api.py ./src/
-COPY src/youtube_equipment_scraper.py ./src/
-COPY src/tsb_scraper.py ./src/
+COPY src/unified_scraper_complete.py ./src/
+COPY src/graphiti_integration.py ./src/
 
 # Set environment variables
 ENV PYTHONPATH=/app/src:$PYTHONPATH
 ENV GOOGLE_CLOUD_PROJECT=bobs-house-ai
-ENV NEO4J_URI=bolt://10.128.0.2:7687
+ENV NEO4J_URI=neo4j+s://d3653283.databases.neo4j.io
 ENV NEO4J_USER=neo4j
-ENV NEO4J_PASSWORD=BobBrain2025
+ENV NEO4J_PASSWORD=q9eazAmPqXsv0KSnnjiX6Q-UvXXPKIUCZbkC7P5VOAE
+ENV PORT=8080
 
-# Run the unified scraper API server
-CMD ["python", "src/unified_scraper_api.py"]
+# Run the complete unified scraper with Flask API
+CMD ["python", "src/unified_scraper_complete.py"]

@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the website form integration script
+COPY src/website_form_complete_integration.py .
+COPY src/pdf_generator.py .
+
+# Set environment variables
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+# Run the application
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 website_form_complete_integration:app

@@ -8,27 +8,36 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies - Bob Brain v5.0 with Circle of Life
+# Install Python dependencies - Bob Brain Enterprise with Vertex AI
 RUN pip install --no-cache-dir \
     flask \
     gunicorn \
     slack-sdk \
-    google-genai \
+    google-cloud-aiplatform \
+    vertexai \
+    google-generativeai \
     google-auth \
     google-cloud-bigquery \
     google-cloud-datastore \
     neo4j \
-    graphiti-core || echo "Graphiti install failed, continuing..."
+    pytz \
+    python-dotenv
 
-# Copy Bob Brain v5.0 with Circle of Life
-COPY src/bob_brain_v5.py src/
+# Copy Bob Brain Enterprise v7 - CEO Grade
+COPY src/bob_brain_enterprise.py src/
+COPY src/graphiti_integration.py src/
 COPY src/circle_of_life.py src/
 
-# Set environment
+# Set environment variables
 ENV PORT=8080
 ENV PYTHONUNBUFFERED=1
+ENV NEO4J_URI=neo4j+s://d3653283.databases.neo4j.io
+ENV NEO4J_USER=neo4j
+ENV NEO4J_PASSWORD=q9eazAmPqXsv0KSnnjiX6Q-UvXXPKIUCZbkC7P5VOAE
+ENV GCP_PROJECT=bobs-house-ai
+ENV GOOGLE_CLOUD_PROJECT=bobs-house-ai
 
-# Run Bob Brain v5.0
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 src.bob_brain_v5:app
-# Cache bust: Sun Aug 10 21:27:44 CDT 2025
-# Deploy timestamp: Sun Aug 10 21:44:39 CDT 2025
+# Run Bob Brain Enterprise v7.0 - 24/7 CEO Assistant
+CMD exec gunicorn --bind :$PORT --workers 2 --threads 8 --timeout 120 src.bob_brain_enterprise:app
+# Cache bust: Wed Aug 14 2025 - Vertex AI Gemini Integration
+# Deploy timestamp: Wed Aug 14 2025

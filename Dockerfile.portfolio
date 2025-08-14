@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements-portfolio.txt .
+RUN pip install --no-cache-dir -r requirements-portfolio.txt
+
+# Copy app
+COPY portfolio_app.py .
+
+# Create upload directory
+RUN mkdir -p /tmp/uploads
+
+EXPOSE 8080
+
+CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "8", "--timeout", "0", "portfolio_app:app"]
