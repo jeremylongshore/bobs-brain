@@ -16,11 +16,11 @@
 ### For startaitools.com (apex/root):
 Delete the current A record (35.225.160.0) and add these 4 A records (or use ALIAS if Porkbun supports it):
 - **Type:** A
-- **Host:** @ 
+- **Host:** @
 - **Value:** 216.239.32.21
 - **TTL:** 600
 
-- **Type:** A  
+- **Type:** A
 - **Host:** @
 - **Value:** 216.239.34.21
 - **TTL:** 600

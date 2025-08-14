@@ -246,18 +246,18 @@ class WebsiteFormIntegration:
         try:
             # Build enhanced prompt with all context
             current_datetime = datetime.now().isoformat()
-            equipment_type = data.get('equipment_type', 'Unknown')
-            equipment_brand = data.get('equipment_brand', '')
-            equipment_model = data.get('equipment_model', '')
-            equipment_year = data.get('equipment_year', '')
-            equipment_hours = data.get('equipment_hours', '')
-            equipment_serial = data.get('equipment_serial', '')
-            problem_description = data.get('problem_description', '')
-            error_codes = ', '.join(data.get('error_codes', [])) if data.get('error_codes') else 'None'
-            service_type = data.get('service_type', 'repair')
-            customer_type = data.get('customer_type', 'individual')
-            repair_history = data.get('repair_history', 'Not available')
-            
+            equipment_type = data.get("equipment_type", "Unknown")
+            equipment_brand = data.get("equipment_brand", "")
+            equipment_model = data.get("equipment_model", "")
+            equipment_year = data.get("equipment_year", "")
+            equipment_hours = data.get("equipment_hours", "")
+            equipment_serial = data.get("equipment_serial", "")
+            problem_description = data.get("problem_description", "")
+            error_codes = ", ".join(data.get("error_codes", [])) if data.get("error_codes") else "None"
+            service_type = data.get("service_type", "repair")
+            customer_type = data.get("customer_type", "individual")
+            repair_history = data.get("repair_history", "Not available")
+
             prompt = f"""
 You are DiagnosticPro's MASTER TECHNICIAN with 30+ years diagnosing {equipment_type} equipment. You've seen every failure mode, know every diagnostic shortcut shops take, and can spot incompetence immediately. Your mission: protect the customer's wallet while ensuring proper repairs.
 
@@ -420,7 +420,7 @@ Return response as properly formatted JSON with markdown content:
                         "Document all symptoms and error codes",
                         "Get written quotes from multiple shops",
                         "Request itemized parts and labor breakdown",
-                        "Contact support for detailed diagnosis"
+                        "Contact support for detailed diagnosis",
                     ],
                     "confidence": 0.5,
                     "similar_cases": [],
@@ -433,12 +433,12 @@ Return response as properly formatted JSON with markdown content:
                         "Can you show me the diagnostic readings?",
                         "Why do all these parts need replacement?",
                         "What's the warranty on parts and labor?",
-                        "Can you provide a written estimate?"
+                        "Can you provide a written estimate?",
                     ],
                     "diy_feasible": False,
                     "parts_needed": [],
                     "labor_hours": {"book": 0, "actual": 0},
-                    "warranty_applies": False
+                    "warranty_applies": False,
                 }
 
             return result
@@ -452,7 +452,7 @@ Return response as properly formatted JSON with markdown content:
                     "Document all symptoms with photos/videos",
                     "Get multiple shop opinions",
                     "Request detailed diagnostic reports",
-                    "Save all error codes displayed"
+                    "Save all error codes displayed",
                 ],
                 "confidence": 0.0,
                 "similar_cases": [],
@@ -465,12 +465,12 @@ Return response as properly formatted JSON with markdown content:
                     "Can I see the test results?",
                     "What's the root cause of the problem?",
                     "Are there any TSBs for this issue?",
-                    "What's included in your warranty?"
+                    "What's included in your warranty?",
                 ],
                 "diy_feasible": False,
                 "parts_needed": [],
                 "labor_hours": {"book": 0, "actual": 0},
-                "warranty_applies": False
+                "warranty_applies": False,
             }
 
     def _store_in_bigquery(self, record: Dict):

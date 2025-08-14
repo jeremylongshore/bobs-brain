@@ -14,7 +14,7 @@ const Neo4jDashboard = () => {
 
   const NEO4J_CONSOLE_URL = 'https://console.neo4j.io';
   const NEO4J_URI = 'neo4j+s://d3653283.databases.neo4j.io';
-  
+
   const sampleQueries = [
     {
       title: 'Find all equipment',
@@ -103,7 +103,7 @@ RETURN path`
         {/* Neo4j Access Section */}
         <div className="bg-white rounded-xl shadow-xl p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">🔗 Neo4j Access</h2>
-          
+
           <div className="flex flex-wrap gap-4 mb-6">
             <a
               href={NEO4J_CONSOLE_URL}
@@ -114,7 +114,7 @@ RETURN path`
               <Database className="w-5 h-5" />
               Open Neo4j Console
             </a>
-            
+
             <button
               onClick={() => setShowEmbedded(!showEmbedded)}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
@@ -122,7 +122,7 @@ RETURN path`
               <Activity className="w-5 h-5" />
               {showEmbedded ? 'Hide' : 'Show'} Embedded View
             </button>
-            
+
             <button
               onClick={() => copyToClipboard(NEO4J_URI)}
               className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
@@ -179,7 +179,7 @@ RETURN path`
         {/* Data Sources */}
         <div className="bg-white rounded-xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">📡 Live Data Sources</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-purple-50 rounded-lg p-6">
               <h3 className="font-semibold text-purple-800 mb-2">YouTube Channels</h3>
@@ -190,7 +190,7 @@ RETURN path`
                 <li>• Diesel Tech Ron</li>
               </ul>
             </div>
-            
+
             <div className="bg-blue-50 rounded-lg p-6">
               <h3 className="font-semibold text-blue-800 mb-2">Reddit Communities</h3>
               <ul className="text-sm text-gray-600 space-y-1">
@@ -200,7 +200,7 @@ RETURN path`
                 <li>• r/Powerstroke</li>
               </ul>
             </div>
-            
+
             <div className="bg-green-50 rounded-lg p-6">
               <h3 className="font-semibold text-green-800 mb-2">Equipment Forums</h3>
               <ul className="text-sm text-gray-600 space-y-1">

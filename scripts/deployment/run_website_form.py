@@ -8,7 +8,7 @@ import os
 import sys
 
 # Add src directory to path
-sys.path.insert(0, '/app/src')
+sys.path.insert(0, "/app/src")
 
 # Import and run the website form integration app
 from website_form_bigquery_integration import app
