@@ -482,9 +482,9 @@ gcloud projects add-iam-policy-binding bobs-house-ai \
 2. **Git Commit Messages**
    ```
    <type>(<scope>): <subject>
-   
+
    <body>
-   
+
    <footer>
    ```
    Types: feat, fix, docs, style, refactor, test, chore

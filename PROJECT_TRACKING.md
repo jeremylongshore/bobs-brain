@@ -71,7 +71,7 @@ gcloud run deploy bobs-brain \
 ## ⚠️ COMMON MISTAKES
 
 1. **Wrong project for Vertex AI**
-   - ❌ Using `diagnostic-pro-mvp` 
+   - ❌ Using `diagnostic-pro-mvp`
    - ✅ Use `bobs-house-ai`
 
 2. **Wrong project for deployment**

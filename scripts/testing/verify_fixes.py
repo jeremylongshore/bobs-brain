@@ -90,7 +90,7 @@ def check_services_health():
     all_healthy = True
     for name, url in services:
         cmd = (
-            f"curl -s {url} | python3 -c \"import json, sys; "
+            f'curl -s {url} | python3 -c "import json, sys; '
             "data = json.load(sys.stdin); print(data.get('status', 'unknown'))\""
         )
         output, code = run_command(cmd)

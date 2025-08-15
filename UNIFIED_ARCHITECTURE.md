@@ -89,7 +89,7 @@ class VertexAILLMClient(LLMClient):
     """Custom LLM client for Vertex AI"""
     def __init__(self, model_name="gemini-1.5-flash"):
         self.model = TextGenerationModel.from_pretrained(model_name)
-    
+
     async def generate(self, prompt, **kwargs):
         response = await self.model.predict_async(prompt)
         return response.text
@@ -98,7 +98,7 @@ class VertexAIEmbedder(EmbedderClient):
     """Custom embedder using Vertex AI"""
     def __init__(self, model_name="textembedding-gecko@003"):
         self.model = TextEmbeddingModel.from_pretrained(model_name)
-    
+
     async def embed(self, text):
         embeddings = await self.model.get_embeddings_async([text])
         return embeddings[0].values
@@ -127,14 +127,14 @@ gcloud compute instances create neo4j-graphiti \
     echo "deb https://debian.neo4j.com stable latest" > /etc/apt/sources.list.d/neo4j.list
     apt-get update
     apt-get install -y neo4j neo4j-graph-data-science
-    
+
     # Configure for production
     echo "dbms.memory.heap.max_size=4G" >> /etc/neo4j/neo4j.conf
     echo "dbms.security.auth_enabled=true" >> /etc/neo4j/neo4j.conf
-    
+
     # Enable vector indexes
     echo "dbms.index.fulltext.enabled=true" >> /etc/neo4j/neo4j.conf
-    
+
     systemctl enable neo4j
     systemctl start neo4j'
 
@@ -151,14 +151,14 @@ import chromadb
 
 async def migrate_all_to_graphiti():
     """Migrate EVERYTHING to Graphiti"""
-    
+
     # Initialize with Vertex AI
     graphiti = create_vertex_graphiti()
-    
+
     # 1. Migrate Firestore documents
     print("Migrating Firestore...")
     fs = firestore.Client(project='diagnostic-pro-mvp')
-    
+
     for collection in ['shared_knowledge', 'bob_conversations']:
         docs = fs.collection(collection).get()
         for doc in docs:
@@ -169,12 +169,12 @@ async def migrate_all_to_graphiti():
                 source_description=f"Migrated from Firestore/{collection}",
                 reference_time=datetime.now()
             )
-    
+
     # 2. Migrate ChromaDB vectors
     print("Migrating ChromaDB...")
     chroma = chromadb.PersistentClient(path='./chroma_data')
     collection = chroma.get_collection('bob_knowledge')
-    
+
     all_data = collection.get()
     for doc, metadata in zip(all_data['documents'], all_data['metadatas']):
         await graphiti.add_episode(
@@ -183,9 +183,9 @@ async def migrate_all_to_graphiti():
             source_description="Migrated from ChromaDB",
             reference_time=datetime.now()
         )
-    
+
     print("✅ Migration complete! Firestore and ChromaDB are now obsolete.")
-    
+
     # 3. Delete old data (after verification)
     # fs.collection('shared_knowledge').delete()  # Uncomment when ready
     # chroma.delete_collection('bob_knowledge')   # Uncomment when ready

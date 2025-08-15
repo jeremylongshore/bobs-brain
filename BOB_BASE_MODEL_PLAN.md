@@ -11,7 +11,7 @@ Instead of building a new framework, we'll **enhance Bob** to become the base mo
 Current Bob → Enhanced Bob (Base Model) → Specialized Bobs
                     ↓
             - Research Bob (web scraping)
-            - Assistant Bob (calendar/tasks)  
+            - Assistant Bob (calendar/tasks)
             - Diagnostic Bob (automotive)
             - Custom Bobs (infinite variations)
 ```
@@ -67,23 +67,23 @@ import logging
 
 class BobMemory:
     """Enhanced memory system for Bob using Graphiti + Firestore"""
-    
+
     def __init__(self, project_id='diagnostic-pro-mvp'):
         # Existing Firestore (for compatibility)
         self.firestore = firestore.Client(
             project=project_id,
             database='bob-brain'
         )
-        
+
         # NEW: Graphiti for intelligence
         self.graphiti = Graphiti(
             neo4j_uri="bolt://localhost:7687",
             neo4j_user="neo4j",
             neo4j_password="bobpassword"
         )
-        
+
         self.logger = logging.getLogger('BobMemory')
-    
+
     def remember(self, user_id, content, context=None):
         """Store knowledge in both systems"""
         # Extract entities and relationships
@@ -93,15 +93,15 @@ class BobMemory:
             "context": context,
             "timestamp": datetime.now()
         }
-        
+
         # Graphiti extracts facts, entities, relationships
         self.graphiti.add_episode(episode)
-        
+
         # Also store in Firestore for backup
         self.firestore.collection('conversations').add(episode)
-        
+
         self.logger.info(f"Remembered: {content[:50]}...")
-    
+
     def recall(self, query, user_id=None):
         """Intelligent recall using knowledge graph"""
         # Search Graphiti's knowledge graph
@@ -110,9 +110,9 @@ class BobMemory:
             user_context=user_id,
             temporal_context=datetime.now()
         )
-        
+
         return results
-    
+
     def get_user_profile(self, user_id):
         """Build complete user understanding"""
         # Get all facts about a user from graph
@@ -126,40 +126,40 @@ from bob_memory import BobMemory
 
 class BobBase(BobCloudRun):  # Inherit from existing Bob
     """Enhanced Bob with Graphiti memory and Model Garden"""
-    
+
     def __init__(self):
         super().__init__()  # Keep all existing Bob functionality
-        
+
         # ENHANCEMENT: Advanced memory
         self.memory = BobMemory()
-        
+
         # ENHANCEMENT: Model router (next phase)
         self.model_router = None  # Will add in Phase 2
-        
+
         # ENHANCEMENT: Tool registry
         self.tools = {}  # Will add in Phase 3
-    
+
     def process_message(self, message, user_id):
         """Enhanced message processing with memory"""
         # Remember the conversation
         self.memory.remember(user_id, message)
-        
+
         # Get user context from knowledge graph
         user_context = self.memory.get_user_profile(user_id)
-        
+
         # Check if this relates to past conversations
         relevant_history = self.memory.recall(message, user_id)
-        
+
         # Generate response with full context
         response = self.generate_response(
             message=message,
             context=user_context,
             history=relevant_history
         )
-        
+
         # Remember the response too
         self.memory.remember(user_id, f"Bob said: {response}")
-        
+
         return response
 ```
 
@@ -176,11 +176,11 @@ from vertexai.preview.generative_models import GenerativeModel
 
 class BobModelRouter:
     """Intelligent routing to 200+ Model Garden models"""
-    
+
     def __init__(self, project_id='diagnostic-pro-mvp'):
         aiplatform.init(project=project_id, location='us-central1')
         vertexai.init(project=project_id)
-        
+
         # Model configurations
         self.models = {
             'chat': 'gemini-2.0-flash',      # Fast, cheap
@@ -189,29 +189,29 @@ class BobModelRouter:
             'vision': 'imagen',               # Image understanding
             'complex': 'claude-3-opus'        # Via Model Garden
         }
-        
+
         # Track usage for cost optimization
         self.usage = {}
-    
+
     def get_model(self, task_type='chat', context_size=0):
         """Select best model for the task"""
         if context_size > 200000:
             return GenerativeModel('gemini-1.5-pro')  # 2M context
-        
+
         if task_type in self.models:
             model_name = self.models[task_type]
             return GenerativeModel(model_name)
-        
+
         # Default to cheap and fast
         return GenerativeModel('gemini-2.0-flash')
-    
+
     def generate(self, prompt, task_type='chat'):
         """Generate response using appropriate model"""
         model = self.get_model(task_type, len(prompt))
-        
+
         # Track usage
         self.usage[task_type] = self.usage.get(task_type, 0) + 1
-        
+
         response = model.generate_content(prompt)
         return response.text
 ```
@@ -225,27 +225,27 @@ class BobBase(BobCloudRun):
     def __init__(self):
         super().__init__()
         self.memory = BobMemory()
-        
+
         # NEW: Model router
         self.model_router = BobModelRouter()
-    
+
     def generate_response(self, message, context=None, history=None):
         """Generate response using best model"""
         # Determine task type
         task_type = self.classify_task(message)
-        
+
         # Build prompt with context
         prompt = self.build_prompt(message, context, history)
-        
+
         # Use router to get response
         response = self.model_router.generate(prompt, task_type)
-        
+
         return response
-    
+
     def classify_task(self, message):
         """Classify message to select model"""
         message_lower = message.lower()
-        
+
         if 'research' in message_lower or 'find' in message_lower:
             return 'research'
         elif 'code' in message_lower or 'function' in message_lower:
@@ -267,33 +267,33 @@ class BobBase(BobCloudRun):
 # src/bob_base.py (final form)
 class BobBase:
     """Base Bob that can be specialized"""
-    
+
     def __init__(self, specialization=None):
         super().__init__()
         self.memory = BobMemory()
         self.model_router = BobModelRouter()
         self.tools = {}
         self.specialization = specialization or "general"
-        
+
         # Load specialization config
         self.load_specialization()
-    
+
     def load_specialization(self):
         """Load tools and configs for specialization"""
         if self.specialization == "research":
             from research_tools import WebScraper, PDFProcessor
             self.tools['scraper'] = WebScraper()
             self.tools['pdf'] = PDFProcessor()
-            
+
         elif self.specialization == "assistant":
             from assistant_tools import Calendar, TaskManager
             self.tools['calendar'] = Calendar()
             self.tools['tasks'] = TaskManager()
-    
+
     def clone(self, new_specialization):
         """Create a new Bob with different specialization"""
         return BobBase(specialization=new_specialization)
-    
+
     # Override this in specialized Bobs
     def specialized_processing(self, message):
         """Hook for specialized behavior"""
@@ -309,16 +309,16 @@ from bs4 import BeautifulSoup
 
 class ResearchBob(BobBase):
     """Bob specialized for research and data gathering"""
-    
+
     def __init__(self):
         super().__init__(specialization="research")
         self.setup_research_tools()
-    
+
     def setup_research_tools(self):
         """Initialize research-specific tools"""
         self.playwright = sync_playwright().start()
         self.browser = self.playwright.chromium.launch(headless=True)
-    
+
     def specialized_processing(self, message):
         """Research-specific processing"""
         if "scrape" in message.lower():
@@ -326,48 +326,48 @@ class ResearchBob(BobBase):
         elif "research" in message.lower():
             return self.deep_research(message)
         return None
-    
+
     def scrape_web(self, query):
         """Scrape public data from web"""
         # Extract URL from query
         url = self.extract_url(query)
-        
+
         if url:
             page = self.browser.new_page()
             page.goto(url)
             content = page.content()
-            
+
             # Parse with BeautifulSoup
             soup = BeautifulSoup(content, 'html.parser')
             text = soup.get_text()
-            
+
             # Store in memory
             self.memory.remember("research", f"Scraped {url}: {text[:500]}")
-            
+
             # Analyze with AI
             analysis = self.model_router.generate(
                 f"Analyze this content: {text[:2000]}",
                 task_type='research'
             )
-            
+
             return f"Scraped and analyzed {url}:\n{analysis}"
-        
+
         return "Please provide a URL to scrape"
-    
+
     def deep_research(self, topic):
         """Conduct deep research on a topic"""
         # Search existing knowledge
         existing = self.memory.recall(topic)
-        
+
         # Determine what's missing
         gaps = self.model_router.generate(
             f"What information is missing about {topic}? Current knowledge: {existing}",
             task_type='research'
         )
-        
+
         # Gather new information (simplified for demo)
         # In production, this would scrape multiple sources
-        
+
         return f"Research on {topic}:\nExisting: {existing}\nGaps: {gaps}"
 ```
 
@@ -424,10 +424,10 @@ async def query_bob(bob_type: str, message: str):
     """Query a specific Bob"""
     if bob_type not in bobs:
         raise HTTPException(404, f"Bob type '{bob_type}' not found")
-    
+
     bob = bobs[bob_type]
     response = bob.process_message(message, user_id="api_user")
-    
+
     return {
         "bob_type": bob_type,
         "query": message,
@@ -470,16 +470,16 @@ async def list_bobs():
    def test_graphiti_memory():
        bob = BobBase()
        bob.memory.remember("user1", "My birthday is May 15")
-       
+
        # Later...
        facts = bob.memory.recall("birthday", "user1")
        assert "May 15" in str(facts)
-   
+
    def test_model_router():
        bob = BobBase()
        response = bob.model_router.generate("Hello", task_type='chat')
        assert response is not None
-   
+
    def test_specialization():
        research_bob = ResearchBob()
        assert 'scraper' in research_bob.tools

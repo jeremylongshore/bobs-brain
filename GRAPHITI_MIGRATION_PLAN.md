@@ -145,41 +145,41 @@ class GraphitiMigrationManager:
     """
     Migrate all databases to Graphiti on GCP
     """
-    
+
     def __init__(self):
         # Neo4j on GCP
         neo4j_host = os.environ.get('NEO4J_HOST', 'bob-neo4j.us-central1.gcp.com')
         neo4j_password = os.environ.get('NEO4J_PASSWORD', 'BobBrainGraph2025')
-        
+
         # Initialize Graphiti
         self.graphiti = Graphiti(
             f"bolt://{neo4j_host}:7687",
             "neo4j",
             neo4j_password
         )
-        
+
         # Connect to existing databases
         self.firestore = firestore.Client(
             project='diagnostic-pro-mvp',
             database='bob-brain'
         )
-        
+
         self.chroma_client = chromadb.PersistentClient(
             path='/home/jeremylongshore/bobs-brain/chroma_data'
         )
-        
+
         self.logger = logging.getLogger('GraphitiMigration')
-    
+
     def migrate_firestore_to_graph(self):
         """
         Convert Firestore documents to graph entities
         """
         # Migrate shared_knowledge
         knowledge_docs = self.firestore.collection('shared_knowledge').get()
-        
+
         for doc in knowledge_docs:
             data = doc.to_dict()
-            
+
             # Create episode for Graphiti
             episode = EpisodeType(
                 name=doc.id,
@@ -194,16 +194,16 @@ class GraphitiMigrationManager:
                     'original_id': data.get('original_id', doc.id)
                 }
             )
-            
+
             # Add to Graphiti (creates entities and relationships)
             self.graphiti.add_episode(episode)
-        
+
         # Migrate conversations
         conversations = self.firestore.collection('bob_conversations').get()
-        
+
         for conv in conversations:
             data = conv.to_dict()
-            
+
             # Create user entity
             user_episode = EpisodeType(
                 name=f"user_{data.get('user_id')}",
@@ -212,7 +212,7 @@ class GraphitiMigrationManager:
                 created_at=data.get('timestamp'),
                 valid_at=data.get('timestamp')
             )
-            
+
             # Create Bob's response
             bob_episode = EpisodeType(
                 name=f"bob_response_{conv.id}",
@@ -222,17 +222,17 @@ class GraphitiMigrationManager:
                 valid_at=data.get('timestamp'),
                 reference_time=data.get('timestamp')
             )
-            
+
             self.graphiti.add_episode(user_episode)
             self.graphiti.add_episode(bob_episode)
-    
+
     def migrate_chromadb_to_graph(self):
         """
         Convert ChromaDB vectors to graph with embeddings
         """
         collection = self.chroma_client.get_collection('bob_knowledge')
         all_data = collection.get()
-        
+
         for i, (doc_id, content, metadata) in enumerate(
             zip(all_data['ids'], all_data['documents'], all_data['metadatas'])
         ):
@@ -251,9 +251,9 @@ class GraphitiMigrationManager:
                     'priority': metadata.get('priority', 'normal')
                 }
             )
-            
+
             self.graphiti.add_episode(episode)
-    
+
     def migrate_mvp3_data(self):
         """
         Integrate MVP3 business data into knowledge graph
@@ -263,12 +263,12 @@ class GraphitiMigrationManager:
             project='diagnostic-pro-mvp'
             # Uses default database
         )
-        
+
         # Migrate users as entities
         users = mvp3_db.collection('users').get()
         for user in users:
             data = user.to_dict()
-            
+
             # Create user entity
             user_episode = EpisodeType(
                 name=f"mvp3_user_{user.id}",
@@ -280,14 +280,14 @@ class GraphitiMigrationManager:
                     'type': 'customer'
                 }
             )
-            
+
             self.graphiti.add_episode(user_episode)
-        
+
         # Migrate diagnostic submissions
         diagnostics = mvp3_db.collection('diagnostic_submissions').get()
         for diag in diagnostics:
             data = diag.to_dict()
-            
+
             # Create diagnostic entity
             diag_episode = EpisodeType(
                 name=f"diagnostic_{diag.id}",
@@ -299,9 +299,9 @@ class GraphitiMigrationManager:
                     'status': data.get('status', 'submitted')
                 }
             )
-            
+
             self.graphiti.add_episode(diag_episode)
-    
+
     def create_core_entities(self):
         """
         Create core business entities in the graph
@@ -318,7 +318,7 @@ class GraphitiMigrationManager:
                 'background': 'BBI, trucking'
             }
         )
-        
+
         # Create DiagnosticPro company
         company_episode = EpisodeType(
             name="DiagnosticPro",
@@ -331,7 +331,7 @@ class GraphitiMigrationManager:
                 'mission': 'Protect customers from repair overcharges'
             }
         )
-        
+
         # Create Bob as AI agent
         bob_episode = EpisodeType(
             name="Bob_AI_Agent",
@@ -344,46 +344,46 @@ class GraphitiMigrationManager:
                 'capabilities': ['research', 'assistance', 'diagnostics']
             }
         )
-        
+
         self.graphiti.add_episode(jeremy_episode)
         self.graphiti.add_episode(company_episode)
         self.graphiti.add_episode(bob_episode)
-    
+
     def run_complete_migration(self):
         """
         Execute full migration to Graphiti
         """
         self.logger.info("Starting Graphiti migration on GCP...")
-        
+
         # 1. Create core entities
         self.logger.info("Creating core entities...")
         self.create_core_entities()
-        
+
         # 2. Migrate Firestore
         self.logger.info("Migrating Firestore data...")
         self.migrate_firestore_to_graph()
-        
+
         # 3. Migrate ChromaDB
         self.logger.info("Migrating ChromaDB vectors...")
         self.migrate_chromadb_to_graph()
-        
+
         # 4. Migrate MVP3
         self.logger.info("Integrating MVP3 business data...")
         self.migrate_mvp3_data()
-        
+
         # 5. Build relationships
         self.logger.info("Building knowledge graph relationships...")
         self.graphiti.build_communities()
-        
+
         self.logger.info("Migration complete!")
-        
+
         # Get statistics
         stats = {
             'nodes': self.graphiti.get_node_count(),
             'edges': self.graphiti.get_edge_count(),
             'communities': self.graphiti.get_community_count()
         }
-        
+
         return stats
 ```
 
@@ -398,17 +398,17 @@ class BobGraphiti(BobBase):
     """
     Bob powered by Graphiti knowledge graph on GCP
     """
-    
+
     def __init__(self):
         super().__init__()
-        
+
         # Connect to Graphiti on GCP
         self.graphiti = Graphiti(
             f"bolt://{os.environ['NEO4J_HOST']}:7687",
             "neo4j",
             os.environ['NEO4J_PASSWORD']
         )
-        
+
     def process_message(self, message: str, user_id: str):
         """
         Process using Graphiti's knowledge graph
@@ -421,7 +421,7 @@ class BobGraphiti(BobBase):
             created_at=datetime.now()
         )
         self.graphiti.add_episode(episode)
-        
+
         # Search knowledge graph
         search_config = SearchConfig(
             query=message,
@@ -429,13 +429,13 @@ class BobGraphiti(BobBase):
             include_community_info=True,
             temporal_context=datetime.now()
         )
-        
+
         results = self.graphiti.search(search_config)
-        
+
         # Generate response with graph context
         context = self._build_graph_context(results)
         response = self.generate_response(message, context)
-        
+
         # Add response to graph
         response_episode = EpisodeType(
             name=f"response_{datetime.now().isoformat()}",
@@ -444,9 +444,9 @@ class BobGraphiti(BobBase):
             created_at=datetime.now()
         )
         self.graphiti.add_episode(response_episode)
-        
+
         return response
-    
+
     def _build_graph_context(self, results):
         """
         Build context from knowledge graph results
@@ -457,7 +457,7 @@ class BobGraphiti(BobBase):
             'facts': [],
             'temporal_context': []
         }
-        
+
         for result in results:
             if result.node:
                 context['entities'].append({
@@ -465,7 +465,7 @@ class BobGraphiti(BobBase):
                     'content': result.node.content,
                     'created': result.node.created_at
                 })
-            
+
             if result.edges:
                 for edge in result.edges:
                     context['relationships'].append({
@@ -474,10 +474,10 @@ class BobGraphiti(BobBase):
                         'type': edge.relationship_type,
                         'valid_from': edge.valid_at
                     })
-            
+
             if result.facts:
                 context['facts'].extend(result.facts)
-        
+
         return context
 ```
 

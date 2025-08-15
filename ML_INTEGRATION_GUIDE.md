@@ -11,7 +11,7 @@ from google.cloud import aiplatform
 
 # Load customer data
 query = """
-SELECT vehicle_make, vehicle_model, repair_type, 
+SELECT vehicle_make, vehicle_model, repair_type,
        quoted_price, fair_price, savings
 FROM `diagnostic-pro-mvp.bob-brain.diagnostic_submissions`
 """
@@ -100,12 +100,12 @@ FROM ML.PREDICT(MODEL `bob-brain.repair_price_model`,
 # In Bob's code (bob_http_graphiti.py)
 async def process_message(self, text: str, user: str, channel: str):
     # ... existing search code ...
-    
+
     # Check if asking about repair price
     if "repair" in text and "price" in text:
         # Call your ML model
         prediction = await self.predict_fair_price(text)
-        
+
         # Add to response
         response = f"Based on ML analysis of {self.model_training_data} similar repairs, "
         response += f"the fair price should be around ${prediction:.2f}"
@@ -119,26 +119,26 @@ from google.cloud import aiplatform
 class BobWithML:
     def __init__(self):
         # ... existing init ...
-        
+
         # Load your custom ML model
         self.price_model = aiplatform.Model(
             model_name="repair-price-predictor"
         )
-        
+
         # Load scam detection model
         self.scam_detector = aiplatform.Model(
             model_name="scam-detector"
         )
-    
+
     async def analyze_repair_quote(self, quote_data):
         """Use ML to analyze a repair quote"""
-        
+
         # 1. Predict fair price
         fair_price = self.price_model.predict(quote_data)
-        
+
         # 2. Check for scam
         scam_probability = self.scam_detector.predict(quote_data)
-        
+
         # 3. Generate response
         if scam_probability > 0.7:
             return f"⚠️ Warning: This quote seems {scam_probability*100:.0f}% likely to be overpriced!"
@@ -162,7 +162,7 @@ bq load --source_format=DATASTORE_BACKUP \
 -- In BigQuery
 CREATE MODEL `bob-brain.quick_price_model`
 OPTIONS(model_type='linear_reg') AS
-SELECT 
+SELECT
   repair_type,
   vehicle_year,
   quoted_price as label

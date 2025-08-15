@@ -152,7 +152,7 @@ GRAPHITI_MAX_CONCURRENT_EDGES=10
 
 ### Production on GCP
 - **Neo4j VM**: $50/month
-- **Cloud Run**: $20/month  
+- **Cloud Run**: $20/month
 - **Firestore**: $10/month
 - **Vertex AI**: $30/month
 - **Total**: $110/month
@@ -210,7 +210,7 @@ Fix bob_memory.py line 58-61:
 # WRONG (current)
 self.graphiti = Graphiti(
     neo4j_uri=uri,      # ❌
-    neo4j_user=user,    # ❌  
+    neo4j_user=user,    # ❌
     neo4j_password=password  # ❌
 )
 

@@ -50,7 +50,7 @@ python3 src/bob_solid.py
 ## 🎯 CORE TRUTH:
 Bob is just 3 things:
 1. **Slack Listener** (slack-bolt)
-2. **AI Brain** (Vertex AI) 
+2. **AI Brain** (Vertex AI)
 3. **Memory** (ChromaDB)
 
 Everything else is extra.

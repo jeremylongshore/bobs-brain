@@ -205,7 +205,7 @@ After first overnight run, Bob will have:
 
 ### Check scraping history:
 ```sql
-SELECT 
+SELECT
   scrape_id,
   start_time,
   end_time,
@@ -219,7 +219,7 @@ LIMIT 10
 
 ### View S740 knowledge growth:
 ```sql
-SELECT 
+SELECT
   DATE(scraped_at) as date,
   COUNT(*) as issues_found,
   COUNT(DISTINCT problem_type) as problem_types

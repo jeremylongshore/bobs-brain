@@ -1,12 +1,12 @@
 # 📊 DATA MIGRATION STATUS - COMPLETE
 
-**Date:** 2025-08-10  
+**Date:** 2025-08-10
 **Status:** ✅ All available data migrated to Graphiti
 
 ## 🔍 Data Audit Results
 
 ### Local Data Found and Migrated:
-- **ChromaDB:** 5 documents 
+- **ChromaDB:** 5 documents
   - Location: `./chroma_data/bob_knowledge`
   - Status: ✅ Migrated to production Neo4j via API
   - Backup: `bob_data_backup_20250810_185731.json`
@@ -29,7 +29,7 @@
    - ✅ `./chroma_data` - Found 5 documents
    - ✅ `~/.bob_brain/chroma` - Empty
    - ✅ `./chroma` - Not found
-   
+
 2. **Firestore:**
    - ❌ `diagnostic-pro-mvp` - Datastore mode (not accessible)
    - ❌ `bobs-house-ai` - Permission denied from local

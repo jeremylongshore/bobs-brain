@@ -87,7 +87,7 @@ Every new Firestore document automatically copies to BigQuery!
 ### 1. Find Patterns
 ```sql
 -- Which shops overcharge most?
-SELECT 
+SELECT
   shop_name,
   AVG(quoted_price - fair_price) as avg_overcharge,
   COUNT(*) as num_quotes
@@ -101,7 +101,7 @@ ORDER BY avg_overcharge DESC
 -- Create price prediction model
 CREATE MODEL diagnosticpro_analytics.price_predictor
 OPTIONS(model_type='linear_reg') AS
-SELECT 
+SELECT
   vehicle_make, vehicle_model, repair_type,
   quoted_price as label
 FROM diagnosticpro_analytics.diagnostic_submissions
@@ -110,7 +110,7 @@ FROM diagnosticpro_analytics.diagnostic_submissions
 ### 3. Business Intelligence
 ```sql
 -- Monthly revenue saved for customers
-SELECT 
+SELECT
   DATE_TRUNC(timestamp, MONTH) as month,
   SUM(quoted_price - fair_price) as total_saved,
   COUNT(DISTINCT customer_email) as customers_helped
@@ -125,11 +125,11 @@ class BobWithBothDatabases:
     def __init__(self):
         self.firestore = firestore.Client()  # Real-time
         self.bigquery = bigquery.Client()    # Analytics
-    
+
     async def process_message(self, text):
         # Quick lookup in Firestore
         recent_submission = self.firestore.collection('diagnostic_submissions').limit(1).get()
-        
+
         # Analytics from BigQuery
         query = """
         SELECT AVG(quoted_price) as avg_price
@@ -137,7 +137,7 @@ class BobWithBothDatabases:
         WHERE repair_type = 'brake_replacement'
         """
         analytics = self.bigquery.query(query).result()
-        
+
         # Bob uses both!
         response = f"Latest submission: {recent_submission}"
         response += f"Average brake price: {analytics.avg_price}"

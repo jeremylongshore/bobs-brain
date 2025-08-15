@@ -127,32 +127,32 @@ class HybridMemory:
             neo4j_user=os.getenv("NEO4J_USER"),
             neo4j_password=os.getenv("NEO4J_PASSWORD")
         )
-        
+
         # Firestore for document storage
         self.firestore = firestore.Client(
             project='diagnostic-pro-mvp',
             database='agent-knowledge'
         )
-        
+
         # Vector search for semantic retrieval
         self.vector_index = self._init_vector_search()
-    
+
     def store_knowledge(self, content, metadata):
         # Store in Graphiti for relationships
         entities = self.graphiti.extract_entities(content)
         self.graphiti.add_entities(entities)
-        
+
         # Store in Firestore for persistence
         doc_ref = self.firestore.collection('knowledge').add({
             'content': content,
             'metadata': metadata,
             'timestamp': datetime.now()
         })
-        
+
         # Generate embeddings for search
         embedding = self.generate_embedding(content)
         self.vector_index.add(embedding, doc_ref.id)
-        
+
         return doc_ref.id
 ```
 
@@ -166,7 +166,7 @@ class ModelRouter:
     def __init__(self):
         self.model_configs = self._load_configs()
         self.usage_tracker = {}
-        
+
     def select_model(self, task_type, context_size, priority='balanced'):
         """
         Intelligently route to the best model based on:
@@ -179,22 +179,22 @@ class ModelRouter:
                 return self.get_model('gemini-2.0-flash')
             else:
                 return self.get_model('gemini-1.5-pro')
-                
+
         elif task_type == 'research':
             if priority == 'quality':
                 return self.get_model('gemini-1.5-pro')
             else:
                 return self.get_model('gemini-2.0-flash')
-                
+
         elif task_type == 'code':
             return self.get_model('codey')
-            
+
         elif task_type == 'vision':
             return self.get_model('imagen')
-            
+
         elif task_type == 'complex_reasoning':
             return self.get_model('claude-3-opus')
-            
+
         else:
             return self.get_model('gemini-2.0-flash')  # Default
 ```
@@ -216,7 +216,7 @@ class ResearchScraper:
     def __init__(self):
         self.rate_limiter = RateLimiter(requests_per_second=1)
         self.user_agent = "ResearchAgent/1.0 (Compatible; For research purposes)"
-        
+
     async def scrape_public_data(self, urls):
         """
         Scrape public forums, documentation, PDFs
@@ -227,22 +227,22 @@ class ResearchScraper:
         results = []
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
-            
+
             for url in urls:
                 if self._check_robots_txt(url):
                     page = await browser.new_page()
                     await page.goto(url)
                     content = await page.content()
-                    
+
                     # Parse with BeautifulSoup
                     soup = BeautifulSoup(content, 'html.parser')
-                    
+
                     # Extract meaningful data
                     data = self._extract_data(soup)
                     results.append(data)
-                    
+
                     await self.rate_limiter.wait()
-                    
+
         return results
 ```
 
@@ -253,24 +253,24 @@ class KnowledgeBuilder:
     def __init__(self, memory_manager):
         self.memory = memory_manager
         self.quality_scorer = QualityScorer()
-        
+
     def process_research_data(self, raw_data):
         """
         Transform raw scraped data into structured knowledge
         """
         # Quality filtering
-        high_quality = [d for d in raw_data 
+        high_quality = [d for d in raw_data
                        if self.quality_scorer.score(d) > 0.7]
-        
+
         # Entity extraction
         entities = self.extract_entities(high_quality)
-        
+
         # Relationship mapping
         relationships = self.map_relationships(entities)
-        
+
         # Temporal tracking
         temporal_facts = self.extract_temporal_facts(high_quality)
-        
+
         # Store in hybrid memory
         for fact in temporal_facts:
             self.memory.store_knowledge(
@@ -281,7 +281,7 @@ class KnowledgeBuilder:
                     'timestamp': fact['timestamp']
                 }
             )
-        
+
         return {
             'entities': entities,
             'relationships': relationships,
@@ -345,12 +345,12 @@ async def query_agent(request: QueryRequest):
     agent = AgentRegistry.get_agent(request.agent_type)
     if not agent:
         raise HTTPException(404, f"Agent {request.agent_type} not found")
-    
+
     response = await agent.process_query(
         query=request.query,
         context=request.context
     )
-    
+
     return {
         "agent": request.agent_type,
         "response": response,

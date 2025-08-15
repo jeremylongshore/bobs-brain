@@ -49,7 +49,7 @@ Building a **modular, cloud-native agent framework** that creates specialized AI
 **1. Graphiti (Knowledge Graphs)**
 - **Purpose**: Relationship intelligence, temporal reasoning
 - **Deployment**: Cloud Run with Neo4j container
-- **Use Cases**: 
+- **Use Cases**:
   - Entity relationships (customers → equipment → repairs)
   - Temporal tracking (when facts changed)
   - Pattern recognition across data
@@ -123,7 +123,7 @@ Your $1000 credits = 10 months runway
 ```python
 # Framework selection
 - LangChain: UI components, tool chains
-- Google ADK: GCP-native orchestration  
+- Google ADK: GCP-native orchestration
 - Crew AI: Multi-agent coordination (future)
 - Graphiti: Memory and relationships
 ```
@@ -202,7 +202,7 @@ fastapi==0.104.0
 
 **1. startaitools.com (HQ/Command Center)**
 - **Purpose**: Admin dashboard for all agents
-- **Tech Stack**: 
+- **Tech Stack**:
   - Frontend: React/Next.js or Streamlit
   - Auth: Firebase Auth
   - Backend: Cloud Run + FastAPI

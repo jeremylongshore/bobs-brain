@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from google.cloud import bigquery
-from playwright.async_api import async_playwright, Page
+from playwright.async_api import Page, async_playwright
 
 from forum_scraper import ForumIntelligenceScraper
 
@@ -26,10 +26,10 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     Specialized scraper for skid steer and compact equipment knowledge
     Focus on Bobcat S740 and similar equipment
     """
-    
+
     def __init__(self, project_id="bobs-house-ai"):
         super().__init__(project_id)
-        
+
         # Specialized equipment patterns
         self.target_equipment = {
             "bobcat": {
@@ -67,7 +67,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "common_problems": ["loader valve", "engine timing", "turbo issues"]
             }
         }
-        
+
         # Specialized forums for skid steers
         self.skidsteer_forums = [
             # Primary Skid Steer Forums
@@ -75,30 +75,30 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "https://www.tractorbynet.com/forums/compact-track-loaders/",
             "https://www.lawnsite.com/forums/heavy-equipment-skid-steers.37/",
             "https://www.skidsteerforum.com",
-            
+
             # Bobcat Specific
             "https://www.bobcatforum.com",
             "https://talk.newagtalk.com/forums/forum-view.asp?fid=150",  # Bobcat section
-            
+
             # Equipment Forums with Skid Steer Sections
             "https://www.smokstak.com/forum/forums/construction-industrial-equipment.134/",
             "https://www.mytractorforum.com/forums/skid-steer-loaders.137/",
             "https://forums.yesterdaystractors.com/forums/construction-equipment.98/",
-            
+
             # Reddit Communities
             "https://www.reddit.com/r/HeavyEquipment/",
             "https://www.reddit.com/r/Construction/",
             "https://www.reddit.com/r/Landscaping/",
-            
+
             # Facebook Groups (public posts only)
             "https://www.facebook.com/groups/skidsteeroperators/",
             "https://www.facebook.com/groups/bobcatequipment/",
-            
+
             # Operator Forums
             "https://www.contractortalk.com/forums/heavy-equipment.172/",
             "https://www.plowsite.com/forums/skid-steer.119/",
         ]
-        
+
         # Initialize specialized tables
         self._create_skidsteer_tables()
         logger.info("🚜 Skid Steer Knowledge Scraper initialized - Focus: Bobcat S740")
@@ -109,13 +109,13 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         dataset = bigquery.Dataset(dataset_id)
         dataset.description = "Specialized skid steer and compact equipment knowledge"
         dataset.location = "US"
-        
+
         try:
             self.bq_client.create_dataset(dataset, exists_ok=True)
             logger.info("📊 Skid steer dataset ready")
         except Exception as e:
             logger.debug(f"Dataset exists or error: {e}")
-        
+
         # Specialized tables for equipment knowledge
         tables = {
             "bobcat_s740_issues": [
@@ -193,11 +193,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 bigquery.SchemaField("source", "STRING"),
             ],
         }
-        
+
         for table_name, schema in tables.items():
             table_id = f"{self.project_id}.skidsteer_knowledge.{table_name}"
             table = bigquery.Table(table_id, schema=schema)
-            
+
             try:
                 self.bq_client.create_table(table, exists_ok=True)
                 logger.info(f"✅ Skid steer table ready: {table_name}")
@@ -228,17 +228,17 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "S740 skid loader troubleshooting",
             "Bobcat 700 series problems",
         ]
-        
+
         await self.initialize_browser()
         relevant_urls = set()
-        
+
         for query in search_queries:
             try:
                 # Use DuckDuckGo for less restrictive searching
                 search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}"
                 page = await self.context.new_page()
                 await page.goto(search_url, wait_until='networkidle')
-                
+
                 # Extract search results
                 links = await page.evaluate("""
                     () => {
@@ -252,16 +252,16 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                         return links.slice(0, 10);
                     }
                 """)
-                
+
                 relevant_urls.update(links)
                 await page.close()
-                
+
                 # Rate limiting
                 await asyncio.sleep(2)
-                
+
             except Exception as e:
                 logger.error(f"Search failed for '{query}': {e}")
-        
+
         logger.info(f"🔍 Found {len(relevant_urls)} potential Bobcat S740 discussions")
         return list(relevant_urls)
 
@@ -270,11 +270,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         Extract Bobcat S740 specific issue from content
         """
         content_lower = page_content.lower()
-        
+
         # Check if this is about S740
         if not any(pattern in content_lower for pattern in ["s740", "s 740", "bobcat 740"]):
             return None
-        
+
         issue_data = {
             "issue_id": hashlib.md5(f"{url}_s740".encode()).hexdigest(),
             "problem_type": self._identify_problem_type(content_lower),
@@ -292,7 +292,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "verified": self._check_if_verified(page_content),
             "scraped_at": datetime.now(),
         }
-        
+
         return issue_data
 
     def _identify_problem_type(self, content: str) -> str:
@@ -306,11 +306,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "cooling": ["cooling", "radiator", "fan", "temperature", "thermostat"],
             "control": ["joystick", "control", "pedal", "lever", "valve"],
         }
-        
+
         for prob_type, keywords in problem_types.items():
             if any(keyword in content for keyword in keywords):
                 return prob_type
-        
+
         return "general"
 
     def _extract_problem_description(self, content: str) -> str:
@@ -323,12 +323,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"won't[:\s]+([^.!?]{20,200})",
             r"fails to[:\s]+([^.!?]{20,200})",
         ]
-        
+
         for pattern in problem_patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 return match.group(1).strip()
-        
+
         # Return first 200 chars as fallback
         return content[:200].strip()
 
@@ -339,13 +339,13 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "jerky", "slow", "noise", "vibration", "error code", "warning light",
             "smoke", "burning smell", "won't lift", "won't tilt", "drifting"
         ]
-        
+
         symptoms = []
         content_lower = content.lower()
         for symptom in symptom_keywords:
             if symptom in content_lower:
                 symptoms.append(symptom)
-        
+
         return symptoms[:10]
 
     def _extract_error_codes(self, content: str) -> List[str]:
@@ -357,12 +357,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"error\s*(\d{3,5})",
             r"fault\s*(\d{3,5})",
         ]
-        
+
         codes = set()
         for pattern in code_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             codes.update(matches[:10])
-        
+
         return list(codes)
 
     def _extract_solution_text(self, content: str) -> str:
@@ -373,12 +373,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"what worked[:\s]+([^.!?]{20,500})",
             r"resolved by[:\s]+([^.!?]{20,500})",
         ]
-        
+
         for pattern in solution_patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 return match.group(1).strip()
-        
+
         return ""
 
     def _extract_parts_list(self, content: str) -> List[str]:
@@ -388,46 +388,46 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"bobcat\s*part\s*([A-Z0-9]{5,})",
             r"(\d{4,}-\d{3,})",  # Common part number format
         ]
-        
+
         parts = set()
         for pattern in parts_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             parts.update(matches[:10])
-        
+
         # Also look for part descriptions
         part_keywords = ["filter", "pump", "valve", "seal", "bearing", "belt", "hose"]
         content_lower = content.lower()
         for keyword in part_keywords:
             if keyword in content_lower:
                 parts.add(keyword)
-        
+
         return list(parts)[:15]
 
     def _extract_cost(self, content: str) -> str:
         """Extract cost information"""
         cost_pattern = r'\$\s*(\d+(?:,\d{3})*(?:\.\d{2})?)'
         matches = re.findall(cost_pattern, content)
-        
+
         if matches:
             # Return range if multiple costs mentioned
             if len(matches) > 1:
                 costs = [float(m.replace(',', '')) for m in matches]
                 return f"${min(costs):.2f} - ${max(costs):.2f}"
             return f"${matches[0]}"
-        
+
         return "unknown"
 
     def _assess_repair_difficulty(self, content: str) -> str:
         """Assess repair difficulty"""
         content_lower = content.lower()
-        
+
         if any(word in content_lower for word in ["easy", "simple", "quick", "diy", "anyone can"]):
             return "easy"
         elif any(word in content_lower for word in ["dealer", "professional", "certified", "special tool"]):
             return "professional"
         elif any(word in content_lower for word in ["moderate", "some experience", "intermediate"]):
             return "moderate"
-        
+
         return "moderate"
 
     def _extract_hours(self, content: str) -> float:
@@ -437,7 +437,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"(\d+)\s*mins?",
             r"took\s*(\d+(?:\.\d+)?)\s*hours?",
         ]
-        
+
         for pattern in time_patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
@@ -445,7 +445,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 if "min" in match.group(0).lower():
                     return value / 60  # Convert minutes to hours
                 return value
-        
+
         return 0.0
 
     def _extract_machine_hours(self, content: str) -> int:
@@ -455,22 +455,22 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"(\d+)\s*hrs?",
             r"hour\s*meter[:\s]+(\d+)",
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 return int(match.group(1))
-        
+
         return 0
 
     def _extract_year_model(self, content: str) -> str:
         """Extract year/model information"""
         year_pattern = r"(20\d{2})\s*(?:model|year|bobcat)?"
         match = re.search(year_pattern, content, re.IGNORECASE)
-        
+
         if match:
             return match.group(1)
-        
+
         return "unknown"
 
     def _check_if_verified(self, content: str) -> bool:
@@ -479,18 +479,18 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "confirmed", "verified", "worked for me", "solved", "fixed",
             "this works", "can confirm", "tested and working"
         ]
-        
+
         content_lower = content.lower()
         return any(indicator in content_lower for indicator in verified_indicators)
 
     async def extract_equipment_hacks(self, content: str, url: str, model: str) -> Optional[Dict]:
         """Extract equipment hacks and modifications"""
         hack_keywords = ["hack", "mod", "modification", "trick", "tip", "upgrade", "improve"]
-        
+
         content_lower = content.lower()
         if not any(keyword in content_lower for keyword in hack_keywords):
             return None
-        
+
         hack_data = {
             "hack_id": hashlib.md5(f"{url}_hack".encode()).hexdigest(),
             "equipment_model": model,
@@ -506,13 +506,13 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "source_url": url,
             "scraped_at": datetime.now(),
         }
-        
+
         return hack_data
 
     def _identify_hack_type(self, content: str) -> str:
         """Identify type of hack/modification"""
         content_lower = content.lower()
-        
+
         if any(word in content_lower for word in ["maintenance", "service", "grease", "filter"]):
             return "maintenance"
         elif any(word in content_lower for word in ["performance", "power", "speed", "flow"]):
@@ -521,7 +521,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             return "comfort"
         elif any(word in content_lower for word in ["safety", "visibility", "light", "camera"]):
             return "safety"
-        
+
         return "general"
 
     def _extract_hack_title(self, content: str) -> str:
@@ -543,12 +543,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"advantage[s]?[:\s]+([^.!?]{20,200})",
             r"improve[s]?[:\s]+([^.!?]{20,200})",
         ]
-        
+
         for pattern in benefit_patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 return match.group(1).strip()
-        
+
         return ""
 
     def _extract_warnings(self, content: str) -> str:
@@ -559,12 +559,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             r"be careful[:\s]+([^.!?]{20,200})",
             r"don't[:\s]+([^.!?]{20,200})",
         ]
-        
+
         for pattern in warning_patterns:
             match = re.search(pattern, content, re.IGNORECASE)
             if match:
                 return match.group(1).strip()
-        
+
         return ""
 
     def _extract_tools_list(self, content: str) -> List[str]:
@@ -573,23 +573,23 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "wrench", "socket", "screwdriver", "drill", "grinder",
             "welder", "torch", "hammer", "pliers", "jack", "gauge"
         ]
-        
+
         tools = []
         content_lower = content.lower()
         for tool in tool_keywords:
             if tool in content_lower:
                 tools.append(tool)
-        
+
         return tools[:10]
 
     def _extract_time(self, content: str) -> str:
         """Extract time required"""
         time_pattern = r"(\d+)\s*(hours?|minutes?|mins?|hrs?)"
         match = re.search(time_pattern, content, re.IGNORECASE)
-        
+
         if match:
             return f"{match.group(1)} {match.group(2)}"
-        
+
         return "unknown"
 
     async def scrape_skidsteer_forums(self) -> Dict:
@@ -597,9 +597,9 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         Main function to scrape skid steer forums with focus on Bobcat S740
         """
         logger.info("🚜 Starting Bobcat S740 & Skid Steer Knowledge Scraping")
-        
+
         await self.initialize_browser()
-        
+
         results = {
             "scrape_id": hashlib.md5(f"skidsteer_{datetime.now().isoformat()}".encode()).hexdigest(),
             "timestamp": datetime.now().isoformat(),
@@ -615,82 +615,82 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "operator_tips": 0,
             }
         }
-        
+
         try:
             # Phase 1: Search for Bobcat S740 specific content
             logger.info("📡 Phase 1: Searching for Bobcat S740 content...")
             s740_urls = await self.search_bobcat_s740_specifically()
-            
+
             # Phase 2: Scrape known skid steer forums
             logger.info("📚 Phase 2: Scraping skid steer forums...")
             all_forums = self.skidsteer_forums + list(s740_urls)
-            
+
             for forum_url in all_forums[:20]:  # Limit to 20 forums for initial run
                 try:
                     logger.info(f"Scraping: {forum_url}")
-                    
+
                     # Analyze forum
                     forum_info = await self.analyze_forum(forum_url)
                     if not forum_info:
                         continue
-                    
+
                     results["forums_scraped"] += 1
-                    
+
                     # Scrape threads
                     threads = await self.scrape_forum_threads(forum_info, max_threads=30)
-                    
+
                     # Process each thread for S740 content
                     for thread in threads:
                         content = thread.get('problem_description', '') + thread.get('solution', '')
-                        
+
                         # Extract S740 specific issues
                         if "s740" in content.lower() or "740" in content.lower():
                             issue = await self.extract_bobcat_s740_issue(content, thread['url'])
                             if issue:
                                 # Store in BigQuery
                                 table_id = f"{self.project_id}.skidsteer_knowledge.bobcat_s740_issues"
-                                
+
                                 # Convert datetime to ISO format
                                 if isinstance(issue.get('scraped_at'), datetime):
                                     issue['scraped_at'] = issue['scraped_at'].isoformat()
-                                
+
                                 errors = self.bq_client.insert_rows_json(table_id, [issue])
                                 if not errors:
                                     results["issues_found"] += 1
                                     results["data_stored"]["bobcat_s740_issues"] += 1
                                     logger.info(f"✅ Stored S740 issue: {issue['problem_type']}")
-                        
+
                         # Extract equipment hacks
                         hack = await self.extract_equipment_hacks(content, thread['url'], "S740")
                         if hack:
                             table_id = f"{self.project_id}.skidsteer_knowledge.equipment_hacks"
-                            
+
                             if isinstance(hack.get('scraped_at'), datetime):
                                 hack['scraped_at'] = hack['scraped_at'].isoformat()
-                            
+
                             errors = self.bq_client.insert_rows_json(table_id, [hack])
                             if not errors:
                                 results["hacks_found"] += 1
                                 results["data_stored"]["equipment_hacks"] += 1
-                        
+
                         # Count solutions
                         if thread.get('solution'):
                             results["solutions_found"] += 1
-                    
+
                     # Rate limiting
                     await asyncio.sleep(2)
-                    
+
                 except Exception as e:
                     logger.error(f"Failed to scrape {forum_url}: {e}")
-            
+
             # Phase 3: Generate maintenance schedules from scraped data
             logger.info("📋 Phase 3: Extracting maintenance schedules...")
             await self._generate_maintenance_schedules()
-            
+
             # Phase 4: Extract operator tips
             logger.info("💡 Phase 4: Extracting operator tips...")
             await self._extract_operator_tips()
-            
+
             logger.info(f"""
             ✅ Bobcat S740 Scraping Complete!
             ================================
@@ -698,19 +698,19 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             S740 Issues Found: {results['issues_found']}
             Equipment Hacks Found: {results['hacks_found']}
             Solutions Found: {results['solutions_found']}
-            
+
             Data Stored in BigQuery:
             - S740 Issues: {results['data_stored']['bobcat_s740_issues']}
             - Equipment Hacks: {results['data_stored']['equipment_hacks']}
             """)
-            
+
         except Exception as e:
             logger.error(f"Scraping operation failed: {e}")
             results["error"] = str(e)
-        
+
         finally:
             await self.close_browser()
-        
+
         return results
 
     async def _generate_maintenance_schedules(self):
@@ -766,11 +766,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "source": "Emissions Manual",
             },
         ]
-        
+
         # Store maintenance schedules
         table_id = f"{self.project_id}.skidsteer_knowledge.maintenance_schedules"
         errors = self.bq_client.insert_rows_json(table_id, maintenance_items)
-        
+
         if not errors:
             logger.info(f"✅ Stored {len(maintenance_items)} maintenance schedules")
 
@@ -803,11 +803,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "scraped_at": datetime.now().isoformat(),
             },
         ]
-        
+
         # Store operator tips
         table_id = f"{self.project_id}.skidsteer_knowledge.operator_tips"
         errors = self.bq_client.insert_rows_json(table_id, tips)
-        
+
         if not errors:
             logger.info(f"✅ Stored {len(tips)} operator tips")
 
@@ -815,10 +815,10 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
 async def main():
     """Main function to run skid steer scraper"""
     scraper = SkidSteerKnowledgeScraper()
-    
+
     # Run comprehensive Bobcat S740 scrape
     results = await scraper.scrape_skidsteer_forums()
-    
+
     print(json.dumps(results, indent=2))
 
 

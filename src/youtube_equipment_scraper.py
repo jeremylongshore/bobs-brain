@@ -343,14 +343,14 @@ class YouTubeEquipmentScraper:
         # In production, would use YouTube Data API for search
         known_videos = {
             "bobcat": ["dQw4w9WgXcQ"],  # Example - replace with actual equipment videos
-            "diesel": ["dQw4w9WgXcQ"],  
+            "diesel": ["dQw4w9WgXcQ"],
             "tractor": ["dQw4w9WgXcQ"],
         }
-        
+
         # Determine equipment type from query
         equipment_type = "general"
         video_ids = []
-        
+
         if "skid" in query.lower() or "bobcat" in query.lower():
             equipment_type = "mini_skid_steers"
             video_ids = known_videos.get("bobcat", [])
@@ -360,7 +360,7 @@ class YouTubeEquipmentScraper:
         elif "tractor" in query.lower() or "compact" in query.lower():
             equipment_type = "compact_equipment"
             video_ids = known_videos.get("tractor", [])
-        
+
         scraped_count = 0
         for video_id in video_ids[:max_results]:
             try:
@@ -370,7 +370,7 @@ class YouTubeEquipmentScraper:
                 await asyncio.sleep(2)  # Rate limiting
             except Exception as e:
                 logger.error(f"Failed to scrape {video_id}: {e}")
-        
+
         logger.info(f"✅ Scraped {scraped_count} videos for query: {query}")
         return scraped_count
 

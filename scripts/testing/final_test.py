@@ -1,7 +1,8 @@
-#\!/usr/bin/env python3
-import requests
+# \!/usr/bin/env python3
 import json
 import time
+
+import requests
 
 print("=" * 60)
 print("FINAL SYSTEM VERIFICATION")
@@ -12,7 +13,7 @@ print("\n1. Service Health Check:")
 services = {
     "Bob's Brain": "https://bobs-brain-157908567967.us-central1.run.app/health",
     "Unified Scraper": "https://unified-scraper-157908567967.us-central1.run.app/health",
-    "Circle of Life": "https://circle-of-life-scraper-157908567967.us-central1.run.app/health"
+    "Circle of Life": "https://circle-of-life-scraper-157908567967.us-central1.run.app/health",
 }
 
 all_healthy = True
@@ -35,18 +36,16 @@ diagnostic_data = {
     "user_id": "final-test",
     "equipment_type": "Bobcat S740",
     "problem_description": "Hydraulic system test",
-    "timestamp": "2025-08-12T08:00:00Z"
+    "timestamp": "2025-08-12T08:00:00Z",
 }
 
 r = requests.post(
-    "https://bobs-brain-157908567967.us-central1.run.app/mvp3/submit-diagnostic",
-    json=diagnostic_data,
-    timeout=10
+    "https://bobs-brain-157908567967.us-central1.run.app/mvp3/submit-diagnostic", json=diagnostic_data, timeout=10
 )
 
 if r.status_code == 200:
     response = r.json()
-    if response.get('bob_analysis'):
+    if response.get("bob_analysis"):
         print(f"  ✅ Bob is processing diagnostics")
         print(f"     Response: {response['bob_analysis'][:100]}...")
     else:
@@ -61,18 +60,14 @@ feedback_data = {
     "suggested_solution": "Test suggestion",
     "actual_solution": "Test solution",
     "success": True,
-    "rating": 5
+    "rating": 5,
 }
 
-r = requests.post(
-    "https://bobs-brain-157908567967.us-central1.run.app/mvp3/feedback",
-    json=feedback_data,
-    timeout=10
-)
+r = requests.post("https://bobs-brain-157908567967.us-central1.run.app/mvp3/feedback", json=feedback_data, timeout=10)
 
 if r.status_code == 200:
     response = r.json()
-    if response.get('status') == 'feedback_recorded':
+    if response.get("status") == "feedback_recorded":
         print(f"  ✅ Circle of Life feedback working")
     else:
         print(f"  ⚠️ Feedback received but status unclear")
@@ -81,15 +76,11 @@ else:
 
 # Test 4: Scraper Status
 print("\n4. Scraper Functionality:")
-r = requests.post(
-    "https://unified-scraper-157908567967.us-central1.run.app/scrape/quick",
-    json={},
-    timeout=10
-)
+r = requests.post("https://unified-scraper-157908567967.us-central1.run.app/scrape/quick", json={}, timeout=10)
 
 if r.status_code == 200:
     response = r.json()
-    if response.get('status') == 'success':
+    if response.get("status") == "success":
         print(f"  ✅ Scraper API working")
         print(f"     Items scraped: {response.get('items', 0)}")
     else:
@@ -102,7 +93,7 @@ print("\n5. YouTube Transcript Scraper:")
 r = requests.post(
     "https://unified-scraper-157908567967.us-central1.run.app/scrape/youtube",
     json={"query": "test", "max_results": 1},
-    timeout=10
+    timeout=10,
 )
 
 if r.status_code == 200:

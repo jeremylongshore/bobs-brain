@@ -147,7 +147,7 @@ def check_neo4j():
     try:
         from neo4j import GraphDatabase
         driver = GraphDatabase.driver(
-            'bolt://localhost:7687', 
+            'bolt://localhost:7687',
             auth=('neo4j', 'BobBrain2025')
         )
         with driver.session() as session:

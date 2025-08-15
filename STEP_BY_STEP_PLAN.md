@@ -94,21 +94,21 @@ try:
         password="BobBrain2025"
     )
     print("✅ Graphiti connected successfully!")
-    
+
     # Test adding data
     from graphiti_core.nodes import EpisodeType
     from datetime import datetime
-    
+
     episode = EpisodeType(
         name="test_connection",
         content="Testing Graphiti connection",
         source="test_script",
         created_at=datetime.now()
     )
-    
+
     graphiti.add_episode(episode)
     print("✅ Successfully added test episode!")
-    
+
 except Exception as e:
     print(f"❌ Connection failed: {e}")
 ```
@@ -129,13 +129,13 @@ python3 test_graphiti_connection.py
 ### Fix bob_memory.py:
 ```python
 # src/bob_memory.py (updated initialization)
-def __init__(self, project_id='diagnostic-pro-mvp', 
-             neo4j_host=None, neo4j_port=None, 
+def __init__(self, project_id='diagnostic-pro-mvp',
+             neo4j_host=None, neo4j_port=None,
              neo4j_user=None, neo4j_password=None):
-    
+
     # Firestore setup (always available)
     self.firestore = firestore.Client(project=project_id, database='bob-brain')
-    
+
     # Graphiti setup (if Neo4j available)
     if neo4j_host:
         try:
@@ -186,11 +186,11 @@ def health():
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
     data = request.json
-    
+
     # Handle URL verification
     if data.get('type') == 'url_verification':
         return jsonify({"challenge": data['challenge']})
-    
+
     # Handle events
     if data.get('type') == 'event_callback':
         event = data['event']
@@ -203,7 +203,7 @@ def slack_events():
                 channel=event['channel'],
                 text=response
             )
-    
+
     return jsonify({"status": "ok"})
 
 if __name__ == '__main__':

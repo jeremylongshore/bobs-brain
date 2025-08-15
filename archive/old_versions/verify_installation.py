@@ -6,6 +6,7 @@ Verify all components are installed for Bob's Brain Graphiti migration
 import sys
 import time
 
+
 def check_import(module_name, package_name=None):
     """Check if a module can be imported"""
     try:
@@ -16,26 +17,27 @@ def check_import(module_name, package_name=None):
         print(f"❌ {package_name or module_name} NOT installed")
         return False
 
+
 def check_neo4j():
     """Check Neo4j connection"""
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            'bolt://localhost:7687', 
-            auth=('neo4j', 'BobBrain2025')
-        )
+
+        driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "BobBrain2025"))
         with driver.session() as session:
-            result = session.run('RETURN 1 AS num')
+            result = session.run("RETURN 1 AS num")
             print(f"✅ Neo4j connected and running")
             return True
     except Exception as e:
         print(f"❌ Neo4j NOT running: {e}")
         return False
 
+
 def check_graphiti():
     """Check Graphiti can initialize"""
     try:
         from graphiti_core import Graphiti
+
         # Just check import, don't connect yet
         print("✅ Graphiti ready to use")
         return True
@@ -43,11 +45,13 @@ def check_graphiti():
         print(f"❌ Graphiti issue: {e}")
         return False
 
+
 def check_firestore():
     """Check Firestore connection"""
     try:
         from google.cloud import firestore
-        db = firestore.Client(project='diagnostic-pro-mvp', database='bob-brain')
+
+        db = firestore.Client(project="diagnostic-pro-mvp", database="bob-brain")
         # Try to list collections
         collections = list(db.collections())
         print(f"✅ Firestore connected ({len(collections)} collections)")
@@ -55,6 +59,7 @@ def check_firestore():
     except Exception as e:
         print(f"⚠️  Firestore issue (may need auth): {str(e)[:50]}")
         return True  # Don't fail on auth issues
+
 
 print("=" * 50)
 print("BOB'S BRAIN INSTALLATION CHECK")
@@ -65,12 +70,12 @@ print()
 print("Python Packages:")
 print("-" * 30)
 packages = [
-    ('graphiti_core', 'graphiti-core'),
-    ('neo4j', 'neo4j'),
-    ('google.cloud.firestore', 'google-cloud-firestore'),
-    ('slack_sdk', 'slack-sdk'),
-    ('vertexai', 'vertexai'),
-    ('chromadb', 'chromadb')
+    ("graphiti_core", "graphiti-core"),
+    ("neo4j", "neo4j"),
+    ("google.cloud.firestore", "google-cloud-firestore"),
+    ("slack_sdk", "slack-sdk"),
+    ("vertexai", "vertexai"),
+    ("chromadb", "chromadb"),
 ]
 
 all_good = True

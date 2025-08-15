@@ -19,7 +19,7 @@ bobs-brain/                          # Root directory (existing)
 │   └── bob_manager.py              # API for managing multiple Bobs
 │
 ├── src/bobs/                        # NEW: Specialized Bob versions
-│   ├── __init__.py                 
+│   ├── __init__.py
 │   ├── research_bob.py             # Research specialization
 │   ├── assistant_bob.py            # Assistant specialization (future)
 │   └── diagnostic_bob.py           # Diagnostic specialization (future)

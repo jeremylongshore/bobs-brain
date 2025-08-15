@@ -12,12 +12,12 @@ BOB'S BRAIN - ALL GOOGLE CLOUD
 ================================
 
 1. BOB APPLICATION → Cloud Run
-2. MEMORY SYSTEM → Graphiti + Neo4j 
+2. MEMORY SYSTEM → Graphiti + Neo4j
 3. ML/AI → Vertex AI
 4. EVERYTHING ELSE → GONE
 
 NO FIRESTORE
-NO CHROMADB  
+NO CHROMADB
 NO OPENAI
 JUST GOOGLE CLOUD + GRAPHITI
 ```
@@ -64,17 +64,17 @@ class BobGraphitiMemory:
     def __init__(self):
         # Get Neo4j internal IP
         neo4j_ip = os.environ.get('NEO4J_IP', '10.128.0.5')
-        
+
         # Connect to Graphiti with Neo4j
         self.graphiti = Graphiti(
             uri=f"bolt://{neo4j_ip}:7687",
             user="neo4j",
             password="BobBrain2025"
         )
-        
+
         # Vertex AI for responses
         self.llm = TextGenerationModel.from_pretrained("gemini-1.5-flash")
-    
+
     async def remember(self, user_message, bob_response):
         """Store in Graphiti knowledge graph"""
         await self.graphiti.add_episode(
@@ -83,32 +83,32 @@ class BobGraphitiMemory:
             source_description="Bob conversation",
             reference_time=datetime.now()
         )
-    
+
     async def recall(self, query):
         """Search Graphiti memory"""
         results = await self.graphiti.search(query, num_results=5)
         return results
-    
+
     async def think(self, user_message):
         """Generate response using memory + Vertex AI"""
         # Search memory
         context = await self.recall(user_message)
-        
+
         # Build prompt with context
         prompt = f"""You are Bob, an AI assistant.
-        
+
         Context from memory:
         {context}
-        
+
         User: {user_message}
         Bob:"""
-        
+
         # Generate with Vertex AI
         response = self.llm.predict(prompt, max_output_tokens=256)
-        
+
         # Remember this interaction
         await self.remember(user_message, response.text)
-        
+
         return response.text
 ```
 
@@ -147,17 +147,17 @@ def health():
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
     data = request.json
-    
+
     if data.get('type') == 'url_verification':
         return jsonify({"challenge": data['challenge']})
-    
+
     if data.get('event', {}).get('type') == 'message':
         event = data['event']
         user_message = event['text']
-        
+
         # Get Bob's response
         response = asyncio.run(bob.think(user_message))
-        
+
         # Send to Slack
         from slack_sdk import WebClient
         client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
@@ -165,7 +165,7 @@ def slack_events():
             channel=event['channel'],
             text=response
         )
-    
+
     return jsonify({"ok": True})
 
 if __name__ == '__main__':
@@ -195,12 +195,12 @@ import chromadb
 
 async def migrate_everything():
     bob = BobGraphitiMemory()
-    
+
     # Migrate Firestore
     print("Migrating Firestore to Graphiti...")
     fs = firestore.Client(project='diagnostic-pro-mvp')
     docs = fs.collection('shared_knowledge').get()
-    
+
     for doc in docs:
         data = doc.to_dict()
         await bob.graphiti.add_episode(
@@ -209,13 +209,13 @@ async def migrate_everything():
             source_description="Firestore migration",
             reference_time=datetime.now()
         )
-    
+
     # Migrate ChromaDB
     print("Migrating ChromaDB to Graphiti...")
     chroma = chromadb.PersistentClient(path='./chroma_data')
     collection = chroma.get_collection('bob_knowledge')
     docs = collection.get()
-    
+
     for doc in docs['documents']:
         await bob.graphiti.add_episode(
             name=f"chroma_migration",
@@ -223,7 +223,7 @@ async def migrate_everything():
             source_description="ChromaDB migration",
             reference_time=datetime.now()
         )
-    
+
     print("✅ MIGRATION COMPLETE!")
     print("Firestore and ChromaDB are now OBSOLETE")
     print("Everything is in Graphiti on Google Cloud!")
@@ -324,7 +324,7 @@ curl https://bob-brain-xxxxx.run.app/health
 
 **Bob now has:**
 - ONE memory system (Graphiti)
-- ONE database (Neo4j)  
+- ONE database (Neo4j)
 - ONE cloud (Google Cloud)
 - ONE ML platform (Vertex AI)
 

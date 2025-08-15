@@ -72,7 +72,7 @@ Bob's Brain has been successfully deployed with the Graphiti knowledge graph sys
 
 All production tests passed:
 - ✅ Health endpoint
-- ✅ Root endpoint  
+- ✅ Root endpoint
 - ✅ Slack URL verification
 - ✅ Message processing
 - ✅ Neo4j connectivity

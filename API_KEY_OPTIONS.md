@@ -34,7 +34,7 @@ from graphiti_core.llm_client import AnthropicClient
 llm_client = AnthropicClient(api_key="sk-ant-...")
 graphiti = Graphiti(
     uri="bolt://localhost:7687",
-    user="neo4j", 
+    user="neo4j",
     password="BobBrain2025",
     llm_client=llm_client
 )

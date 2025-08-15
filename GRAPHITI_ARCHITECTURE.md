@@ -43,15 +43,15 @@ class GraphitiWithML:
     def __init__(self):
         # Graphiti is the brain
         self.graphiti = Graphiti(neo4j_connection)
-        
+
         # ML connections
         self.bigquery = bigquery.Client()  # For ML models
         self.vertex = aiplatform.init()    # For predictions
-    
+
     async def think(self, question):
         # 1. Search knowledge graph
         context = await self.graphiti.search(question)
-        
+
         # 2. Get ML predictions from BigQuery
         ml_prediction = self.bigquery.query("""
             SELECT * FROM ML.PREDICT(
@@ -59,7 +59,7 @@ class GraphitiWithML:
                 (SELECT * FROM input_data)
             )
         """)
-        
+
         # 3. Combine knowledge + ML
         return enhanced_response
 ```
@@ -116,21 +116,21 @@ User Question → Graphiti Searches → Finds Context
 async def process_with_ml(question):
     # 1. GRAPHITI searches knowledge
     knowledge = await graphiti.search(question)
-    
+
     # 2. BIGQUERY provides ML predictions
     ml_result = bigquery.query("""
-        SELECT predicted_price 
+        SELECT predicted_price
         FROM ML.PREDICT(MODEL `price_model`, ...)
     """)
-    
+
     # 3. VERTEX AI generates response
     response = vertex_model.generate(
         prompt=f"{knowledge} + {ml_result}"
     )
-    
+
     # 4. Store learning back in GRAPHITI
     await graphiti.add_episode(response)
-    
+
     return response
 ```
 
@@ -151,7 +151,7 @@ async def process_with_ml(question):
 **Graphiti CONNECTS to them:**
 
 1. ML models live in BigQuery/Vertex
-2. Data lives in BigQuery/Firestore  
+2. Data lives in BigQuery/Firestore
 3. Graphiti creates RELATIONSHIPS between them
 4. Bob uses Graphiti to ACCESS everything
 
