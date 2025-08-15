@@ -1,0 +1,17 @@
+[Unit]
+Description=Bob Ferrari - Holistic AI Assistant
+After=network.target
+
+[Service]
+Type=simple
+User=jeremylongshore
+WorkingDirectory=/home/jeremylongshore/bobs-brain
+Environment="PATH=/usr/bin:/usr/local/bin"
+ExecStart=/usr/bin/python3 /home/jeremylongshore/bobs-brain/bob_ferrari.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/jeremylongshore/bobs-brain/logs/bob-ferrari.log
+StandardError=append:/home/jeremylongshore/bobs-brain/logs/bob-ferrari-error.log
+
+[Install]
+WantedBy=multi-user.target

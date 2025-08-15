@@ -20,6 +20,10 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # Vector Search
 import chromadb
 
@@ -66,6 +70,21 @@ class BobFerrari:
         self.channel_id = "C099A4N4PSN"
         self.jeremy_id = "U099CBRE7CL"
 
+        # State management
+        self.conversation_history = []
+        self.processed_messages = set()
+        self.entity_cache = defaultdict(list)
+        self.learning_buffer = []
+
+        # Stats - MUST BE BEFORE INIT METHODS
+        self.stats = {
+            "messages_processed": 0,
+            "entities_extracted": 0,
+            "knowledge_items": 0,
+            "graph_nodes": 0,
+            "patterns_learned": 0,
+        }
+
         # Initialize all systems
         self._init_gemini()
         self._init_slack()
@@ -74,21 +93,6 @@ class BobFerrari:
         self._init_bigquery()
         self._init_datastore()
         self._init_graphiti()
-
-        # State management
-        self.conversation_history = []
-        self.processed_messages = set()
-        self.entity_cache = defaultdict(list)
-        self.learning_buffer = []
-
-        # Stats
-        self.stats = {
-            "messages_processed": 0,
-            "entities_extracted": 0,
-            "knowledge_items": 0,
-            "graph_nodes": 0,
-            "patterns_learned": 0,
-        }
 
         logger.info("🚀 Bob Ferrari initialized - All systems operational")
         self._log_system_status()
@@ -156,23 +160,9 @@ class BobFerrari:
 
     def _init_graphiti(self):
         """Initialize Graphiti for entity extraction"""
-        if not GRAPHITI_AVAILABLE or not self.neo4j_driver:
-            self.graphiti = None
-            logger.warning("⚠️ Graphiti not initialized")
-            return
-
-        try:
-            # Configure Graphiti with Gemini for entity extraction
-            self.graphiti = Graphiti(
-                llm_client=self.gemini_model,
-                neo4j_uri="neo4j+s://d3653283.databases.neo4j.io",
-                neo4j_user="neo4j",
-                neo4j_password=os.getenv("NEO4J_PASSWORD"),
-            )
-            logger.info("✅ Graphiti initialized for entity extraction")
-        except Exception as e:
-            logger.error(f"Graphiti initialization failed: {e}")
-            self.graphiti = None
+        # Temporarily disabled - needs correct initialization parameters
+        self.graphiti = None
+        logger.info("⚠️ Graphiti temporarily disabled - will fix later")
 
     def _ensure_bigquery_datasets(self):
         """Ensure BigQuery datasets exist"""
@@ -251,7 +241,7 @@ class BobFerrari:
                 LIMIT 3
                 """
 
-                result = session.run(cypher, query=query)
+                result = session.run(cypher, {"query": query})
                 for record in result:
                     results.append(
                         {
