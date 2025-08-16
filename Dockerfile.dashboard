@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install a simple web server
+RUN pip install --no-cache-dir gunicorn flask
+
+# Copy dashboard files
+COPY dashboard_neo4j.html /app/static/index.html
+COPY Neo4jDashboard.tsx /app/static/
+
+# Create a simple Flask app to serve the dashboard
+RUN echo 'from flask import Flask, send_from_directory\n\
+app = Flask(__name__)\n\
+\n\
+@app.route("/")\n\
+def index():\n\
+    return send_from_directory("static", "index.html")\n\
+\n\
+@app.route("/<path:path>")\n\
+def serve_static(path):\n\
+    return send_from_directory("static", path)\n\
+\n\
+if __name__ == "__main__":\n\
+    app.run(host="0.0.0.0", port=8080)' > app.py
+
+# Create static directory
+RUN mkdir -p static
+
+EXPOSE 8080
+
+CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "8", "--timeout", "0", "app:app"]
