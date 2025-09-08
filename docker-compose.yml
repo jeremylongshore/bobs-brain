@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # Bob v1 - Basic CLI Version
+  bob-v1:
+    build:
+      context: .
+      dockerfile: docker/v1-basic.Dockerfile
+    container_name: bob-v1-basic
+    environment:
+      - BOB_VERSION=v1-basic
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data/knowledge_base:/app/data/knowledge_base
+      - bob-v1-chroma:/app/data/chroma
+      - bob-v1-logs:/app/logs
+    stdin_open: true
+    tty: true
+    networks:
+      - bob-network
+    profiles:
+      - v1
+      - all
+
+  # Bob v2 - Unified Slack Bot
+  bob-v2:
+    build:
+      context: .
+      dockerfile: docker/v2-unified.Dockerfile
+    container_name: bob-v2-unified
+    environment:
+      - BOB_VERSION=v2-unified
+      - PYTHONUNBUFFERED=1
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+    volumes:
+      - ./data/knowledge_base:/app/data/knowledge_base
+      - bob-v2-chroma:/app/data/chroma
+      - bob-v2-logs:/app/logs
+    networks:
+      - bob-network
+    restart: unless-stopped
+    profiles:
+      - v2
+      - production
+      - all
+    healthcheck:
+      test: ["CMD", "python", "-c", "import slack_sdk; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ChromaDB Standalone (Optional - for development)
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: bob-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER=AUTHORIZATION
+      - CHROMA_SERVER_AUTH_CREDENTIALS=test-token
+      - PERSIST_DIRECTORY=/chroma/chroma
+    networks:
+      - bob-network
+    profiles:
+      - dev
+      - chromadb
+
+  # Version Selector Web UI (Development)
+  version-selector:
+    image: python:3.10-slim
+    container_name: bob-selector
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: python -m http.server 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - bob-network
+    profiles:
+      - dev
+      - selector
+
+networks:
+  bob-network:
+    driver: bridge
+    name: bob-brain-network
+
+volumes:
+  bob-v1-chroma:
+    name: bob-v1-chroma
+  bob-v1-logs:
+    name: bob-v1-logs
+  bob-v2-chroma:
+    name: bob-v2-chroma
+  bob-v2-logs:
+    name: bob-v2-logs
+  chroma-data:
+    name: bob-chroma-data
+
+# Usage Examples:
+# 
+# Run specific version:
+#   docker-compose --profile v1 up        # Run v1 only
+#   docker-compose --profile v2 up        # Run v2 only
+#   docker-compose --profile all up       # Run all versions
+#
+# Development setup:
+#   docker-compose --profile dev up       # Run with ChromaDB and selector
+#
+# Production deployment:
+#   docker-compose --profile production up -d
+#
+# Interactive v1 session:
+#   docker-compose run --rm bob-v1
+#
+# View logs:
+#   docker-compose logs -f bob-v2
+#
+# Stop all:
+#   docker-compose down
+#
+# Clean volumes:
+#   docker-compose down -v

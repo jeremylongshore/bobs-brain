@@ -4,6 +4,8 @@
 .env
 *.env
 !.env.template
+versions/*/.env
+versions/*/venv/
 
 # Virtual environments
 venv/
@@ -11,14 +13,27 @@ venv_bob/
 __pycache__/
 *.pyc
 *.pyo
+.Python
 
 # Database files (keep structure, ignore data)
 data/consolidated_db/*.db
 data/vector_store/*.sqlite3
+chroma_db/
+*.db
+*.sqlite
 
 # Logs
 logs/*.log
 *.log
+*.log.*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
 
 # Temporary files
 .tmp/
@@ -45,3 +60,16 @@ models/
 *token*
 *key*
 !*template*
+slack_tokens.env
+credentials.json
+
+# Bob specific
+backup/
+exports/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
