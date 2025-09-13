@@ -1,0 +1,46 @@
+# GitHub Pages Configuration for Bob's Brain
+
+title: Bob's Brain - AI Assistant Platform
+description: From Simple Template to Ferrari-Level Intelligence
+author: Jeremy Longshore
+theme: jekyll-theme-cayman
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Simple Template
+    url: /simple-template
+  - title: Knowledge Graph
+    url: /knowledge-graph
+  - title: Production System
+    url: /production-system
+  - title: Ferrari Edition
+    url: /ferrari-edition
+  - title: Documentation
+    url: /documentation
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Exclude files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - .gitignore
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Site settings
+url: https://jeremylongshore.github.io
+baseurl: /bobs-brain
+
+# Google Analytics (optional)
+# google_analytics: UA-XXXXXXXXX-X
