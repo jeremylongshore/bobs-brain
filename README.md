@@ -1,213 +1,221 @@
-# 🧠 Bob's Brain - The AI That Actually Ships™
+# 🤖 Bob's Brain - Slack AI Agent Template
 
-[![Status: Crushing It](https://img.shields.io/badge/Status-Crushing%20It-00ff00)](https://github.com/jeremylongshore/bobs-brain)
-[![Disruption Level: Maximum](https://img.shields.io/badge/Disruption%20Level-Maximum-ff69b4)](https://github.com/jeremylongshore/bobs-brain)
-[![10x Engineer: Confirmed](https://img.shields.io/badge/10x%20Engineer-Confirmed-gold)](https://github.com/jeremylongshore/bobs-brain)
-[![Venture Backed: Soon™](https://img.shields.io/badge/Venture%20Backed-Soon™-blue)](https://github.com/jeremylongshore/bobs-brain)
-[![License: MIT](https://img.shields.io/badge/License-MIT%20(but%20worth%20millions)-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Slack Compatible](https://img.shields.io/badge/slack-socket_mode-4A154B)](https://api.slack.com/)
+[![ChromaDB](https://img.shields.io/badge/vectordb-chromadb-orange)](https://www.trychroma.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> 🚀 **Bob isn't just an AI assistant. Bob is your unfair advantage.**
+> A simple, clean template for building your own Slack AI assistant with knowledge base integration.
 
-## 💥 The Problem We're Solving
+## 🎯 What This Is
 
-Every business is drowning in AI hype but starving for actual solutions. While your competitors are still figuring out ChatGPT prompts, Bob is already:
-- 🎯 **Crushing support tickets** before humans even wake up
-- 💰 **Saving customers thousands** with accurate diagnostics
-- 🏃 **Moving at the speed of thought** with instant expertise
-- 🦾 **Scaling infinitely** without hiring a single person
+Bob's Brain is a **template/starter kit** for developers who want to:
+- Build a custom Slack bot with AI capabilities
+- Connect it to their own knowledge base
+- Have a working example to learn from
+- Start with clean, organized Python code
 
-**TL;DR:** Bob makes you look like a genius while you sleep.
+**Note:** This is a template - you bring your own data and customize it for your needs.
 
-## 🔥 What Makes Bob Different
+## 📦 What's Included
 
-### Not Your Average Chatbot
-- **970+ Knowledge Items** - More domain expertise than your entire team combined
-- **Zero Hallucination Architecture™** - ChromaDB-backed facts, not fiction
-- **Battle-Tested in Production** - Powering DiagnosticPro.io's customer success
-- **Slack-Native** - Lives where your team already works
-- **15 Years of Business DNA** - Encoded with real entrepreneurial experience
+### Two Bot Implementations
+1. **Slack Bot** (`bob/agents/unified_v2.py`)
+   - Uses Slack Socket Mode (WebSocket connection)
+   - Handles messages and mentions
+   - Prevents duplicate responses
+   - Basic conversation memory
 
-### The Stack That Slaps
-```python
-Tech_Stack = {
-    "brain": "ChromaDB + Vector Embeddings",
-    "muscle": "Python 3.10+ Async Architecture",
-    "nervous_system": "Slack Socket Mode",
-    "memory": "Persistent Context Management",
-    "personality": "Customizable per use case"
-}
-```
+2. **CLI Bot** (`bob/agents/basic.py`)
+   - Command-line interface for testing
+   - SQLite for local storage
+   - Good for development/debugging
 
-## 🎮 Quick Start (5 Minutes to Magic)
+### Core Features
+- ✅ Slack integration via Socket Mode
+- ✅ ChromaDB vector database hookup
+- ✅ Message deduplication
+- ✅ Conversation context tracking
+- ✅ Clean Python package structure
+- ✅ Configuration management
+- ✅ Logging system
+
+### What You Need to Add
+- 🔧 Your own knowledge base data
+- 🔧 Your business logic
+- 🔧 Custom responses/personality
+- 🔧 API integrations (OpenAI, etc.)
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.10+
+- Slack workspace with app creation permissions
+- ChromaDB (or modify to use your preferred vector DB)
+
+### Installation
 
 ```bash
-# Clone the future
+# Clone the repository
 git clone https://github.com/jeremylongshore/bobs-brain.git
 cd bobs-brain
 
-# Install the sauce
+# Install dependencies
 pip install -r requirements.txt
 
-# Configure your empire
+# Copy environment template
 cp config/.env.template config/.env
-# Add your Slack tokens (instructions below)
-
-# 🚀 LAUNCH BOB
-./scripts/start_unified_bob_v2.sh
 ```
 
-**Boom.** You now have an AI employee that never sleeps, never complains, and never asks for equity.
+### Configuration
 
-## 💪 Core Capabilities
+1. **Create a Slack App**
+   - Go to https://api.slack.com/apps
+   - Create new app
+   - Enable Socket Mode
+   - Add Bot Token Scopes:
+     - `app_mentions:read`
+     - `chat:write`
+     - `channels:history`
+     - `im:history`
 
-### 🏗️ For DiagnosticPro
-- **Instant Diagnostics** - Vehicle issues diagnosed in seconds
-- **Price Protection** - Prevents shop overcharges with data-backed estimates
-- **24/7 Support** - Bob doesn't need coffee breaks
+2. **Get Your Tokens**
+   - Bot Token: `xoxb-...` (OAuth & Permissions page)
+   - App Token: `xapp-...` (Basic Information page)
 
-### 💼 For Your Business
-- **Customer Success Automation** - Handle L1/L2 support without humans
-- **Knowledge Management** - Institutional knowledge that scales
-- **Strategic Analysis** - 15 years of business experience on tap
+3. **Update `.env` file**
+   ```env
+   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   SLACK_APP_TOKEN=xapp-your-app-token
+   ```
 
-### 🧪 For Developers
-- **Modular Architecture** - Swap brains, add skills, scale infinitely
-- **Production-Ready** - Not a demo, this runs real businesses
-- **Open Source** - Because gatekeeping is for Web2
+### Running the Bot
 
-## 🏛️ Architecture (For the Nerds)
+**For Slack:**
+```bash
+python run_slack_bot.py
+```
+
+**For CLI Testing:**
+```bash
+python run_bob.py
+```
+
+## 🏗️ Project Structure
 
 ```
 bobs-brain/
-├── 🧠 bob/               # The magic happens here
-│   ├── agents/          # Multiple personality support
-│   ├── core/            # The engine room
-│   └── utils/           # Helper functions that slap
-├── 🚀 scripts/           # One-click deployments
-├── 🧪 tests/            # 100% coverage (trust me bro)
-└── 📚 data/             # 970+ knowledge items
+├── bob/                  # Main package
+│   ├── agents/          # Bot implementations
+│   │   ├── unified_v2.py    # Slack bot
+│   │   └── basic.py         # CLI bot
+│   ├── core/            # Core functionality
+│   │   ├── config.py        # Configuration
+│   │   ├── knowledge.py     # ChromaDB integration
+│   │   └── slack.py         # Slack utilities
+│   └── utils/           # Helper functions
+├── config/              # Configuration files
+├── data/               # Sample data structure
+├── tests/              # Test files
+└── scripts/            # Utility scripts
 ```
 
-## 🛠️ Advanced Setup
+## 🔧 Customization Guide
 
-### Slack Configuration (The Secret Sauce)
-
-1. **Create Your App**: https://api.slack.com/apps
-2. **Socket Mode**: Enable it (WebSockets > Webhooks)
-3. **Scopes You Need**:
-   ```
-   app_mentions:read    # Bob sees when you @ him
-   chat:write          # Bob can respond
-   channels:history    # Bob remembers context
-   im:history         # Bob slides into DMs
-   ```
-4. **Tokens**:
-   - Bot Token: `xoxb-your-token`
-   - App Token: `xapp-your-token`
-
-### Knowledge Base Setup
+### Adding Your Knowledge Base
 
 ```python
-# Bob's brain uses ChromaDB for zero-hallucination responses
 from bob.core.knowledge import KnowledgeBase
+from bob.core.config import BobConfig
 
-kb = KnowledgeBase()
-kb.add_knowledge("Your domain expertise here")
-# Bob now knows your business better than you do
+# Initialize your knowledge base
+config = BobConfig()
+kb = KnowledgeBase(config)
+
+# Add your documents
+kb.add_knowledge(
+    documents=["Your content here"],
+    metadata=[{"source": "your_source"}]
+)
 ```
 
-## 📊 Performance Metrics (Numbers Don't Lie)
+### Customizing Responses
 
-- ⚡ **Response Time**: < 2 seconds average
-- 🎯 **Accuracy**: 98.5% on domain questions
-- 📈 **Uptime**: 99.99% (that 0.01% was planned)
-- 💰 **ROI**: 10x reduction in support costs
-- 🚀 **Scale**: Handles 1000+ concurrent conversations
+Edit `bob/agents/unified_v2.py` to modify:
+- Response patterns
+- Business context
+- Greeting messages
+- Conversation logic
 
-## 🤝 The Bob Manifesto
+### Integrating AI Models
 
-1. **Move Fast, Don't Break Things** - Bob has safeguards
-2. **Knowledge > Hallucination** - Facts backed by ChromaDB
-3. **Scale > Hiring** - One Bob replaces 10 employees
-4. **Open Source > Proprietary** - Community > Competition
+The template is model-agnostic. You can add:
+- OpenAI GPT
+- Anthropic Claude
+- Local models (Ollama)
+- Any LLM API
 
-## 🎯 Use Cases (Bob in the Wild)
-
-### Current Deployments
-- **DiagnosticPro.io** - Primary customer success agent
-- **Internal Ops** - Handles 80% of repetitive tasks
-- **Knowledge Management** - Living documentation that responds
-
-### Future Possibilities
-- **Sales Bob** - Qualify leads while you sleep
-- **DevOps Bob** - Deploy with confidence
-- **Legal Bob** - Contract review at scale
-- **The possibilities are literally endless**
-
-## 🚁 Roadmap (We're Just Getting Started)
-
-- [x] Slack integration
-- [x] ChromaDB knowledge base
-- [x] Production deployment
-- [ ] Multi-language support (Bob goes global)
-- [ ] Voice interface (Bob gets vocal)
-- [ ] API endpoints (Bob as a Service)
-- [ ] Plugin marketplace (Bob app store)
-- [ ] AGI (kidding... unless?)
-
-## 💎 Why This Matters
-
-In 5 years, every business will have an AI employee. The question is: will you build yours or rent theirs?
-
-Bob isn't just code. Bob is:
-- 🏆 **Competitive Advantage** packaged as Python
-- 🚀 **Force Multiplier** for your team
-- 💰 **Money Printer** disguised as a Slack bot
-
-## 🤝 Contributing (Join the Revolution)
-
-We're not just building software, we're building the future:
-
-```bash
-# Fork it
-# Branch it
-# Push it
-# PR it
-# Ship it
+Example in requirements.txt:
+```python
+openai>=1.0.0  # Uncomment and implement
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full manifesto.
+## 📚 Learning Resources
 
-## 📈 Investors / Partnerships
+### For Beginners
+1. Start with the CLI bot (`run_bob.py`) to understand the flow
+2. Read through `bob/agents/basic.py` - it's simpler
+3. Test locally before deploying to Slack
+4. Add features incrementally
 
-Currently bootstrapped and profitable. If you're interested in scaling Bob to the moon:
-- 📧 **Email**: jeremy@diagnosticpro.io
-- 🐦 **Twitter**: [@asphaltcowb0y](https://twitter.com/asphaltcowb0y)
-- 💼 **LinkedIn**: [/in/jeremylongshore](https://linkedin.com/in/jeremylongshore)
+### Key Files to Study
+- `bob/core/config.py` - How configuration works
+- `bob/agents/basic.py` - Simple bot logic
+- `bob/agents/unified_v2.py` - Slack integration
+- `run_slack_bot.py` - Entry point
 
-*Serious inquiries only. We're building a unicorn here.*
+## 🐛 Common Issues
 
-## ⚖️ License
+### "No knowledge base found"
+- You need to create and populate your ChromaDB collection
+- Check the path in your config
 
-MIT License - because open source is the only way to build the future.
+### "Slack tokens not configured"
+- Make sure `.env` file exists with your tokens
+- Verify tokens are correct format
+
+### "Bot not responding"
+- Check Socket Mode is enabled in Slack app
+- Verify bot is in the channel
+- Check logs in `logs/` directory
+
+## 🤝 Contributing
+
+This is a template meant for learning and customization. Feel free to:
+- Fork and modify for your needs
+- Submit issues for bugs
+- Share your improvements
+
+## 📄 License
+
+MIT License - Use this template however you want!
+
+## 🙏 Acknowledgments
+
+- Built as a learning template for the community
+- Inspired by real production needs at DiagnosticPro.io
+- Designed to be simple and hackable
 
 ---
 
-<p align="center">
-  <b>🧠 Bob's Brain - Making Humans Obsolete, One Task at a Time™</b>
-</p>
+**Remember:** This is a starting point. The magic happens when you add your own data and logic! 🚀
 
-<p align="center">
-  <a href="https://github.com/jeremylongshore/bobs-brain">⭐ Star this repo</a> •
-  <a href="https://diagnosticpro.io">🚀 See Bob in action</a> •
-  <a href="https://twitter.com/intent/tweet?text=Just%20discovered%20Bob's%20Brain%20-%20The%20AI%20assistant%20that%20actually%20ships!%20🧠🚀&url=https://github.com/jeremylongshore/bobs-brain">🐦 Tweet about Bob</a>
-</p>
+## Need Help?
 
-<p align="center">
-  <i>"The future is already here. It's called Bob."</i><br>
-  - Every smart founder
-</p>
+- 📧 Email: jeremy@diagnosticpro.io
+- 🐛 Issues: [GitHub Issues](https://github.com/jeremylongshore/bobs-brain/issues)
+- 📖 Docs: Check the `docs/` directory for more details
 
 ---
 
-**P.S.** - If you're still reading this, you're already behind. Your competitors have Bob. Do you? 🚀
+*Bob's Brain - Your journey to building AI assistants starts here!*
