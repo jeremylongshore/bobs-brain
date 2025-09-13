@@ -1,17 +1,30 @@
 #!/usr/bin/env python3
 """
-Simple launcher for our clean Bob
+Bob Runner - Clean entry point for running Bob agents
 """
 
 import sys
-import os
 from pathlib import Path
 
-# Add agent directory to path
-agent_dir = Path(__file__).parent / "agent"
-sys.path.insert(0, str(agent_dir))
+# Add bob package to Python path
+sys.path.insert(0, str(Path(__file__).parent))
 
-from bob_clean import main
+from bob.core.config import BobConfig
+from bob.agents.basic import BobBasic
+
+
+def main():
+    """Run Bob Basic CLI version"""
+    try:
+        config = BobConfig()
+        bob = BobBasic(config)
+        bob.run_interactive()
+    except ImportError:
+        # Fallback to old implementation during transition
+        sys.path.insert(0, str(Path(__file__).parent / "agent"))
+        from bob_clean import main as old_main
+        old_main()
+
 
 if __name__ == "__main__":
     main()
