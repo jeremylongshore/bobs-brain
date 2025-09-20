@@ -13,7 +13,7 @@
 ## 🌟 Features
 
 - **🤖 Advanced AI**: Powered by Google Gemini 2.5 Flash with intelligent response generation
-- **🧠 Persistent Memory**: Full conversation recall with Neo4j graph database
+- **🧠 Persistent Memory**: Full conversation recall with Neo4j graph database or ChromaDB vector store
 - **📱 Slack Integration**: Native Slack bot with real-time messaging
 - **🔄 Continuous Learning**: Circle of Life feedback loop for model improvement
 - **📊 Data Collection**: Automated scraping from 40+ technical sources
@@ -93,7 +93,7 @@ graph TB
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | **AI Engine** | Google Gemini 2.5 Flash | Natural language processing |
-| **Graph Database** | Neo4j 5.20 | Knowledge relationships & memory |
+| **Memory Store** | Neo4j 5.20 / ChromaDB | Knowledge relationships & vector memory |
 | **Data Warehouse** | BigQuery | Analytics & ML training |
 | **Message Bus** | Slack API | User interaction interface |
 | **Web Framework** | Flask + Gunicorn | REST API server |
@@ -137,7 +137,8 @@ make metrics       # Display system metrics
 ```
 bobs-brain/
 ├── src/                    # Production source code
-│   ├── bob_brain_v5.py    # Main AI assistant service
+│   ├── bob_brain_v5.py    # Main AI assistant service (Neo4j)
+│   ├── bob_brain_chroma.py # ChromaDB version for local development
 │   ├── circle_of_life.py  # Learning pipeline
 │   └── unified_scraper.py # Data collection
 ├── scripts/               # Automation scripts

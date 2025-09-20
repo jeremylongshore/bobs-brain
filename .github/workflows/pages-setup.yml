@@ -1,0 +1,67 @@
+name: Setup GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/pages-setup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable GitHub Pages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Check if Pages is already enabled
+              const { data: pages } = await github.rest.repos.getPages({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              console.log('Pages already enabled:', pages.html_url);
+            } catch (error) {
+              if (error.status === 404) {
+                // Pages not enabled, let's enable it
+                console.log('Enabling GitHub Pages...');
+                try {
+                  await github.rest.repos.createPagesSite({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    source: {
+                      branch: 'main',
+                      path: '/docs'
+                    },
+                    build_type: 'workflow'
+                  });
+                  console.log('GitHub Pages enabled successfully');
+                } catch (enableError) {
+                  console.log('Error enabling Pages:', enableError.message);
+                  console.log('This may require manual setup in repository settings');
+                }
+              } else {
+                console.log('Error checking Pages status:', error.message);
+              }
+            }
+
+      - name: Trigger Pages Build
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pages.yml'
+            });

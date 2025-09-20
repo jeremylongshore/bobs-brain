@@ -71,11 +71,11 @@ class MVP3BigQueryMonitor:
                         "customer": row.full_name,
                         "email": row.email,
                         "equipment": row.equipment_type,
-                        "problem": row.problem_description[:200] if row.problem_description else "No description",
+                        "problem": (row.problem_description[:200] if row.problem_description else "No description"),
                         "service": row.selected_service,
                         "payment": row.payment_status,
                         "analyzed": row.ai_analysis is not None,
-                        "created": row.created_at.isoformat() if row.created_at else None,
+                        "created": (row.created_at.isoformat() if row.created_at else None),
                     }
                 )
 
@@ -158,7 +158,7 @@ class MVP3BigQueryMonitor:
                     "total_submissions": row.total_submissions,
                     "unique_customers": row.unique_customers,
                     "revenue": float(row.revenue) if row.revenue else 0,
-                    "avg_confidence": float(row.avg_confidence) if row.avg_confidence else 0,
+                    "avg_confidence": (float(row.avg_confidence) if row.avg_confidence else 0),
                     "paid_submissions": row.paid_submissions,
                     "emails_sent": row.emails_sent,
                 }

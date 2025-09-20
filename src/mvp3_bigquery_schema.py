@@ -55,9 +55,17 @@ class MVP3BigQuerySchema:
 
         schema = [
             # Core identifiers
-            bigquery.SchemaField("submission_id", "STRING", mode="REQUIRED", description="Unique submission ID"),
             bigquery.SchemaField(
-                "schema_version", "STRING", mode="REQUIRED", description="Schema version for migration tracking"
+                "submission_id",
+                "STRING",
+                mode="REQUIRED",
+                description="Unique submission ID",
+            ),
+            bigquery.SchemaField(
+                "schema_version",
+                "STRING",
+                mode="REQUIRED",
+                description="Schema version for migration tracking",
             ),
             # Customer information
             bigquery.SchemaField("full_name", "STRING", mode="REQUIRED"),
@@ -65,7 +73,10 @@ class MVP3BigQuerySchema:
             bigquery.SchemaField("phone", "STRING"),
             # Service selection
             bigquery.SchemaField(
-                "selected_service", "STRING", mode="REQUIRED", description="diagnosis|verification|emergency"
+                "selected_service",
+                "STRING",
+                mode="REQUIRED",
+                description="diagnosis|verification|emergency",
             ),
             bigquery.SchemaField("service_price", "FLOAT64"),
             bigquery.SchemaField("promo_code", "STRING"),
@@ -85,7 +96,12 @@ class MVP3BigQuerySchema:
             bigquery.SchemaField("mileage", "INTEGER"),
             bigquery.SchemaField("hours", "INTEGER", description="Operating hours for equipment"),
             # Problem details
-            bigquery.SchemaField("error_codes", "STRING", mode="REPEATED", description="Array of error codes"),
+            bigquery.SchemaField(
+                "error_codes",
+                "STRING",
+                mode="REPEATED",
+                description="Array of error codes",
+            ),
             bigquery.SchemaField("problem_description", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("symptoms", "STRING", mode="REPEATED", description="Array of symptoms"),
             bigquery.SchemaField("when_started", "STRING"),
@@ -102,7 +118,11 @@ class MVP3BigQuerySchema:
             bigquery.SchemaField("ai_model_used", "STRING"),
             bigquery.SchemaField("ai_processing_time_ms", "INTEGER"),
             # Payment information
-            bigquery.SchemaField("payment_status", "STRING", description="pending|completed|failed|refunded"),
+            bigquery.SchemaField(
+                "payment_status",
+                "STRING",
+                description="pending|completed|failed|refunded",
+            ),
             bigquery.SchemaField("stripe_payment_id", "STRING"),
             bigquery.SchemaField("payment_amount", "FLOAT64"),
             bigquery.SchemaField("payment_completed_at", "TIMESTAMP"),
@@ -112,10 +132,22 @@ class MVP3BigQuerySchema:
             bigquery.SchemaField("email_opened", "BOOLEAN"),
             bigquery.SchemaField("email_opened_at", "TIMESTAMP"),
             # MASSIVE EXPANSION FIELDS
-            bigquery.SchemaField("custom_fields", "JSON", description="Unlimited custom form fields as JSON"),
-            bigquery.SchemaField("metadata", "JSON", description="Flexible metadata for any additional data"),
+            bigquery.SchemaField(
+                "custom_fields",
+                "JSON",
+                description="Unlimited custom form fields as JSON",
+            ),
+            bigquery.SchemaField(
+                "metadata",
+                "JSON",
+                description="Flexible metadata for any additional data",
+            ),
             bigquery.SchemaField("tags", "STRING", mode="REPEATED", description="Searchable tags array"),
-            bigquery.SchemaField("data_source", "STRING", description="web_form|api|mobile|voice|chat|email"),
+            bigquery.SchemaField(
+                "data_source",
+                "STRING",
+                description="web_form|api|mobile|voice|chat|email",
+            ),
             bigquery.SchemaField("integration_source", "STRING", description="Source system identifier"),
             bigquery.SchemaField("raw_form_data", "JSON", description="Complete raw form submission"),
             # Versioning and audit
@@ -128,7 +160,11 @@ class MVP3BigQuerySchema:
             bigquery.SchemaField("processed_at", "TIMESTAMP"),
             bigquery.SchemaField("archived_at", "TIMESTAMP"),
             # Relationships
-            bigquery.SchemaField("parent_submission_id", "STRING", description="For follow-up submissions"),
+            bigquery.SchemaField(
+                "parent_submission_id",
+                "STRING",
+                description="For follow-up submissions",
+            ),
             bigquery.SchemaField("related_submissions", "STRING", mode="REPEATED"),
             bigquery.SchemaField("customer_id", "STRING", description="For repeat customers"),
             bigquery.SchemaField("session_id", "STRING"),
@@ -143,7 +179,11 @@ class MVP3BigQuerySchema:
         # Configure table with partitioning for massive scale
         table = bigquery.Table(table_id, schema=schema)
         table.time_partitioning = bigquery.TimePartitioning(type_=bigquery.TimePartitioningType.DAY, field="created_at")
-        table.clustering_fields = ["equipment_category", "selected_service", "payment_status"]
+        table.clustering_fields = [
+            "equipment_category",
+            "selected_service",
+            "payment_status",
+        ]
         table.description = "MVP3 diagnostic form submissions with massive expansion capabilities"
 
         try:

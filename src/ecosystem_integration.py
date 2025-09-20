@@ -110,7 +110,10 @@ class EcosystemIntegration:
                     health = await resp.json()
 
                 # Test Slack capability
-                test_message = {"text": "🔧 System Integration Test - Phase 5", "channel": "bob-testing"}
+                test_message = {
+                    "text": "🔧 System Integration Test - Phase 5",
+                    "channel": "bob-testing",
+                }
                 async with session.post(f"{self.bobs_brain_url}/slack/message", json=test_message) as resp:
                     slack_test = resp.status == 200
 
@@ -132,7 +135,8 @@ class EcosystemIntegration:
         """Connect to Neo4j Knowledge Graph"""
         try:
             driver = AsyncGraphDatabase.driver(
-                self.neo4j_uri, auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "bobshouse123"))
+                self.neo4j_uri,
+                auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "bobshouse123")),
             )
 
             async with driver.session() as session:
@@ -295,7 +299,10 @@ class EcosystemIntegration:
                     "dashboard": "status_updates",
                 },
                 "automation_rules": [
-                    {"trigger": "new_customer_submission", "action": "analyze_and_notify"},
+                    {
+                        "trigger": "new_customer_submission",
+                        "action": "analyze_and_notify",
+                    },
                     {"trigger": "knowledge_update", "action": "refresh_intelligence"},
                     {"trigger": "system_anomaly", "action": "alert_and_diagnose"},
                 ],
@@ -304,7 +311,8 @@ class EcosystemIntegration:
             # Send configuration to Bob
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.bobs_brain_url}/configure/orchestrator", json=orchestrator_config
+                    f"{self.bobs_brain_url}/configure/orchestrator",
+                    json=orchestrator_config,
                 ) as resp:
                     if resp.status == 200:
                         logger.info("✅ Bob configured as system orchestrator")
@@ -370,7 +378,8 @@ class EcosystemIntegration:
             # Send to scraper router (which stores in Neo4j)
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    "https://unified-scraper-157908567967.us-central1.run.app/process", json=test_content
+                    "https://unified-scraper-157908567967.us-central1.run.app/process",
+                    json=test_content,
                 ) as resp:
                     scraper_result = resp.status == 200
 
@@ -424,7 +433,7 @@ class EcosystemIntegration:
             submission_found = result.total_rows > 0
 
             return {
-                "status": "passed" if submission_saved and submission_found else "failed",
+                "status": ("passed" if submission_saved and submission_found else "failed"),
                 "submission_saved": submission_saved,
                 "bob_can_query": submission_found,
             }
@@ -449,7 +458,10 @@ class EcosystemIntegration:
                 for endpoint in api_endpoints:
                     try:
                         async with session.get(f"{self.dashboard_url}{endpoint}") as resp:
-                            api_results[endpoint] = resp.status in [200, 404]  # 404 ok if not implemented
+                            api_results[endpoint] = resp.status in [
+                                200,
+                                404,
+                            ]  # 404 ok if not implemented
                     except Exception:
                         api_results[endpoint] = False
 
@@ -509,7 +521,10 @@ class EcosystemIntegration:
 
             all_checks_passed = all(resilience_checks.values())
 
-            return {"status": "passed" if all_checks_passed else "partial", "checks": resilience_checks}
+            return {
+                "status": "passed" if all_checks_passed else "partial",
+                "checks": resilience_checks,
+            }
 
         except Exception as e:
             logger.error(f"Resilience test failed: {e}")

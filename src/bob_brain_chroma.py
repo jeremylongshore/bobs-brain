@@ -6,14 +6,12 @@ Local AI assistant with vector memory, no cloud dependencies
 
 import asyncio
 import hashlib
-import json
 import logging
 import os
 import sqlite3
-import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import chromadb
 import google.generativeai as genai
@@ -25,12 +23,10 @@ from slack_sdk.errors import SlackApiError
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("bob_brain.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("bob_brain.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 
 class BobBrainChroma:
     """
@@ -72,12 +68,12 @@ class BobBrainChroma:
             # Create collections for different types of memory
             self.conversations = self.chroma_client.get_or_create_collection(
                 name="conversations",
-                metadata={"description": "User conversations with semantic search"}
+                metadata={"description": "User conversations with semantic search"},
             )
 
             self.knowledge_base = self.chroma_client.get_or_create_collection(
                 name="knowledge_base",
-                metadata={"description": "Equipment repair knowledge and solutions"}
+                metadata={"description": "Equipment repair knowledge and solutions"},
             )
 
             logger.info("✅ ChromaDB vector memory initialized")
@@ -96,27 +92,32 @@ class BobBrainChroma:
             cursor = self.sqlite_db.cursor()
 
             # Users table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY,
                     name TEXT,
                     preferences TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Learning metrics table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS learning_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     metric_name TEXT,
                     metric_value REAL,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Corrections table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS corrections (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -125,7 +126,8 @@ class BobBrainChroma:
                     context TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             self.sqlite_db.commit()
             logger.info("✅ SQLite database initialized")
@@ -137,10 +139,10 @@ class BobBrainChroma:
     def _setup_genai(self):
         """Initialize Google Generative AI"""
         try:
-            api_key = os.getenv('GOOGLE_API_KEY')
+            api_key = os.getenv("GOOGLE_API_KEY")
             if api_key:
                 genai.configure(api_key=api_key)
-                self.genai_client = genai.GenerativeModel('gemini-2.0-flash-exp')
+                self.genai_client = genai.GenerativeModel("gemini-2.0-flash-exp")
                 logger.info("✅ Google Generative AI initialized")
             else:
                 logger.warning("⚠️ No GOOGLE_API_KEY found - AI responses disabled")
@@ -152,7 +154,7 @@ class BobBrainChroma:
     def _setup_slack(self):
         """Initialize Slack client"""
         try:
-            slack_token = os.getenv('SLACK_BOT_TOKEN')
+            slack_token = os.getenv("SLACK_BOT_TOKEN")
             if slack_token:
                 self.slack_client = WebClient(token=slack_token)
                 logger.info("✅ Slack client initialized")
@@ -169,17 +171,21 @@ class BobBrainChroma:
             return False
 
         try:
-            conversation_id = hashlib.md5(f"{user}{message}{datetime.now()}".encode(), usedforsecurity=False).hexdigest()
+            conversation_id = hashlib.md5(
+                f"{user}{message}{datetime.now()}".encode(), usedforsecurity=False
+            ).hexdigest()
 
             # Store in ChromaDB with automatic embeddings
             self.conversations.add(
                 documents=[f"User: {message}\nBob: {response}"],
-                metadatas=[{
-                    "user": user,
-                    "timestamp": datetime.now().isoformat(),
-                    "message_type": "conversation"
-                }],
-                ids=[conversation_id]
+                metadatas=[
+                    {
+                        "user": user,
+                        "timestamp": datetime.now().isoformat(),
+                        "message_type": "conversation",
+                    }
+                ],
+                ids=[conversation_id],
             )
 
             logger.info(f"💾 Stored conversation for {user}")
@@ -201,20 +207,18 @@ class BobBrainChroma:
                 where["user"] = user
 
             # Semantic search in ChromaDB
-            results = self.conversations.query(
-                query_texts=[query],
-                n_results=limit,
-                where=where if where else None
-            )
+            results = self.conversations.query(query_texts=[query], n_results=limit, where=where if where else None)
 
             memory_results = []
-            if results['documents'] and results['documents'][0]:
-                for i, doc in enumerate(results['documents'][0]):
-                    memory_results.append({
-                        "content": doc,
-                        "metadata": results['metadatas'][0][i],
-                        "distance": results['distances'][0][i] if results['distances'] else 0
-                    })
+            if results["documents"] and results["documents"][0]:
+                for i, doc in enumerate(results["documents"][0]):
+                    memory_results.append(
+                        {
+                            "content": doc,
+                            "metadata": results["metadatas"][0][i],
+                            "distance": (results["distances"][0][i] if results["distances"] else 0),
+                        }
+                    )
 
             return memory_results
 
@@ -232,12 +236,14 @@ class BobBrainChroma:
 
             self.knowledge_base.add(
                 documents=[content],
-                metadatas=[{
-                    "title": title,
-                    "source": source,
-                    "timestamp": datetime.now().isoformat()
-                }],
-                ids=[knowledge_id]
+                metadatas=[
+                    {
+                        "title": title,
+                        "source": source,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ],
+                ids=[knowledge_id],
             )
 
             logger.info(f"📚 Stored knowledge: {title}")
@@ -253,19 +259,18 @@ class BobBrainChroma:
             return []
 
         try:
-            results = self.knowledge_base.query(
-                query_texts=[query],
-                n_results=limit
-            )
+            results = self.knowledge_base.query(query_texts=[query], n_results=limit)
 
             knowledge_results = []
-            if results['documents'] and results['documents'][0]:
-                for i, doc in enumerate(results['documents'][0]):
-                    knowledge_results.append({
-                        "content": doc,
-                        "metadata": results['metadatas'][0][i],
-                        "distance": results['distances'][0][i] if results['distances'] else 0
-                    })
+            if results["documents"] and results["documents"][0]:
+                for i, doc in enumerate(results["documents"][0]):
+                    knowledge_results.append(
+                        {
+                            "content": doc,
+                            "metadata": results["metadatas"][0][i],
+                            "distance": (results["distances"][0][i] if results["distances"] else 0),
+                        }
+                    )
 
             return knowledge_results
 
@@ -280,10 +285,13 @@ class BobBrainChroma:
 
         try:
             cursor = self.sqlite_db.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO corrections (user_id, original_response, correction, context)
                 VALUES (?, ?, ?, ?)
-            """, (user, original, correction, context))
+            """,
+                (user, original, correction, context),
+            )
             self.sqlite_db.commit()
 
             logger.info(f"📝 Stored correction from {user}")
@@ -332,7 +340,7 @@ Respond as Bob with:
             if self.genai_client:
                 response = await asyncio.get_event_loop().run_in_executor(
                     self.executor,
-                    lambda: self.genai_client.generate_content(prompt).text
+                    lambda: self.genai_client.generate_content(prompt).text,
                 )
 
                 # Store this conversation
@@ -340,7 +348,9 @@ Respond as Bob with:
 
                 return response
             else:
-                fallback_response = f"I heard you say: '{user_message}'. My AI is currently offline, but I've stored this in memory."
+                fallback_response = (
+                    f"I heard you say: '{user_message}'. " "My AI is currently offline, but I've stored this in memory."
+                )
                 self.store_conversation(user, user_message, fallback_response)
                 return fallback_response
 
@@ -351,7 +361,7 @@ Respond as Bob with:
     def _setup_routes(self):
         """Setup Flask routes"""
 
-        @self.app.route('/health', methods=['GET'])
+        @self.app.route("/health", methods=["GET"])
         def health():
             status = {
                 "status": "healthy",
@@ -359,95 +369,83 @@ Respond as Bob with:
                 "sqlite": bool(self.sqlite_db),
                 "genai": bool(self.genai_client),
                 "slack": bool(self.slack_client),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             return jsonify(status)
 
-        @self.app.route('/test', methods=['POST'])
+        @self.app.route("/test", methods=["POST"])
         def test():
             data = request.json
-            message = data.get('message', 'Hello Bob!')
+            message = data.get("message", "Hello Bob!")
 
             # Run async response generation
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            response = loop.run_until_complete(
-                self.generate_response(message, "test_user")
-            )
+            response = loop.run_until_complete(self.generate_response(message, "test_user"))
             loop.close()
 
-            return jsonify({
-                "message": message,
-                "response": response,
-                "timestamp": datetime.now().isoformat()
-            })
+            return jsonify(
+                {
+                    "message": message,
+                    "response": response,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
-        @self.app.route('/memory/search', methods=['POST'])
+        @self.app.route("/memory/search", methods=["POST"])
         def search_memory_endpoint():
             data = request.json
-            query = data.get('query', '')
-            user = data.get('user')
-            limit = data.get('limit', 5)
+            query = data.get("query", "")
+            user = data.get("user")
+            limit = data.get("limit", 5)
 
             results = self.search_memory(query, user, limit)
 
-            return jsonify({
-                "query": query,
-                "results": results,
-                "count": len(results)
-            })
+            return jsonify({"query": query, "results": results, "count": len(results)})
 
-        @self.app.route('/knowledge/add', methods=['POST'])
+        @self.app.route("/knowledge/add", methods=["POST"])
         def add_knowledge():
             data = request.json
-            title = data.get('title', '')
-            content = data.get('content', '')
-            source = data.get('source', 'manual')
+            title = data.get("title", "")
+            content = data.get("content", "")
+            source = data.get("source", "manual")
 
             success = self.store_knowledge(title, content, source)
 
-            return jsonify({
-                "success": success,
-                "title": title,
-                "source": source
-            })
+            return jsonify({"success": success, "title": title, "source": source})
 
-        @self.app.route('/slack/events', methods=['POST'])
+        @self.app.route("/slack/events", methods=["POST"])
         def slack_events():
             data = request.json
 
             # Handle Slack URL verification
-            if data.get('type') == 'url_verification':
-                return jsonify({'challenge': data.get('challenge')})
+            if data.get("type") == "url_verification":
+                return jsonify({"challenge": data.get("challenge")})
 
             # Handle Slack events
-            if data.get('type') == 'event_callback':
-                event = data.get('event', {})
+            if data.get("type") == "event_callback":
+                event = data.get("event", {})
 
-                if event.get('type') == 'message' and not event.get('bot_id'):
-                    user = event.get('user')
-                    text = event.get('text', '')
-                    channel = event.get('channel')
+                if event.get("type") == "message" and not event.get("bot_id"):
+                    user = event.get("user")
+                    text = event.get("text", "")
+                    channel = event.get("channel")
 
                     # Generate response
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    response = loop.run_until_complete(
-                        self.generate_response(text, user)
-                    )
+                    response = loop.run_until_complete(self.generate_response(text, user))
                     loop.close()
 
                     # Send to Slack
                     if self.slack_client:
                         try:
-                            self.slack_client.chat_postMessage(
-                                channel=channel,
-                                text=response
-                            )
+                            self.slack_client.chat_postMessage(channel=channel, text=response)
                         except SlackApiError as e:
                             logger.error(f"Slack error: {e}")
 
-            return jsonify({'status': 'ok'})
+            return jsonify({"status": "ok"})
+
 
 def main():
     """Main entry point"""
@@ -456,13 +454,17 @@ def main():
     # Add some initial knowledge
     bob.store_knowledge(
         "Bob Introduction",
-        "I am Bob, Jeremy's AI assistant. I have persistent memory using ChromaDB and can help with technical questions, equipment repair, and general assistance.",
-        "system"
+        (
+            "I am Bob, Jeremy's AI assistant. I have persistent memory using ChromaDB "
+            "and can help with technical questions, equipment repair, and general assistance."
+        ),
+        "system",
     )
 
     port = int(os.environ.get("PORT", 8080))
     logger.info(f"🚀 Starting Bob's Brain v6.0 on port {port}")
     bob.app.run(host="0.0.0.0", port=port, debug=False)
+
 
 if __name__ == "__main__":
     main()

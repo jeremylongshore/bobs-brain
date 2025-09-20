@@ -31,7 +31,12 @@ class CircleOfLife:
     5. Feedback: Continuous improvement loop
     """
 
-    def __init__(self, mvp_project="diagnostic-pro-mvp", bob_project="bobs-house-ai", batch_size=100):
+    def __init__(
+        self,
+        mvp_project="diagnostic-pro-mvp",
+        bob_project="bobs-house-ai",
+        batch_size=100,
+    ):
         """
         Initialize Circle of Life with optimal settings for scalability
         """
@@ -189,9 +194,23 @@ class CircleOfLife:
         description_lower = description.lower()
 
         categories = {
-            "electrical": ["electrical", "battery", "alternator", "starter", "lights", "wiring"],
+            "electrical": [
+                "electrical",
+                "battery",
+                "alternator",
+                "starter",
+                "lights",
+                "wiring",
+            ],
             "engine": ["engine", "motor", "cylinder", "piston", "valve", "timing"],
-            "transmission": ["transmission", "gear", "clutch", "shifting", "automatic", "manual"],
+            "transmission": [
+                "transmission",
+                "gear",
+                "clutch",
+                "shifting",
+                "automatic",
+                "manual",
+            ],
             "brake": ["brake", "pad", "rotor", "caliper", "abs", "stopping"],
             "suspension": ["suspension", "shock", "strut", "spring", "alignment"],
             "cooling": ["cooling", "radiator", "coolant", "overheating", "thermostat"],
@@ -225,7 +244,12 @@ class CircleOfLife:
         Extract patterns from diagnostic data using BigQuery ML capabilities
         Returns learned patterns for Bob to use
         """
-        patterns = {"common_problems": {}, "effective_solutions": {}, "problem_correlations": {}, "seasonal_trends": {}}
+        patterns = {
+            "common_problems": {},
+            "effective_solutions": {},
+            "problem_correlations": {},
+            "seasonal_trends": {},
+        }
 
         try:
             # Query for most common problems
@@ -295,8 +319,8 @@ class CircleOfLife:
                             "pattern_id": hashlib.md5(f"{pattern_type}_{key}".encode()).hexdigest(),
                             "pattern_type": pattern_type,
                             "pattern_value": key,
-                            "frequency": value.get("frequency", 1) if isinstance(value, dict) else 1,
-                            "effectiveness": value.get("confidence", 0.5) if isinstance(value, dict) else 0.5,
+                            "frequency": (value.get("frequency", 1) if isinstance(value, dict) else 1),
+                            "effectiveness": (value.get("confidence", 0.5) if isinstance(value, dict) else 0.5),
                             "last_seen": datetime.now(),
                             "metadata": (
                                 json.dumps(value)
@@ -379,7 +403,12 @@ class CircleOfLife:
             return response
 
     async def feedback_loop(
-        self, problem: str, suggested_solution: str, actual_solution: str, success: bool, rating: int = 0
+        self,
+        problem: str,
+        suggested_solution: str,
+        actual_solution: str,
+        success: bool,
+        rating: int = 0,
     ):
         """
         Complete the Circle of Life with feedback

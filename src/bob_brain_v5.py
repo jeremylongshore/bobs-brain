@@ -12,8 +12,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from flask import Flask, jsonify, request
 import google.generativeai as genai
+from flask import Flask, jsonify, request
 from google.cloud import bigquery, datastore
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -71,7 +71,11 @@ class BobBrainV5:
             self.genai_client = genai.Client(vertexai=True, project=self.project_id, location=self.location)
 
             # Try multiple models
-            model_attempts = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-002"]
+            model_attempts = [
+                "gemini-2.5-flash",
+                "gemini-1.5-flash",
+                "gemini-1.5-flash-002",
+            ]
 
             self.model_name = None
             self.model_available = False
@@ -257,7 +261,8 @@ class BobBrainV5:
         if self.slack_token:
             # Initialize with higher timeout for Cloud Run networking
             self.slack_client = WebClient(
-                token=self.slack_token, timeout=30  # Increased timeout from default 10s to 30s
+                token=self.slack_token,
+                timeout=30,  # Increased timeout from default 10s to 30s
             )
             logger.info("✅ Slack: Client initialized with 30s timeout")
         else:
@@ -323,7 +328,10 @@ class BobBrainV5:
                             user=user,
                             message=user_message,
                             response=bot_response,
-                            id=hashlib.md5(f"{user_message}{bot_response}".encode(), usedforsecurity=False).hexdigest(),
+                            id=hashlib.md5(
+                                f"{user_message}{bot_response}".encode(),
+                                usedforsecurity=False,
+                            ).hexdigest(),
                         )
                     logger.info("💾 Stored conversation in Neo4j")
                 except Exception as e:
@@ -758,12 +766,23 @@ class BobBrainV5:
             if any(word in text.lower() for word in ["actually", "no it's", "correction", "wrong"]):
                 # Extract the correction
                 await self.learn_from_correction(
-                    self.conversation_context[-1] if self.conversation_context else "", text, user
+                    self.conversation_context[-1] if self.conversation_context else "",
+                    text,
+                    user,
                 )
 
             # Recall relevant past conversations
             # For questions about recent context, get the last few conversations
-            if any(phrase in text.lower() for phrase in ["just ask", "what did i", "previous", "before", "earlier"]):
+            if any(
+                phrase in text.lower()
+                for phrase in [
+                    "just ask",
+                    "what did i",
+                    "previous",
+                    "before",
+                    "earlier",
+                ]
+            ):
                 memory_context = await self.get_recent_conversations(user, limit=3)
             else:
                 memory_context = await self.recall_conversations(text, user)
@@ -773,7 +792,18 @@ class BobBrainV5:
 
             # Query Bobcat S740 specific knowledge if relevant
             s740_knowledge = []
-            if any(word in text.lower() for word in ["bobcat", "s740", "skid", "loader", "hydraulic", "dpf", "def"]):
+            if any(
+                word in text.lower()
+                for word in [
+                    "bobcat",
+                    "s740",
+                    "skid",
+                    "loader",
+                    "hydraulic",
+                    "dpf",
+                    "def",
+                ]
+            ):
                 s740_knowledge = self.query_bobcat_s740_knowledge(text)
                 if s740_knowledge:
                     logger.info(f"🚜 Found {len(s740_knowledge)} Bobcat S740 knowledge items")
@@ -846,8 +876,11 @@ Response:"""
                     response = self.genai_client.models.generate_content(
                         model=self.model_name,
                         contents=prompt,
-                        config=types.GenerateContentConfig(
-                            temperature=0.7, max_output_tokens=1024, top_p=0.95, top_k=40
+                        generation_config=genai.GenerationConfig(
+                            temperature=0.7,
+                            max_output_tokens=1024,
+                            top_p=0.95,
+                            top_k=40,
                         ),
                     )
 
@@ -919,10 +952,10 @@ def health():
             "status": "healthy",
             "service": "Bob Brain v5.0",
             "version": "5.0.0",
-            "model": f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model",
+            "model": (f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model"),
             "components": {
                 "genai": bob.model_available,
-                "graphiti": bob.graphiti_available if hasattr(bob, "graphiti_available") else False,
+                "graphiti": (bob.graphiti_available if hasattr(bob, "graphiti_available") else False),
                 "neo4j": hasattr(bob, "neo4j_driver") and bob.neo4j_driver is not None,
                 "memory": (hasattr(bob, "memory_available") and bob.memory_available)
                 or (hasattr(bob, "memory_cache") and len(bob.memory_cache) >= 0),
@@ -1086,7 +1119,7 @@ def test():
             "question": text,
             "response": response,
             "user": user,
-            "model_used": f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model",
+            "model_used": (f"{bob.model_name} (NEW Gen AI SDK)" if bob.model_available else "No model"),
             "processing_time_seconds": round(processing_time, 2),
             "components_status": {
                 "genai": "✅" if bob.model_available else "❌",
@@ -1201,7 +1234,14 @@ def slack_test():
         # Send test message to Slack
         response = bob.slack_client.chat_postMessage(channel=channel, text=f"🧪 {text}")
 
-        return jsonify({"status": "sent", "channel": channel, "text": text, "ts": response.get("ts")})
+        return jsonify(
+            {
+                "status": "sent",
+                "channel": channel,
+                "text": text,
+                "ts": response.get("ts"),
+            }
+        )
 
     except SlackApiError as e:
         logger.error(f"Slack test failed: {e}")
@@ -1221,7 +1261,12 @@ def slack_message():
     if not bob.slack_available:
         # Log but don't fail - simulate success
         logger.warning(f"Slack not configured, would send: {text}")
-        return jsonify({"status": "simulated", "message": "Slack not configured but message logged"})
+        return jsonify(
+            {
+                "status": "simulated",
+                "message": "Slack not configured but message logged",
+            }
+        )
 
     try:
         response = bob.slack_client.chat_postMessage(channel=channel, text=text)
@@ -1287,7 +1332,11 @@ def orchestrate():
     action = data.get("action", "system_status")
     components = data.get("components", [])
 
-    orchestration_result = {"action": action, "timestamp": datetime.utcnow().isoformat(), "results": {}}
+    orchestration_result = {
+        "action": action,
+        "timestamp": datetime.utcnow().isoformat(),
+        "results": {},
+    }
 
     try:
         if action == "system_status":
@@ -1307,7 +1356,9 @@ def orchestrate():
                 elif component == "customer_data":
                     orchestration_result["results"]["customer_data"] = {
                         "bigquery": bob.bigquery_available,
-                        "submissions": bob.circle_of_life.metrics["patterns_identified"] if bob.circle_available else 0,
+                        "submissions": (
+                            bob.circle_of_life.metrics["patterns_identified"] if bob.circle_available else 0
+                        ),
                     }
 
         orchestration_result["status"] = "completed"
@@ -1367,7 +1418,12 @@ def mvp3_submit():
         return jsonify({"error": "No problem description provided"}), 400
 
     # Get Bob's insights using Circle of Life
-    response = {"bob_analysis": "", "suggested_solutions": [], "confidence": 0.0, "similar_cases": []}
+    response = {
+        "bob_analysis": "",
+        "suggested_solutions": [],
+        "confidence": 0.0,
+        "similar_cases": [],
+    }
 
     if hasattr(bob, "circle_available") and bob.circle_available:
         loop = asyncio.new_event_loop()
@@ -1450,7 +1506,7 @@ def index():
                 "/slack/events": "Slack event handler",
             },
             "architecture": {
-                "ai_model": f"{bob.model_name} via Google Gen AI SDK" if bob.model_available else "Model offline",
+                "ai_model": (f"{bob.model_name} via Google Gen AI SDK" if bob.model_available else "Model offline"),
                 "memory": "Graphiti/Neo4j for perfect recall",
                 "knowledge": "BigQuery warehouse for massive data",
                 "learning": "Circle of Life continuous learning from MVP3",
