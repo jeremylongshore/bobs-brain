@@ -9,21 +9,22 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict
 
 import aiohttp
 from google.cloud import bigquery
 from google.cloud import aiplatform
 from neo4j import AsyncGraphDatabase
+
 try:
     from google.cloud import monitoring_v3
 except ImportError:
     monitoring_v3 = None  # Optional for monitoring
-import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class EcosystemIntegration:
     """Complete AI Ecosystem Integration with Bob as System Orchestrator"""
@@ -49,7 +50,7 @@ class EcosystemIntegration:
             "scrapers": {"status": "unknown", "last_check": None},
             "mvp3": {"status": "unknown", "last_check": None},
             "dashboard": {"status": "unknown", "last_check": None},
-            "automl": {"status": "unknown", "last_check": None}
+            "automl": {"status": "unknown", "last_check": None},
         }
 
         # Performance metrics
@@ -59,7 +60,7 @@ class EcosystemIntegration:
             "customer_submissions": 0,
             "ml_predictions": 0,
             "slack_messages": 0,
-            "system_uptime": 0
+            "system_uptime": 0,
         }
 
     async def initialize_ecosystem(self) -> Dict[str, Any]:
@@ -71,7 +72,7 @@ class EcosystemIntegration:
             "phase": "5",
             "status": "initializing",
             "components": {},
-            "integrations": {}
+            "integrations": {},
         }
 
         # 1. Validate Bob's Brain is operational
@@ -110,21 +111,15 @@ class EcosystemIntegration:
                     health = await resp.json()
 
                 # Test Slack capability
-                test_message = {
-                    "text": "🔧 System Integration Test - Phase 5",
-                    "channel": "bob-testing"
-                }
-                async with session.post(
-                    f"{self.bobs_brain_url}/slack/message",
-                    json=test_message
-                ) as resp:
+                test_message = {"text": "🔧 System Integration Test - Phase 5", "channel": "bob-testing"}
+                async with session.post(f"{self.bobs_brain_url}/slack/message", json=test_message) as resp:
                     slack_test = resp.status == 200
 
                 self.components["bob_brain"] = {
                     "status": "operational",
                     "last_check": datetime.utcnow().isoformat(),
                     "health": health,
-                    "slack_active": slack_test
+                    "slack_active": slack_test,
                 }
 
                 logger.info("✅ Bob's Brain validated and operational")
@@ -138,13 +133,13 @@ class EcosystemIntegration:
         """Connect to Neo4j Knowledge Graph"""
         try:
             driver = AsyncGraphDatabase.driver(
-                self.neo4j_uri,
-                auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "bobshouse123"))
+                self.neo4j_uri, auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "bobshouse123"))
             )
 
             async with driver.session() as session:
                 # Get knowledge graph statistics
-                result = await session.run("""
+                result = await session.run(
+                    """
                     MATCH (n)
                     RETURN
                         COUNT(DISTINCT n) as nodes,
@@ -154,14 +149,15 @@ class EcosystemIntegration:
                     RETURN
                         COUNT(r) as relationships,
                         COUNT(DISTINCT type(r)) as relationship_types
-                """)
+                """
+                )
 
                 stats = await result.data()
 
                 self.components["neo4j"] = {
                     "status": "connected",
                     "last_check": datetime.utcnow().isoformat(),
-                    "statistics": stats
+                    "statistics": stats,
                 }
 
                 self.metrics["knowledge_graph_size"] = stats[0]["nodes"] if stats else 0
@@ -196,8 +192,8 @@ class EcosystemIntegration:
                 "statistics": {
                     "total_submissions": stats.get("total_submissions", 0),
                     "unique_customers": stats.get("unique_customers", 0),
-                    "latest_submission": str(stats.get("latest_submission", "N/A"))
-                }
+                    "latest_submission": str(stats.get("latest_submission", "N/A")),
+                },
             }
 
             self.metrics["customer_submissions"] = stats.get("total_submissions", 0)
@@ -219,26 +215,23 @@ class EcosystemIntegration:
             dataset_name = "mvp3_diagnostic_patterns"
 
             # Check for existing datasets
-            datasets = aiplatform.TabularDataset.list(
-                filter=f'display_name="{dataset_name}"'
-            )
+            datasets = aiplatform.TabularDataset.list(filter=f'display_name="{dataset_name}"')
 
             if not datasets:
                 # Create new dataset from BigQuery
-                dataset = aiplatform.TabularDataset.create(
+                aiplatform.TabularDataset.create(
                     display_name=dataset_name,
-                    bq_source=f"bq://{self.project_id}.circle_of_life.mvp3_diagnostic_submissions"
+                    bq_source=f"bq://{self.project_id}.circle_of_life.mvp3_diagnostic_submissions",
                 )
                 logger.info(f"✅ Created AutoML dataset: {dataset_name}")
             else:
-                dataset = datasets[0]
                 logger.info(f"✅ Using existing AutoML dataset: {dataset_name}")
 
             self.components["automl"] = {
                 "status": "configured",
                 "last_check": datetime.utcnow().isoformat(),
                 "dataset": dataset_name,
-                "ready_for_training": True
+                "ready_for_training": True,
             }
 
             return self.components["automl"]
@@ -255,7 +248,7 @@ class EcosystemIntegration:
                 "bob_response_time": "Distribution of Bob's response times",
                 "knowledge_graph_queries": "Number of knowledge graph queries",
                 "customer_satisfaction": "Customer satisfaction scores",
-                "system_health_score": "Overall system health score"
+                "system_health_score": "Overall system health score",
             }
 
             # Configure alerts
@@ -263,7 +256,7 @@ class EcosystemIntegration:
                 "bob_down": {"threshold": 5, "window": "5m"},
                 "high_latency": {"threshold": 3000, "window": "1m"},
                 "low_memory": {"threshold": 80, "window": "5m"},
-                "cost_overrun": {"threshold": 100, "window": "1d"}
+                "cost_overrun": {"threshold": 100, "window": "1d"},
             }
 
             monitoring_status = {
@@ -271,7 +264,7 @@ class EcosystemIntegration:
                 "last_check": datetime.utcnow().isoformat(),
                 "metrics": list(metrics_config.keys()),
                 "alerts": list(alerts_config.keys()),
-                "dashboard_url": f"{self.dashboard_url}/monitoring"
+                "dashboard_url": f"{self.dashboard_url}/monitoring",
             }
 
             logger.info("✅ System monitoring configured")
@@ -292,7 +285,7 @@ class EcosystemIntegration:
                     "trigger_ml_training",
                     "manage_scrapers",
                     "coordinate_responses",
-                    "alert_on_anomalies"
+                    "alert_on_anomalies",
                 ],
                 "integrations": {
                     "neo4j": "knowledge_queries",
@@ -300,29 +293,19 @@ class EcosystemIntegration:
                     "automl": "prediction_requests",
                     "scrapers": "content_routing",
                     "slack": "team_notifications",
-                    "dashboard": "status_updates"
+                    "dashboard": "status_updates",
                 },
                 "automation_rules": [
-                    {
-                        "trigger": "new_customer_submission",
-                        "action": "analyze_and_notify"
-                    },
-                    {
-                        "trigger": "knowledge_update",
-                        "action": "refresh_intelligence"
-                    },
-                    {
-                        "trigger": "system_anomaly",
-                        "action": "alert_and_diagnose"
-                    }
-                ]
+                    {"trigger": "new_customer_submission", "action": "analyze_and_notify"},
+                    {"trigger": "knowledge_update", "action": "refresh_intelligence"},
+                    {"trigger": "system_anomaly", "action": "alert_and_diagnose"},
+                ],
             }
 
             # Send configuration to Bob
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.bobs_brain_url}/configure/orchestrator",
-                    json=orchestrator_config
+                    f"{self.bobs_brain_url}/configure/orchestrator", json=orchestrator_config
                 ) as resp:
                     if resp.status == 200:
                         logger.info("✅ Bob configured as system orchestrator")
@@ -332,7 +315,7 @@ class EcosystemIntegration:
             return {
                 "status": "configured",
                 "role": "system_orchestrator",
-                "capabilities": orchestrator_config["capabilities"]
+                "capabilities": orchestrator_config["capabilities"],
             }
 
         except Exception as e:
@@ -343,10 +326,7 @@ class EcosystemIntegration:
         """Test complete end-to-end ecosystem flow"""
         logger.info("🔄 Testing complete ecosystem flow...")
 
-        test_results = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "tests": {}
-        }
+        test_results = {"timestamp": datetime.utcnow().isoformat(), "tests": {}}
 
         # Test 1: Scraper → Neo4j → Bob Intelligence
         test_results["tests"]["scraper_to_bob"] = await self.test_scraper_flow()
@@ -364,17 +344,14 @@ class EcosystemIntegration:
         test_results["tests"]["system_resilience"] = await self.test_resilience()
 
         # Calculate overall success
-        successful_tests = sum(
-            1 for test in test_results["tests"].values()
-            if test.get("status") == "passed"
-        )
+        successful_tests = sum(1 for test in test_results["tests"].values() if test.get("status") == "passed")
         total_tests = len(test_results["tests"])
 
         test_results["summary"] = {
             "total_tests": total_tests,
             "passed": successful_tests,
             "failed": total_tests - successful_tests,
-            "success_rate": f"{(successful_tests/total_tests)*100:.1f}%"
+            "success_rate": f"{(successful_tests/total_tests)*100:.1f}%",
         }
 
         return test_results
@@ -388,24 +365,20 @@ class EcosystemIntegration:
                 "title": "Bobcat T590 Hydraulic System Diagnosis",
                 "content": "Common issues include slow cylinder response and internal leakage...",
                 "source_type": "technical_manual",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             # Send to scraper router (which stores in Neo4j)
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    "https://unified-scraper-157908567967.us-central1.run.app/process",
-                    json=test_content
+                    "https://unified-scraper-157908567967.us-central1.run.app/process", json=test_content
                 ) as resp:
                     scraper_result = resp.status == 200
 
             # Query Bob for the knowledge
             async with aiohttp.ClientSession() as session:
                 query = {"question": "What are common Bobcat T590 hydraulic issues?"}
-                async with session.post(
-                    f"{self.bobs_brain_url}/api/query",
-                    json=query
-                ) as resp:
+                async with session.post(f"{self.bobs_brain_url}/api/query", json=query) as resp:
                     if resp.status == 200:
                         bob_response = await resp.json()
                         knowledge_found = "hydraulic" in str(bob_response).lower()
@@ -415,7 +388,7 @@ class EcosystemIntegration:
             return {
                 "status": "passed" if scraper_result and knowledge_found else "failed",
                 "scraper_stored": scraper_result,
-                "bob_has_knowledge": knowledge_found
+                "bob_has_knowledge": knowledge_found,
             }
 
         except Exception as e:
@@ -432,7 +405,7 @@ class EcosystemIntegration:
                 "email": "test@example.com",
                 "equipment_type": "excavator",
                 "problem_description": "Hydraulic system not responding",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.utcnow().isoformat(),
             }
 
             # Insert test submission to BigQuery
@@ -454,7 +427,7 @@ class EcosystemIntegration:
             return {
                 "status": "passed" if submission_saved and submission_found else "failed",
                 "submission_saved": submission_saved,
-                "bob_can_query": submission_found
+                "bob_can_query": submission_found,
             }
 
         except Exception as e:
@@ -471,24 +444,20 @@ class EcosystemIntegration:
                     dashboard_accessible = resp.status in [200, 301, 302]
 
                 # Check API endpoints
-                api_endpoints = [
-                    "/api/health",
-                    "/api/metrics",
-                    "/api/knowledge-graph"
-                ]
+                api_endpoints = ["/api/health", "/api/metrics", "/api/knowledge-graph"]
 
                 api_results = {}
                 for endpoint in api_endpoints:
                     try:
                         async with session.get(f"{self.dashboard_url}{endpoint}") as resp:
                             api_results[endpoint] = resp.status in [200, 404]  # 404 ok if not implemented
-                    except:
+                    except Exception:
                         api_results[endpoint] = False
 
             return {
                 "status": "passed" if dashboard_accessible else "partial",
                 "dashboard_accessible": dashboard_accessible,
-                "api_endpoints": api_results
+                "api_endpoints": api_results,
             }
 
         except Exception as e:
@@ -501,18 +470,11 @@ class EcosystemIntegration:
             # Check if AutoML dataset exists
             aiplatform.init(project=self.project_id, location="us-central1")
 
-            datasets = aiplatform.TabularDataset.list(
-                filter='display_name="mvp3_diagnostic_patterns"'
-            )
+            datasets = aiplatform.TabularDataset.list(filter='display_name="mvp3_diagnostic_patterns"')
 
             dataset_exists = len(datasets) > 0
 
-            # Simulate prediction request
-            test_prediction = {
-                "equipment_type": "excavator",
-                "symptoms": ["slow hydraulics", "unusual noise"],
-                "error_codes": ["E-101", "H-205"]
-            }
+            # Note: Prediction functionality would be used here in production
 
             # Note: Actual model training would take time, so we check readiness
             ml_ready = dataset_exists
@@ -521,7 +483,7 @@ class EcosystemIntegration:
                 "status": "passed" if ml_ready else "partial",
                 "dataset_exists": dataset_exists,
                 "ready_for_training": ml_ready,
-                "note": "Full ML training requires more data and time"
+                "note": "Full ML training requires more data and time",
             }
 
         except Exception as e:
@@ -536,7 +498,7 @@ class EcosystemIntegration:
                 "error_recovery": True,  # Try-catch blocks in place
                 "data_persistence": True,  # BigQuery and Neo4j persistent
                 "backup_configured": True,  # GCP automatic backups
-                "monitoring_active": True  # Cloud Monitoring enabled
+                "monitoring_active": True,  # Cloud Monitoring enabled
             }
 
             # Check Bob's uptime
@@ -548,10 +510,7 @@ class EcosystemIntegration:
 
             all_checks_passed = all(resilience_checks.values())
 
-            return {
-                "status": "passed" if all_checks_passed else "partial",
-                "checks": resilience_checks
-            }
+            return {"status": "passed" if all_checks_passed else "partial", "checks": resilience_checks}
 
         except Exception as e:
             logger.error(f"Resilience test failed: {e}")
@@ -573,7 +532,7 @@ class EcosystemIntegration:
                 "bob_to_slack": "✅ Operational",
                 "dashboard_visualization": "✅ Available",
                 "automl_pipeline": "⚠️ Ready for training",
-                "monitoring_system": "✅ Active"
+                "monitoring_system": "✅ Active",
             },
             "bob_orchestrator": {
                 "status": "ACTIVE",
@@ -583,22 +542,22 @@ class EcosystemIntegration:
                     "Customer submission processing",
                     "Team notifications",
                     "System health monitoring",
-                    "ML prediction access"
-                ]
+                    "ML prediction access",
+                ],
             },
             "readiness": {
                 "production_ready": True,
                 "scalability_ready": True,
                 "ml_ready": True,
-                "expansion_ready": True
+                "expansion_ready": True,
             },
             "next_steps": [
                 "Monitor system performance",
                 "Collect more training data",
                 "Train AutoML models",
                 "Expand scraping sources",
-                "Optimize costs"
-            ]
+                "Optimize costs",
+            ],
         }
 
         # Send report to Slack via Bob
@@ -615,19 +574,14 @@ class EcosystemIntegration:
         """Send notification to Slack via Bob"""
         try:
             async with aiohttp.ClientSession() as session:
-                payload = {
-                    "text": message,
-                    "channel": "general"
-                }
-                async with session.post(
-                    f"{self.bobs_brain_url}/slack/message",
-                    json=payload
-                ) as resp:
+                payload = {"text": message, "channel": "general"}
+                async with session.post(f"{self.bobs_brain_url}/slack/message", json=payload) as resp:
                     if resp.status == 200:
                         self.metrics["slack_messages"] += 1
-                        logger.info(f"📨 Slack notification sent")
+                        logger.info("📨 Slack notification sent")
         except Exception as e:
             logger.error(f"Failed to send Slack notification: {e}")
+
 
 async def main():
     """Execute Phase 5: Complete Ecosystem Integration"""
@@ -664,6 +618,7 @@ async def main():
         logger.warning("⚠️ Phase 5 partially complete - manual intervention may be needed")
 
     return report
+
 
 if __name__ == "__main__":
     # Run the integration

@@ -7,19 +7,18 @@ Uses open-source libraries for web scraping
 
 import asyncio
 import hashlib
-import json
 import logging
 import re
 from datetime import datetime
 from typing import Dict, List, Optional
 
-import feedparser
 import requests
 from bs4 import BeautifulSoup
 from google.cloud import bigquery
 from neo4j import GraphDatabase
 
 logger = logging.getLogger(__name__)
+
 
 class TSBScraper:
     """
@@ -118,7 +117,7 @@ class TSBScraper:
 
         try:
             self.bq_client.create_dataset(dataset, exists_ok=True)
-        except:
+        except Exception:
             pass
 
         # Schema for TSBs
@@ -147,7 +146,7 @@ class TSBScraper:
         try:
             self.bq_client.create_table(table, exists_ok=True)
             logger.info("✅ TSB table ready")
-        except:
+        except Exception:
             pass
 
     async def scrape_nhtsa_recalls(self, make: str, model: str = None, year: int = None) -> List[Dict]:
@@ -471,6 +470,7 @@ class TSBScraper:
 
         return found_tsbs
 
+
 async def main():
     """Test the TSB scraper"""
     logging.basicConfig(level=logging.INFO)
@@ -501,6 +501,7 @@ async def main():
     print(f"✅ Scraped {truck_count} truck TSBs")
 
     print("\n📊 Data stored in BigQuery: tsb_knowledge.service_bulletins")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

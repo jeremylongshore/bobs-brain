@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+
 class BobBrainV5:
     """Bob as Jeremy's Universal Assistant with Full Memory"""
 
@@ -912,8 +913,10 @@ Response:"""
 
         return response
 
+
 # Initialize Bob Brain v5
 bob = BobBrainV5()
+
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -946,6 +949,7 @@ def health():
             "timestamp": time.time(),
         }
     )
+
 
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
@@ -1063,6 +1067,7 @@ def slack_events():
         logger.error(f"Slack event processing error: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/test", methods=["GET", "POST"])
 def test():
     """Test endpoint with full capabilities"""
@@ -1107,6 +1112,7 @@ def test():
         }
     )
 
+
 @app.route("/learn", methods=["POST"])
 def learn():
     """Endpoint to explicitly teach Bob something"""
@@ -1131,6 +1137,7 @@ def learn():
         }
     )
 
+
 @app.route("/api/query", methods=["POST"])
 def api_query():
     """Query Bob's knowledge - main intelligence endpoint"""
@@ -1149,9 +1156,7 @@ def api_query():
         # Query BigQuery knowledge if available
         knowledge_context = ""
         if bob.bigquery_available:
-            knowledge_results = loop.run_until_complete(
-                bob._search_bigquery_knowledge(question)
-            )
+            knowledge_results = loop.run_until_complete(bob._search_bigquery_knowledge(question))
             if knowledge_results:
                 knowledge_context = f"\nRelevant knowledge:\n{knowledge_results[:1000]}"
 
@@ -1165,10 +1170,7 @@ def api_query():
 
             Provide a helpful, accurate response based on the available knowledge."""
 
-            response = bob.genai_client.models.generate_content(
-                model=bob.model_name,
-                contents=prompt
-            )
+            response = bob.genai_client.models.generate_content(model=bob.model_name, contents=prompt)
 
             if response and response.candidates:
                 answer = response.candidates[0].content.parts[0].text
@@ -1177,20 +1179,20 @@ def api_query():
         else:
             answer = "AI model not available. Please check system configuration."
 
-        return jsonify({
-            "question": question,
-            "answer": answer,
-            "context": context,
-            "knowledge_available": bool(knowledge_context),
-            "model": bob.model_name if bob.model_available else "none"
-        })
+        return jsonify(
+            {
+                "question": question,
+                "answer": answer,
+                "context": context,
+                "knowledge_available": bool(knowledge_context),
+                "model": bob.model_name if bob.model_available else "none",
+            }
+        )
 
     except Exception as e:
         logger.error(f"Query processing error: {e}")
-        return jsonify({
-            "error": "Failed to process query",
-            "details": str(e)
-        }), 500
+        return jsonify({"error": "Failed to process query", "details": str(e)}), 500
+
 
 @app.route("/slack/test", methods=["POST"])
 def slack_test():
@@ -1204,24 +1206,14 @@ def slack_test():
 
     try:
         # Send test message to Slack
-        response = bob.slack_client.chat_postMessage(
-            channel=channel,
-            text=f"🧪 {text}"
-        )
+        response = bob.slack_client.chat_postMessage(channel=channel, text=f"🧪 {text}")
 
-        return jsonify({
-            "status": "sent",
-            "channel": channel,
-            "text": text,
-            "ts": response.get("ts")
-        })
+        return jsonify({"status": "sent", "channel": channel, "text": text, "ts": response.get("ts")})
 
     except SlackApiError as e:
         logger.error(f"Slack test failed: {e}")
-        return jsonify({
-            "error": "Slack test failed",
-            "details": str(e)
-        }), 500
+        return jsonify({"error": "Slack test failed", "details": str(e)}), 500
+
 
 @app.route("/slack/message", methods=["POST"])
 def slack_message():
@@ -1236,32 +1228,22 @@ def slack_message():
     if not bob.slack_available:
         # Log but don't fail - simulate success
         logger.warning(f"Slack not configured, would send: {text}")
-        return jsonify({
-            "status": "simulated",
-            "message": "Slack not configured but message logged"
-        })
+        return jsonify({"status": "simulated", "message": "Slack not configured but message logged"})
 
     try:
-        response = bob.slack_client.chat_postMessage(
-            channel=channel,
-            text=text
-        )
+        response = bob.slack_client.chat_postMessage(channel=channel, text=text)
 
-        return jsonify({
-            "status": "sent",
-            "channel": channel,
-            "ts": response.get("ts")
-        })
+        return jsonify({"status": "sent", "channel": channel, "ts": response.get("ts")})
 
     except Exception as e:
         logger.error(f"Slack message failed: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/api/mvp3/process", methods=["POST"])
 def mvp3_process():
     """Process MVP3 submission"""
     data = request.json or {}
-    submission_type = data.get("type", "mvp3_submission")
     submission_data = data.get("data", {})
 
     try:
@@ -1286,21 +1268,24 @@ def mvp3_process():
                 bob.slack_client.chat_postMessage(
                     channel="mvp3-submissions",
                     text=f"📋 New MVP3 submission from {submission_data.get('customer_name')}\n"
-                         f"Equipment: {submission_data.get('equipment_type')}\n"
-                         f"Problem: {submission_data.get('problem')}"
+                    f"Equipment: {submission_data.get('equipment_type')}\n"
+                    f"Problem: {submission_data.get('problem')}",
                 )
-            except:
+            except Exception:
                 pass  # Don't fail if Slack notification fails
 
-        return jsonify({
-            "status": "processed",
-            "submission_id": submission_data.get("submission_id"),
-            "stored": bob.bigquery_available
-        })
+        return jsonify(
+            {
+                "status": "processed",
+                "submission_id": submission_data.get("submission_id"),
+                "stored": bob.bigquery_available,
+            }
+        )
 
     except Exception as e:
         logger.error(f"MVP3 processing error: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/orchestrate", methods=["POST"])
 def orchestrate():
@@ -1309,11 +1294,7 @@ def orchestrate():
     action = data.get("action", "system_status")
     components = data.get("components", [])
 
-    orchestration_result = {
-        "action": action,
-        "timestamp": datetime.utcnow().isoformat(),
-        "results": {}
-    }
+    orchestration_result = {"action": action, "timestamp": datetime.utcnow().isoformat(), "results": {}}
 
     try:
         if action == "system_status":
@@ -1323,17 +1304,17 @@ def orchestrate():
                     # Check scraper health
                     orchestration_result["results"]["scrapers"] = {
                         "unified": "operational",  # Would check actual status
-                        "circle": "operational"
+                        "circle": "operational",
                     }
                 elif component == "knowledge_graph":
                     orchestration_result["results"]["knowledge_graph"] = {
                         "neo4j": bob.graphiti_available,
-                        "nodes": "unknown"  # Would query actual count
+                        "nodes": "unknown",  # Would query actual count
                     }
                 elif component == "customer_data":
                     orchestration_result["results"]["customer_data"] = {
                         "bigquery": bob.bigquery_available,
-                        "submissions": bob.circle_of_life.metrics["patterns_identified"] if bob.circle_available else 0
+                        "submissions": bob.circle_of_life.metrics["patterns_identified"] if bob.circle_available else 0,
                     }
 
         orchestration_result["status"] = "completed"
@@ -1344,6 +1325,7 @@ def orchestrate():
         orchestration_result["status"] = "failed"
         orchestration_result["error"] = str(e)
         return jsonify(orchestration_result), 500
+
 
 @app.route("/circle-of-life/metrics", methods=["GET"])
 def circle_metrics():
@@ -1356,6 +1338,7 @@ def circle_metrics():
     metrics = loop.run_until_complete(bob.circle_of_life.get_system_metrics())
 
     return jsonify(metrics)
+
 
 @app.route("/circle-of-life/ingest", methods=["POST"])
 def circle_ingest():
@@ -1377,6 +1360,7 @@ def circle_ingest():
             "message": f"Ingested {len(insights)} diagnostic insights into Circle of Life",
         }
     )
+
 
 @app.route("/mvp3/submit-diagnostic", methods=["POST"])
 def mvp3_submit():
@@ -1416,6 +1400,7 @@ def mvp3_submit():
 
     return jsonify(response)
 
+
 @app.route("/mvp3/feedback", methods=["POST"])
 def mvp3_feedback():
     """Endpoint for MVP3 to provide feedback on Bob's suggestions"""
@@ -1449,6 +1434,7 @@ def mvp3_feedback():
         )
 
     return jsonify({"error": "Circle of Life not available"}), 503
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -1492,6 +1478,7 @@ def index():
             "purpose": "Universal knowledge and development assistant",
         }
     )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

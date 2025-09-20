@@ -17,6 +17,7 @@ from neo4j import GraphDatabase
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class ScraperNeo4jRouter:
     """Routes all scraped data to Neo4j for Bob's knowledge graph"""
 
@@ -272,7 +273,10 @@ class ScraperNeo4jRouter:
             self.driver.close()
             logger.info("🔒 Neo4j connection closed")
 
+
 # Integration with existing scrapers
+
+
 class ScraperIntegration:
     """Integrate with existing scrapers to route data to Neo4j"""
 
@@ -310,6 +314,7 @@ class ScraperIntegration:
         logger.info(f"📊 Bulk processing complete: {results}")
         return results
 
+
 def main():
     """Test the Neo4j router"""
     router = ScraperNeo4jRouter()
@@ -318,7 +323,10 @@ def main():
     test_content = {
         "url": "https://example.com/bobcat-repair",
         "title": "Bobcat T590 Hydraulic System Repair Guide",
-        "content": "Common hydraulic problems in Bobcat T590 include slow operation and leaking seals. To fix these issues...",
+        "content": (
+            "Common hydraulic problems in Bobcat T590 include slow operation and leaking seals. "
+            "To fix these issues..."
+        ),
         "source_type": "forum",
         "category": "repair_guide",
     }
@@ -337,6 +345,7 @@ def main():
     logger.info(f"📊 Knowledge graph statistics: {stats}")
 
     router.close()
+
 
 if __name__ == "__main__":
     main()

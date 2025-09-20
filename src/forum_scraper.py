@@ -11,15 +11,14 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import urljoin, urlparse
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp
-import feedparser
 from google.cloud import bigquery
-from playwright.async_api import Browser, Page, async_playwright
+from playwright.async_api import async_playwright, Page
 
 logger = logging.getLogger(__name__)
+
 
 class ForumIntelligenceScraper:
     """
@@ -580,7 +579,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return "Unknown Forum"
 
     async def _analyze_authentication(self, page: Page, auth_hint: str = None) -> Tuple[str, str]:
@@ -649,7 +648,7 @@ class ForumIntelligenceScraper:
 
             return expertise_found if expertise_found else ["mixed"]
 
-        except:
+        except Exception:
             return ["unknown"]
 
     async def _identify_equipment_focus(self, page: Page) -> List[str]:
@@ -674,7 +673,7 @@ class ForumIntelligenceScraper:
 
             return equipment_types if equipment_types else ["general"]
 
-        except:
+        except Exception:
             return ["unknown"]
 
     async def _calculate_quality_score(self, page: Page) -> float:
@@ -719,14 +718,14 @@ class ForumIntelligenceScraper:
 
             return min(score, 100.0)
 
-        except:
+        except Exception:
             return 50.0
 
     async def _extract_active_members(self, page: Page) -> int:
         """Extract count of recently active members"""
         try:
             return await page.evaluate(
-                """
+                r"""
                 () => {
                     const activeIndicators = document.querySelectorAll(
                         '.online-users, .users-online, [class*="active-users"]'
@@ -740,7 +739,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return 0
 
     async def _generate_scrape_notes(self, page: Page, auth_level: str, user_expertise: List[str]) -> str:
@@ -790,7 +789,7 @@ class ForumIntelligenceScraper:
             )
 
             return categories
-        except:
+        except Exception:
             return []
 
     async def _extract_member_count(self, page: Page) -> int:
@@ -809,7 +808,7 @@ class ForumIntelligenceScraper:
             """
             )
             return member_text
-        except:
+        except Exception:
             return 0
 
     async def _extract_thread_count(self, page: Page) -> int:
@@ -828,7 +827,7 @@ class ForumIntelligenceScraper:
             """
             )
             return thread_text
-        except:
+        except Exception:
             return 0
 
     async def _identify_specialties(self, page: Page) -> List[str]:
@@ -853,7 +852,7 @@ class ForumIntelligenceScraper:
                     specialties.append(specialty)
 
             return specialties[:5]  # Limit to top 5 specialties
-        except:
+        except Exception:
             return []
 
     async def start_realtime_scraping(self, forums: List[Dict]):
@@ -874,6 +873,9 @@ class ForumIntelligenceScraper:
 
         await self.initialize_browser()
         threads = []
+
+        # Create basic forum_info structure
+        forum_info = {"url": forum_url, "name": forum_url.split("//")[-1].split("/")[0], "platform": "unknown"}
 
         try:
             page = await self.context.new_page()
@@ -984,7 +986,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return "Unknown Thread"
 
     async def _extract_thread_category(self, page: Page) -> str:
@@ -1002,7 +1004,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return "General"
 
     async def _extract_problem(self, page: Page) -> str:
@@ -1011,7 +1013,9 @@ class ForumIntelligenceScraper:
             return await page.evaluate(
                 """
                 () => {
-                    const firstPost = document.querySelector('.post-content, .entry-content, .message-content, [class*="post-body"]');
+                    const firstPost = document.querySelector(
+                        '.post-content, .entry-content, .message-content, [class*="post-body"]'
+                    );
                     if (firstPost) {
                         const text = firstPost.textContent.trim();
                         return text.substring(0, 1000);  // Limit to 1000 chars
@@ -1020,7 +1024,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return ""
 
     async def _extract_solution(self, page: Page) -> str:
@@ -1048,7 +1052,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return ""
 
     async def _extract_equipment(self, page: Page) -> List[str]:
@@ -1071,7 +1075,7 @@ class ForumIntelligenceScraper:
                 equipment.update(matches[:5])  # Limit matches per pattern
 
             return list(equipment)[:10]  # Return top 10
-        except:
+        except Exception:
             return []
 
     async def _extract_view_count(self, page: Page) -> int:
@@ -1089,7 +1093,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return 0
 
     async def _extract_reply_count(self, page: Page) -> int:
@@ -1103,7 +1107,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return 0
 
     async def _check_if_solved(self, page: Page) -> bool:
@@ -1120,7 +1124,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return False
 
     async def _extract_author(self, page: Page) -> str:
@@ -1135,7 +1139,7 @@ class ForumIntelligenceScraper:
                 }
             """
             )
-        except:
+        except Exception:
             return "Anonymous"
 
     async def _extract_date(self, page: Page) -> datetime:
@@ -1161,7 +1165,7 @@ class ForumIntelligenceScraper:
 
                 return parser.parse(date_str)
 
-        except:
+        except Exception:
             pass
 
         return datetime.now()
@@ -1210,9 +1214,11 @@ class ForumIntelligenceScraper:
                 "problem_category": self._categorize_problem(thread_data.get("problem_description", "")),
                 "problem": thread_data.get("problem_description", "")[:500],
                 "solution": thread_data.get("solution", "")[:1000],
-                "equipment_type": thread_data.get("equipment_mentioned", ["Unknown"])[0]
-                if thread_data.get("equipment_mentioned")
-                else "Unknown",
+                "equipment_type": (
+                    thread_data.get("equipment_mentioned", ["Unknown"])[0]
+                    if thread_data.get("equipment_mentioned")
+                    else "Unknown"
+                ),
                 "parts_needed": self._extract_parts(thread_data.get("solution", "")),
                 "tools_required": self._extract_tools(thread_data.get("solution", "")),
                 "difficulty_level": self._assess_difficulty(thread_data.get("solution", "")),
@@ -1227,7 +1233,7 @@ class ForumIntelligenceScraper:
             errors = self.bq_client.insert_rows_json(table_id, [solution_data])
 
             if not errors:
-                logger.debug(f"✅ Stored repair solution from thread")
+                logger.debug("✅ Stored repair solution from thread")
 
         except Exception as e:
             logger.error(f"Failed to extract/store solution: {e}")
@@ -1403,6 +1409,7 @@ class ForumIntelligenceScraper:
         finally:
             await self.close_browser()
 
+
 async def main():
     """Main function for testing"""
     scraper = ForumIntelligenceScraper()
@@ -1411,6 +1418,7 @@ async def main():
     report = await scraper.run_comprehensive_scrape()
 
     print(json.dumps(report, indent=2))
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

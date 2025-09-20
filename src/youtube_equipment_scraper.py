@@ -6,8 +6,6 @@ Focuses on: Mini skid steers, diesel pickup trucks, compact construction equipme
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import re
 from datetime import datetime
@@ -21,6 +19,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
 logger = logging.getLogger(__name__)
+
 
 class YouTubeEquipmentScraper:
     """
@@ -125,7 +124,7 @@ class YouTubeEquipmentScraper:
 
         try:
             self.bq_client.create_dataset(dataset, exists_ok=True)
-        except:
+        except Exception:
             pass
 
         # Schema for YouTube transcripts
@@ -150,7 +149,7 @@ class YouTubeEquipmentScraper:
         try:
             self.bq_client.create_table(table, exists_ok=True)
             logger.info("✅ YouTube transcript table ready")
-        except:
+        except Exception:
             pass
 
     async def get_video_transcript(self, video_id: str) -> Optional[str]:
@@ -217,7 +216,7 @@ class YouTubeEquipmentScraper:
         """Get video IDs from a channel - simplified without yt-dlp"""
         # Return empty list for now - would need YouTube Data API for channel videos
         # Focus on search_and_scrape with specific video IDs instead
-        logger.info(f"Channel scraping not available without YouTube API - use search_and_scrape instead")
+        logger.info("Channel scraping not available without YouTube API - use search_and_scrape instead")
         return []
 
     async def scrape_and_store(self, video_id: str, equipment_type: str = "general") -> bool:
@@ -247,9 +246,11 @@ class YouTubeEquipmentScraper:
                 "topics": topics,
                 "duration": metadata.get("duration", 0),
                 "view_count": metadata.get("view_count", 0),
-                "published_date": datetime.strptime(metadata.get("upload_date", "20230101"), "%Y%m%d")
-                if metadata.get("upload_date")
-                else None,
+                "published_date": (
+                    datetime.strptime(metadata.get("upload_date", "20230101"), "%Y%m%d")
+                    if metadata.get("upload_date")
+                    else None
+                ),
                 "scraped_at": datetime.now(),
             }
 
@@ -373,6 +374,7 @@ class YouTubeEquipmentScraper:
         logger.info(f"✅ Scraped {scraped_count} videos for query: {query}")
         return scraped_count
 
+
 async def main():
     """Test the YouTube equipment scraper"""
     logging.basicConfig(level=logging.INFO)
@@ -394,6 +396,7 @@ async def main():
     # Uncomment to scrape all channels
     # total = await scraper.scrape_all_channels(max_videos_per_channel=2)
     # print(f"\n✅ Total videos from channels: {total}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

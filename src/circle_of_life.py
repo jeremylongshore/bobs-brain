@@ -20,6 +20,7 @@ from google.cloud import bigquery, datastore
 
 logger = logging.getLogger(__name__)
 
+
 class CircleOfLife:
     """
     Implements the Circle of Life learning system:
@@ -297,9 +298,11 @@ class CircleOfLife:
                             "frequency": value.get("frequency", 1) if isinstance(value, dict) else 1,
                             "effectiveness": value.get("confidence", 0.5) if isinstance(value, dict) else 0.5,
                             "last_seen": datetime.now(),
-                            "metadata": json.dumps(value)
-                            if isinstance(value, (dict, list))
-                            else json.dumps({"value": str(value)}),
+                            "metadata": (
+                                json.dumps(value)
+                                if isinstance(value, (dict, list))
+                                else json.dumps({"value": str(value)})
+                            ),
                         }
                     )
 
@@ -501,8 +504,10 @@ class CircleOfLife:
                 logger.error(f"Circle of Life error: {e}")
                 await asyncio.sleep(60)  # Wait 1 minute on error
 
+
 # Singleton instance for easy import
 circle_of_life = None
+
 
 def get_circle_of_life() -> CircleOfLife:
     """Get or create Circle of Life instance"""
@@ -510,6 +515,7 @@ def get_circle_of_life() -> CircleOfLife:
     if circle_of_life is None:
         circle_of_life = CircleOfLife()
     return circle_of_life
+
 
 if __name__ == "__main__":
     # Test the Circle of Life

@@ -9,11 +9,11 @@ Focus: Bobcat S740 and compact equipment
 import asyncio
 import json
 import logging
-import os
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict
 
 from google.cloud import bigquery
+
 try:
     from google.cloud import scheduler_v1
 except ImportError:
@@ -29,6 +29,7 @@ from skidsteer_scraper import SkidSteerKnowledgeScraper
 from forum_scraper import ForumIntelligenceScraper
 
 logger = logging.getLogger(__name__)
+
 
 class CircleOfLifeScraperIntegration:
     """
@@ -93,7 +94,7 @@ class CircleOfLifeScraperIntegration:
             "start_time": start_time.isoformat(),
             "phases_completed": [],
             "total_data_collected": 0,
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -115,7 +116,7 @@ class CircleOfLifeScraperIntegration:
                 "Bobcat error codes",
                 "hydraulic troubleshooting skid steer",
                 "DPF regeneration Bobcat",
-                "loader attachment problems"
+                "loader attachment problems",
             ]
 
             forum_results = await self.forum_scraper.run_comprehensive_scrape(forum_search_queries)
@@ -141,9 +142,9 @@ class CircleOfLifeScraperIntegration:
 
             # Calculate totals
             results["total_data_collected"] = (
-                skidsteer_results.get("issues_found", 0) +
-                skidsteer_results.get("hacks_found", 0) +
-                forum_results.get("threads_scraped", 0)
+                skidsteer_results.get("issues_found", 0)
+                + skidsteer_results.get("hacks_found", 0)
+                + forum_results.get("threads_scraped", 0)
             )
 
             results["status"] = "completed"
@@ -152,7 +153,8 @@ class CircleOfLifeScraperIntegration:
             # Log successful completion
             await self._log_scraping_complete(scrape_id, results)
 
-            logger.info(f"""
+            logger.info(
+                f"""
             ✅ Overnight Scraping Complete!
             ==============================
             Scrape ID: {scrape_id}
@@ -164,7 +166,8 @@ class CircleOfLifeScraperIntegration:
             Equipment Hacks Found: {skidsteer_results.get('hacks_found', 0)}
             Forums Scraped: {forum_results.get('forums_discovered', 0)}
             Threads Analyzed: {forum_results.get('threads_scraped', 0)}
-            """)
+            """
+            )
 
         except Exception as e:
             logger.error(f"Overnight scraping failed: {e}")
@@ -202,7 +205,7 @@ class CircleOfLifeScraperIntegration:
                     "solution_provided": row.solution,
                     "confidence_score": 0.85,  # High confidence for specific model data
                     "timestamp": datetime.now(),
-                    "source": "skidsteer_scraper"
+                    "source": "skidsteer_scraper",
                 }
 
                 # Store in Circle of Life diagnostic insights
@@ -231,7 +234,7 @@ class CircleOfLifeScraperIntegration:
             "problem_patterns": 0,
             "solution_patterns": 0,
             "equipment_patterns": 0,
-            "seasonal_patterns": 0
+            "seasonal_patterns": 0,
         }
 
         try:
@@ -262,7 +265,7 @@ class CircleOfLifeScraperIntegration:
                     "frequency": row.frequency,
                     "effectiveness": float(row.avg_confidence),
                     "last_seen": datetime.now(),
-                    "metadata": {"category": row.problem_category}
+                    "metadata": {"category": row.problem_category},
                 }
 
                 table_id = f"{self.project_id}.circle_of_life.learning_patterns"
@@ -291,7 +294,7 @@ class CircleOfLifeScraperIntegration:
                     "frequency": row.usage_count,
                     "effectiveness": float(row.success_rate),
                     "last_seen": datetime.now(),
-                    "metadata": {"usage_count": row.usage_count}
+                    "metadata": {"usage_count": row.usage_count},
                 }
 
                 table_id = f"{self.project_id}.circle_of_life.learning_patterns"
@@ -318,8 +321,8 @@ class CircleOfLifeScraperIntegration:
                 "metadata": {
                     "error_code": code,
                     "problem_type": problem_type,
-                    "solution_preview": solution[:200] if solution else ""
-                }
+                    "solution_preview": solution[:200] if solution else "",
+                },
             }
 
             table_id = f"{self.project_id}.circle_of_life.learning_patterns"
@@ -338,10 +341,7 @@ class CircleOfLifeScraperIntegration:
                 "frequency": 1,
                 "effectiveness": 0.6,
                 "last_seen": datetime.now(),
-                "metadata": {
-                    "part": part,
-                    "problem_type": problem_type
-                }
+                "metadata": {"part": part, "problem_type": problem_type},
             }
 
             table_id = f"{self.project_id}.circle_of_life.learning_patterns"
@@ -414,7 +414,7 @@ class CircleOfLifeScraperIntegration:
 
         try:
             self.bq_client.create_dataset(dataset, exists_ok=True)
-        except:
+        except Exception:
             pass
 
         table_id = f"{dataset_id}.bob_knowledge"
@@ -432,7 +432,7 @@ class CircleOfLifeScraperIntegration:
         table = bigquery.Table(table_id, schema=schema)
         try:
             self.bq_client.create_table(table, exists_ok=True)
-        except:
+        except Exception:
             pass
 
     async def _generate_daily_insights(self) -> Dict:
@@ -442,7 +442,7 @@ class CircleOfLifeScraperIntegration:
             "top_problems": [],
             "new_solutions": 0,
             "equipment_focus": "Bobcat S740",
-            "recommendations": []
+            "recommendations": [],
         }
 
         try:
@@ -461,10 +461,7 @@ class CircleOfLifeScraperIntegration:
             results = self.bq_client.query(query).result()
 
             for row in results:
-                insights["top_problems"].append({
-                    "type": row.problem_type,
-                    "occurrences": row.count
-                })
+                insights["top_problems"].append({"type": row.problem_type, "occurrences": row.count})
 
             # Count new solutions
             query = f"""
@@ -480,13 +477,9 @@ class CircleOfLifeScraperIntegration:
             # Generate recommendations
             if insights["top_problems"]:
                 top_problem = insights["top_problems"][0]["type"]
-                insights["recommendations"].append(
-                    f"Focus on {top_problem} issues - high frequency detected"
-                )
+                insights["recommendations"].append(f"Focus on {top_problem} issues - high frequency detected")
 
-            insights["recommendations"].append(
-                f"Added {insights['new_solutions']} new solutions to knowledge base"
-            )
+            insights["recommendations"].append(f"Added {insights['new_solutions']} new solutions to knowledge base")
 
             logger.info(f"📊 Generated daily insights: {insights}")
 
@@ -503,7 +496,7 @@ class CircleOfLifeScraperIntegration:
                 "scrape_type": scrape_type,
                 "start_time": start_time,
                 "status": "running",
-                "metadata": {"initiated_by": "scheduled"}
+                "metadata": {"initiated_by": "scheduled"},
             }
 
             table_id = f"{self.project_id}.circle_of_life.scraping_history"
@@ -573,8 +566,8 @@ class CircleOfLifeScraperIntegration:
                     body=json.dumps({"scrape_type": "overnight"}).encode(),
                     oidc_token=scheduler_v1.OidcToken(
                         service_account_email=f"circle-of-life@{self.project_id}.iam.gserviceaccount.com"
-                    )
-                )
+                    ),
+                ),
             )
 
             try:
@@ -586,6 +579,7 @@ class CircleOfLifeScraperIntegration:
         except Exception as e:
             logger.error(f"Failed to set up Cloud Scheduler: {e}")
 
+
 async def main():
     """Main function for testing Circle of Life scraper"""
     integration = CircleOfLifeScraperIntegration()
@@ -595,9 +589,7 @@ async def main():
 
     print(json.dumps(results, indent=2, default=str))
 
+
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     asyncio.run(main())

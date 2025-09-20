@@ -4,15 +4,13 @@ MVP3 BigQuery Schema - Form-Matched Database Architecture with Massive Expansion
 Phase 4: Enterprise-grade schema for unlimited data collection and ecosystem unleashing
 """
 
-import json
 import logging
-from datetime import datetime
-from typing import Any, Dict, List
 
 from google.cloud import bigquery
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class MVP3BigQuerySchema:
     """
@@ -379,6 +377,7 @@ class MVP3BigQuerySchema:
             "schema_version": self.schema_version,
         }
 
+
 def main():
     """Create the MVP3 BigQuery schema"""
     schema_manager = MVP3BigQuerySchema()
@@ -392,6 +391,7 @@ def main():
     print(f"Schema version: {result['schema_version']}")
     print("\n🚀 Ready for massive expansion and ecosystem unleashing!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

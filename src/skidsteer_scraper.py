@@ -14,11 +14,11 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from google.cloud import bigquery
-from playwright.async_api import Page, async_playwright
 
 from forum_scraper import ForumIntelligenceScraper
 
 logger = logging.getLogger(__name__)
+
 
 class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     """
@@ -32,39 +32,59 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         # Specialized equipment patterns
         self.target_equipment = {
             "bobcat": {
-                "models": ["S740", "S750", "S770", "S650", "S630", "S590", "S570", "S530", "S510", "T740", "T750", "T770"],
+                "models": [
+                    "S740",
+                    "S750",
+                    "S770",
+                    "S650",
+                    "S630",
+                    "S590",
+                    "S570",
+                    "S530",
+                    "S510",
+                    "T740",
+                    "T750",
+                    "T770",
+                ],
                 "patterns": [r"bobcat\s*s740", r"s740\s*skid", r"bobcat.*740"],
                 "common_problems": [
-                    "hydraulic leak", "engine overheating", "drive motor failure",
-                    "lift arm problems", "electrical issues", "joystick malfunction",
-                    "aux hydraulics", "door sensor", "def system", "dpf regeneration"
-                ]
+                    "hydraulic leak",
+                    "engine overheating",
+                    "drive motor failure",
+                    "lift arm problems",
+                    "electrical issues",
+                    "joystick malfunction",
+                    "aux hydraulics",
+                    "door sensor",
+                    "def system",
+                    "dpf regeneration",
+                ],
             },
             "caterpillar": {
                 "models": ["259D", "262D", "272D", "279D", "289D", "299D"],
                 "patterns": [r"cat\s*\d{3}d", r"caterpillar.*skid"],
-                "common_problems": ["track tension", "undercarriage wear", "hydraulic pump"]
+                "common_problems": ["track tension", "undercarriage wear", "hydraulic pump"],
             },
             "kubota": {
                 "models": ["SSV65", "SSV75", "SVL65", "SVL75", "SVL95"],
                 "patterns": [r"kubota\s*s[sv]", r"kubota.*skid"],
-                "common_problems": ["dpf issues", "def problems", "engine codes"]
+                "common_problems": ["dpf issues", "def problems", "engine codes"],
             },
             "john_deere": {
                 "models": ["313", "315", "317", "320", "325", "330", "332"],
                 "patterns": [r"deere\s*\d{3}", r"john\s*deere.*skid"],
-                "common_problems": ["boom drift", "bucket curl", "attachment issues"]
+                "common_problems": ["boom drift", "bucket curl", "attachment issues"],
             },
             "case": {
                 "models": ["SR130", "SR160", "SR175", "SR210", "SR240", "SR270"],
                 "patterns": [r"case\s*sr", r"case.*skid"],
-                "common_problems": ["pilot controls", "cab pressure", "ac problems"]
+                "common_problems": ["pilot controls", "cab pressure", "ac problems"],
             },
             "new_holland": {
                 "models": ["L213", "L215", "L218", "L220", "L225", "L230"],
                 "patterns": [r"new\s*holland\s*l\d", r"nh.*skid"],
-                "common_problems": ["loader valve", "engine timing", "turbo issues"]
-            }
+                "common_problems": ["loader valve", "engine timing", "turbo issues"],
+            },
         }
 
         # Specialized forums for skid steers
@@ -74,25 +94,20 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             "https://www.tractorbynet.com/forums/compact-track-loaders/",
             "https://www.lawnsite.com/forums/heavy-equipment-skid-steers.37/",
             "https://www.skidsteerforum.com",
-
             # Bobcat Specific
             "https://www.bobcatforum.com",
             "https://talk.newagtalk.com/forums/forum-view.asp?fid=150",  # Bobcat section
-
             # Equipment Forums with Skid Steer Sections
             "https://www.smokstak.com/forum/forums/construction-industrial-equipment.134/",
             "https://www.mytractorforum.com/forums/skid-steer-loaders.137/",
             "https://forums.yesterdaystractors.com/forums/construction-equipment.98/",
-
             # Reddit Communities
             "https://www.reddit.com/r/HeavyEquipment/",
             "https://www.reddit.com/r/Construction/",
             "https://www.reddit.com/r/Landscaping/",
-
             # Facebook Groups (public posts only)
             "https://www.facebook.com/groups/skidsteeroperators/",
             "https://www.facebook.com/groups/bobcatequipment/",
-
             # Operator Forums
             "https://www.contractortalk.com/forums/heavy-equipment.172/",
             "https://www.plowsite.com/forums/skid-steer.119/",
@@ -236,10 +251,11 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 # Use DuckDuckGo for less restrictive searching
                 search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}"
                 page = await self.context.new_page()
-                await page.goto(search_url, wait_until='networkidle')
+                await page.goto(search_url, wait_until="networkidle")
 
                 # Extract search results
-                links = await page.evaluate("""
+                links = await page.evaluate(
+                    """
                     () => {
                         const links = [];
                         document.querySelectorAll('a[href*="forum"], a[href*="thread"], a[href*="/r/"]').forEach(a => {
@@ -250,7 +266,8 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                         });
                         return links.slice(0, 10);
                     }
-                """)
+                """
+                )
 
                 relevant_urls.update(links)
                 await page.close()
@@ -334,9 +351,22 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     def _extract_symptoms(self, content: str) -> List[str]:
         """Extract symptoms mentioned"""
         symptom_keywords = [
-            "leaking", "overheating", "won't start", "stalling", "no power",
-            "jerky", "slow", "noise", "vibration", "error code", "warning light",
-            "smoke", "burning smell", "won't lift", "won't tilt", "drifting"
+            "leaking",
+            "overheating",
+            "won't start",
+            "stalling",
+            "no power",
+            "jerky",
+            "slow",
+            "noise",
+            "vibration",
+            "error code",
+            "warning light",
+            "smoke",
+            "burning smell",
+            "won't lift",
+            "won't tilt",
+            "drifting",
         ]
 
         symptoms = []
@@ -404,13 +434,13 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
 
     def _extract_cost(self, content: str) -> str:
         """Extract cost information"""
-        cost_pattern = r'\$\s*(\d+(?:,\d{3})*(?:\.\d{2})?)'
+        cost_pattern = r"\$\s*(\d+(?:,\d{3})*(?:\.\d{2})?)"
         matches = re.findall(cost_pattern, content)
 
         if matches:
             # Return range if multiple costs mentioned
             if len(matches) > 1:
-                costs = [float(m.replace(',', '')) for m in matches]
+                costs = [float(m.replace(",", "")) for m in matches]
                 return f"${min(costs):.2f} - ${max(costs):.2f}"
             return f"${matches[0]}"
 
@@ -475,8 +505,14 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     def _check_if_verified(self, content: str) -> bool:
         """Check if solution is verified"""
         verified_indicators = [
-            "confirmed", "verified", "worked for me", "solved", "fixed",
-            "this works", "can confirm", "tested and working"
+            "confirmed",
+            "verified",
+            "worked for me",
+            "solved",
+            "fixed",
+            "this works",
+            "can confirm",
+            "tested and working",
         ]
 
         content_lower = content.lower()
@@ -525,7 +561,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
 
     def _extract_hack_title(self, content: str) -> str:
         """Extract hack title"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         for line in lines[:5]:  # Check first 5 lines
             if len(line) > 10 and len(line) < 100:
                 return line.strip()
@@ -569,8 +605,17 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     def _extract_tools_list(self, content: str) -> List[str]:
         """Extract tools mentioned"""
         tool_keywords = [
-            "wrench", "socket", "screwdriver", "drill", "grinder",
-            "welder", "torch", "hammer", "pliers", "jack", "gauge"
+            "wrench",
+            "socket",
+            "screwdriver",
+            "drill",
+            "grinder",
+            "welder",
+            "torch",
+            "hammer",
+            "pliers",
+            "jack",
+            "gauge",
         ]
 
         tools = []
@@ -612,7 +657,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "equipment_hacks": 0,
                 "maintenance_schedules": 0,
                 "operator_tips": 0,
-            }
+            },
         }
 
         try:
@@ -640,18 +685,18 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
 
                     # Process each thread for S740 content
                     for thread in threads:
-                        content = thread.get('problem_description', '') + thread.get('solution', '')
+                        content = thread.get("problem_description", "") + thread.get("solution", "")
 
                         # Extract S740 specific issues
                         if "s740" in content.lower() or "740" in content.lower():
-                            issue = await self.extract_bobcat_s740_issue(content, thread['url'])
+                            issue = await self.extract_bobcat_s740_issue(content, thread["url"])
                             if issue:
                                 # Store in BigQuery
                                 table_id = f"{self.project_id}.skidsteer_knowledge.bobcat_s740_issues"
 
                                 # Convert datetime to ISO format
-                                if isinstance(issue.get('scraped_at'), datetime):
-                                    issue['scraped_at'] = issue['scraped_at'].isoformat()
+                                if isinstance(issue.get("scraped_at"), datetime):
+                                    issue["scraped_at"] = issue["scraped_at"].isoformat()
 
                                 errors = self.bq_client.insert_rows_json(table_id, [issue])
                                 if not errors:
@@ -660,12 +705,12 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                                     logger.info(f"✅ Stored S740 issue: {issue['problem_type']}")
 
                         # Extract equipment hacks
-                        hack = await self.extract_equipment_hacks(content, thread['url'], "S740")
+                        hack = await self.extract_equipment_hacks(content, thread["url"], "S740")
                         if hack:
                             table_id = f"{self.project_id}.skidsteer_knowledge.equipment_hacks"
 
-                            if isinstance(hack.get('scraped_at'), datetime):
-                                hack['scraped_at'] = hack['scraped_at'].isoformat()
+                            if isinstance(hack.get("scraped_at"), datetime):
+                                hack["scraped_at"] = hack["scraped_at"].isoformat()
 
                             errors = self.bq_client.insert_rows_json(table_id, [hack])
                             if not errors:
@@ -673,7 +718,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                                 results["data_stored"]["equipment_hacks"] += 1
 
                         # Count solutions
-                        if thread.get('solution'):
+                        if thread.get("solution"):
                             results["solutions_found"] += 1
 
                     # Rate limiting
@@ -690,7 +735,8 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             logger.info("💡 Phase 4: Extracting operator tips...")
             await self._extract_operator_tips()
 
-            logger.info(f"""
+            logger.info(
+                f"""
             ✅ Bobcat S740 Scraping Complete!
             ================================
             Forums Scraped: {results['forums_scraped']}
@@ -701,7 +747,8 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
             Data Stored in BigQuery:
             - S740 Issues: {results['data_stored']['bobcat_s740_issues']}
             - Equipment Hacks: {results['data_stored']['equipment_hacks']}
-            """)
+            """
+            )
 
         except Exception as e:
             logger.error(f"Scraping operation failed: {e}")
@@ -782,7 +829,10 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "equipment_type": "Bobcat S740",
                 "category": "efficiency",
                 "title": "Proper Warm-up Procedure",
-                "tip_content": "Always warm up the machine for 5-10 minutes before heavy operation. Cycle all hydraulic functions slowly to distribute warm oil throughout the system.",
+                "tip_content": (
+                    "Always warm up the machine for 5-10 minutes before heavy operation. "
+                    "Cycle all hydraulic functions slowly to distribute warm oil throughout the system."
+                ),
                 "experience_level": "beginner",
                 "votes": 156,
                 "author": "Forum compilation",
@@ -794,7 +844,10 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
                 "equipment_type": "Bobcat S740",
                 "category": "maintenance",
                 "title": "Daily Greasing Points",
-                "tip_content": "Grease loader arms and bucket pins daily (8-10 hours of operation). Use high-quality grease and pump until clean grease appears.",
+                "tip_content": (
+                    "Grease loader arms and bucket pins daily (8-10 hours of operation). "
+                    "Use high-quality grease and pump until clean grease appears."
+                ),
                 "experience_level": "beginner",
                 "votes": 203,
                 "author": "Forum compilation",
@@ -810,6 +863,7 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         if not errors:
             logger.info(f"✅ Stored {len(tips)} operator tips")
 
+
 async def main():
     """Main function to run skid steer scraper"""
     scraper = SkidSteerKnowledgeScraper()
@@ -818,6 +872,7 @@ async def main():
     results = await scraper.scrape_skidsteer_forums()
 
     print(json.dumps(results, indent=2))
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

@@ -9,20 +9,20 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, Any
+
 from flask import Flask, jsonify, request
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Import all scrapers
 from youtube_equipment_scraper import YouTubeEquipmentScraper
 from tsb_scraper import TSBScraper
 from unified_scraper_enhanced import EnhancedUnifiedScraper
 from circle_of_life_scraper import CircleOfLifeScraperIntegration
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize Flask for Cloud Run
 app = Flask(__name__)
+
 
 class Neo4jUnifiedScraper:
     """
@@ -45,12 +45,7 @@ class Neo4jUnifiedScraper:
         start_time = datetime.now()
         logger.info(f"🌙 STARTING OVERNIGHT NEO4J SCRAPING - {start_time}")
 
-        results = {
-            "start_time": start_time.isoformat(),
-            "scrapers": {},
-            "total_items": 0,
-            "errors": []
-        }
+        results = {"start_time": start_time.isoformat(), "scrapers": {}, "total_items": 0, "errors": []}
 
         try:
             # Phase 1: YouTube Equipment Transcripts
@@ -67,7 +62,7 @@ class Neo4jUnifiedScraper:
                     "compact tractor hydraulic repair",
                     "skid steer attachment troubleshooting",
                     "Ditch Witch SK repair",
-                    "Toro Dingo maintenance"
+                    "Toro Dingo maintenance",
                 ]
 
                 youtube_count = 0
@@ -83,7 +78,7 @@ class Neo4jUnifiedScraper:
                 results["scrapers"]["youtube"] = {
                     "status": "completed",
                     "videos_scraped": youtube_count,
-                    "storage": "Neo4j + BigQuery"
+                    "storage": "Neo4j + BigQuery",
                 }
                 results["total_items"] += youtube_count
                 logger.info(f"✅ YouTube: {youtube_count} videos scraped")
@@ -112,7 +107,7 @@ class Neo4jUnifiedScraper:
                     "equipment": equipment_tsbs,
                     "trucks": truck_tsbs,
                     "forums": len(forum_tsbs),
-                    "storage": "Neo4j + BigQuery"
+                    "storage": "Neo4j + BigQuery",
                 }
                 results["total_items"] += total_tsbs
                 logger.info(f"✅ TSB: {total_tsbs} bulletins scraped")
@@ -125,21 +120,17 @@ class Neo4jUnifiedScraper:
             logger.info("🌐 Phase 3: Scraping forums and equipment sites...")
             try:
                 # Scrape priority categories
-                categories = [
-                    'forums_heavy_equipment',
-                    'manufacturer_resources',
-                    'industry_publications'
-                ]
+                categories = ["forums_heavy_equipment", "manufacturer_resources", "industry_publications"]
 
                 enhanced_results = await self.enhanced_scraper.scrape_all_sources(categories)
 
                 results["scrapers"]["enhanced"] = {
                     "status": "completed",
-                    "items_scraped": enhanced_results.get('total_items', 0),
-                    "by_category": enhanced_results.get('by_category', {}),
-                    "storage": "BigQuery"  # This one doesn't have Neo4j yet
+                    "items_scraped": enhanced_results.get("total_items", 0),
+                    "by_category": enhanced_results.get("by_category", {}),
+                    "storage": "BigQuery",  # This one doesn't have Neo4j yet
                 }
-                results["total_items"] += enhanced_results.get('total_items', 0)
+                results["total_items"] += enhanced_results.get("total_items", 0)
                 logger.info(f"✅ Enhanced: {enhanced_results.get('total_items', 0)} items scraped")
 
             except Exception as e:
@@ -154,7 +145,7 @@ class Neo4jUnifiedScraper:
                 results["scrapers"]["circle_of_life"] = {
                     "status": circle_results.get("status", "unknown"),
                     "data_collected": circle_results.get("total_data_collected", 0),
-                    "phases": circle_results.get("phases_completed", [])
+                    "phases": circle_results.get("phases_completed", []),
                 }
                 results["total_items"] += circle_results.get("total_data_collected", 0)
                 logger.info(f"✅ Circle of Life: {circle_results.get('total_data_collected', 0)} items")
@@ -171,7 +162,8 @@ class Neo4jUnifiedScraper:
             results["runtime_minutes"] = round(runtime, 2)
             results["status"] = "completed" if len(results["errors"]) == 0 else "completed_with_errors"
 
-            logger.info(f"""
+            logger.info(
+                f"""
             🎉 OVERNIGHT SCRAPING COMPLETE!
             ================================
             Total Items: {results['total_items']}
@@ -182,7 +174,8 @@ class Neo4jUnifiedScraper:
             Circle of Life: {results['scrapers'].get('circle_of_life', {}).get('data_collected', 0)}
 
             💾 Data stored in Neo4j graph database!
-            """)
+            """
+            )
 
         except Exception as e:
             logger.error(f"Critical scraping failure: {e}")
@@ -197,17 +190,11 @@ class Neo4jUnifiedScraper:
         """
         logger.info("⚡ Running quick Neo4j scrape...")
 
-        results = {
-            "type": "quick",
-            "items": 0
-        }
+        results = {"type": "quick", "items": 0}
 
         try:
             # Quick YouTube search
-            count = await self.youtube_scraper.search_and_scrape(
-                "Bobcat S740 hydraulic problems",
-                max_results=5
-            )
+            count = await self.youtube_scraper.search_and_scrape("Bobcat S740 hydraulic problems", max_results=5)
             results["youtube"] = count
             results["items"] += count
 
@@ -224,24 +211,29 @@ class Neo4jUnifiedScraper:
 
         return results
 
+
 # Flask endpoints for Cloud Run
 
-@app.route('/health', methods=['GET'])
+
+@app.route("/health", methods=["GET"])
 def health():
     """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "service": "neo4j-unified-scraper",
-        "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "neo4j-unified-scraper",
+            "version": "1.0.0",
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
 
-@app.route('/scrape', methods=['POST'])
+
+@app.route("/scrape", methods=["POST"])
 def scrape():
     """Main scraping endpoint"""
     try:
         data = request.get_json() or {}
-        scrape_type = data.get('type', 'overnight')
+        scrape_type = data.get("type", "overnight")
 
         logger.info(f"🚀 Scraping triggered: type={scrape_type}")
 
@@ -252,7 +244,7 @@ def scrape():
         try:
             scraper = Neo4jUnifiedScraper()
 
-            if scrape_type == 'quick':
+            if scrape_type == "quick":
                 results = loop.run_until_complete(scraper.run_quick_scrape())
             else:
                 results = loop.run_until_complete(scraper.run_overnight_scraping())
@@ -264,33 +256,25 @@ def scrape():
 
     except Exception as e:
         logger.error(f"Scraping error: {e}")
-        return jsonify({
-            "status": "error",
-            "message": str(e)[:500]
-        }), 500
+        return jsonify({"status": "error", "message": str(e)[:500]}), 500
 
-@app.route('/scrape/youtube', methods=['POST'])
+
+@app.route("/scrape/youtube", methods=["POST"])
 def scrape_youtube():
     """Scrape just YouTube"""
     try:
         data = request.get_json() or {}
-        query = data.get('query', 'equipment repair')
-        max_results = data.get('max_results', 10)
+        query = data.get("query", "equipment repair")
+        max_results = data.get("max_results", 10)
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         try:
             scraper = YouTubeEquipmentScraper(use_neo4j=True)
-            count = loop.run_until_complete(
-                scraper.search_and_scrape(query, max_results)
-            )
+            count = loop.run_until_complete(scraper.search_and_scrape(query, max_results))
 
-            return jsonify({
-                "status": "success",
-                "query": query,
-                "videos_scraped": count
-            }), 200
+            return jsonify({"status": "success", "query": query, "videos_scraped": count}), 200
 
         finally:
             loop.close()
@@ -298,12 +282,13 @@ def scrape_youtube():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/scrape/tsb', methods=['POST'])
+
+@app.route("/scrape/tsb", methods=["POST"])
 def scrape_tsb():
     """Scrape just TSBs"""
     try:
         data = request.get_json() or {}
-        manufacturer = data.get('manufacturer', 'Bobcat')
+        manufacturer = data.get("manufacturer", "Bobcat")
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -312,25 +297,26 @@ def scrape_tsb():
             scraper = TSBScraper(use_neo4j=True)
 
             # Get recalls
-            recalls = loop.run_until_complete(
-                scraper.scrape_nhtsa_recalls(manufacturer)
-            )
+            recalls = loop.run_until_complete(scraper.scrape_nhtsa_recalls(manufacturer))
 
             # Store them
             stored = 0
             for recall in recalls:
-                success = loop.run_until_complete(
-                    scraper.store_tsb(recall)
-                )
+                success = loop.run_until_complete(scraper.store_tsb(recall))
                 if success:
                     stored += 1
 
-            return jsonify({
-                "status": "success",
-                "manufacturer": manufacturer,
-                "tsbs_found": len(recalls),
-                "tsbs_stored": stored
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "manufacturer": manufacturer,
+                        "tsbs_found": len(recalls),
+                        "tsbs_stored": stored,
+                    }
+                ),
+                200,
+            )
 
         finally:
             loop.close()
@@ -338,7 +324,8 @@ def scrape_tsb():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/stats', methods=['GET'])
+
+@app.route("/stats", methods=["GET"])
 def stats():
     """Get scraping statistics"""
     try:
@@ -350,42 +337,40 @@ def stats():
 
         with driver.session() as session:
             # Count nodes
-            result = session.run("""
+            result = session.run(
+                """
                 MATCH (n)
                 RETURN
                     labels(n)[0] as type,
                     count(n) as count
                 ORDER BY count DESC
-            """)
+            """
+            )
 
             stats = {}
             for record in result:
                 stats[record["type"]] = record["count"]
 
             # Get recent activity
-            result = session.run("""
+            result = session.run(
+                """
                 MATCH (n)
                 WHERE n.scraped_at IS NOT NULL
                 RETURN count(n) as today_count
-            """)
+            """
+            )
 
             today = result.single()["today_count"]
 
         driver.close()
 
-        return jsonify({
-            "neo4j_stats": stats,
-            "today_items": today,
-            "status": "connected"
-        })
+        return jsonify({"neo4j_stats": stats, "today_items": today, "status": "connected"})
 
     except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "status": "disconnected"
-        }), 500
+        return jsonify({"error": str(e), "status": "disconnected"}), 500
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
     logger.info(f"Starting Neo4j Unified Scraper on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
