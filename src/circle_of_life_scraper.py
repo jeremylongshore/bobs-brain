@@ -25,8 +25,8 @@ except ImportError:
 from google.cloud.exceptions import AlreadyExists
 
 from circle_of_life import CircleOfLife
-from skidsteer_scraper import SkidSteerKnowledgeScraper
 from forum_scraper import ForumIntelligenceScraper
+from skidsteer_scraper import SkidSteerKnowledgeScraper
 
 logger = logging.getLogger(__name__)
 

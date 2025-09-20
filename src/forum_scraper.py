@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Tuple
 
 import aiohttp
 from google.cloud import bigquery
-from playwright.async_api import async_playwright, Page
+from playwright.async_api import Page, async_playwright
 
 logger = logging.getLogger(__name__)
 

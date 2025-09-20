@@ -8,12 +8,13 @@ import asyncio
 import logging
 import os
 from datetime import datetime
+
 from flask import Flask, jsonify, request
 
+from tsb_scraper import TSBScraper
 # Import scrapers
 from unified_scraper_simple import SimpleUnifiedScraper
 from youtube_equipment_scraper import YouTubeEquipmentScraper
-from tsb_scraper import TSBScraper
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

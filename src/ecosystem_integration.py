@@ -13,8 +13,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 import aiohttp
-from google.cloud import bigquery
-from google.cloud import aiplatform
+from google.cloud import aiplatform, bigquery
 from neo4j import AsyncGraphDatabase
 
 try:

@@ -8,6 +8,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime
+
 from flask import Flask, jsonify, request
 
 # Import scrapers - use simple scraper for reliable storage
