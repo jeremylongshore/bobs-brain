@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Configuration from environment
 CONFIDENCE_MIN = float(os.getenv("BB_CONFIDENCE_MIN", "0.6"))

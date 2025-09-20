@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
@@ -16,7 +16,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
-from src.circle_of_life import CircleOfLife, get_circle_of_life
+from src.circle_of_life import get_circle_of_life
 
 # Import validation and circle of life
 from src.validation import LearnBody, QueryBody
