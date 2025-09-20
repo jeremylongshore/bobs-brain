@@ -38,7 +38,6 @@ def get_scraper():
         scraper = scraper_class()
     return scraper
 
-
 @app.route('/health', methods=['GET'])
 def health():
     """Health check for Cloud Run"""
@@ -48,7 +47,6 @@ def health():
         "version": "2.0.0",
         "timestamp": datetime.now().isoformat()
     })
-
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
@@ -61,16 +59,16 @@ def scrape():
         data = request.get_json() or {}
         scrape_type = data.get('type', 'all')
         priority = data.get('priority', 'all')
-        
+
         logger.info(f"🚀 Scraping triggered: type={scrape_type}, priority={priority}")
-        
+
         # Run async scraper in sync context
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             scraper = get_scraper()
-            
+
             # Handle different scraper methods
             if hasattr(scraper, 'scrape_all'):
                 # Simple scraper
@@ -88,7 +86,7 @@ def scrape():
                     scraper.priority_sources = original_sources
                 else:
                     results = loop.run_until_complete(scraper.scrape_all_parallel())
-            
+
             return jsonify({
                 "status": "success",
                 "results": {
@@ -99,17 +97,16 @@ def scrape():
                 },
                 "timestamp": datetime.now().isoformat()
             }), 200
-            
+
         finally:
             loop.close()
-            
+
     except Exception as e:
         logger.error(f"Scraping error: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)[:500]
         }), 500
-
 
 @app.route('/scrape/quick', methods=['POST'])
 def scrape_quick():
@@ -119,13 +116,13 @@ def scrape_quick():
     """
     try:
         logger.info("⚡ Quick scrape triggered")
-        
+
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             scraper = get_scraper()
-            
+
             # Handle different scraper methods for quick scrape
             if hasattr(scraper, 'scrape_all'):
                 # Simple scraper - just run it (it's already fast)
@@ -139,17 +136,17 @@ def scrape_quick():
                 scraper.priority_sources = {'critical': scraper.priority_sources.get('critical', [])}
                 results = loop.run_until_complete(scraper.scrape_all_parallel())
                 scraper.priority_sources = original_sources
-            
+
             return jsonify({
                 "status": "success",
                 "type": "quick",
                 "items_scraped": results.get('total_scraped', 0),
                 "timestamp": datetime.now().isoformat()
             }), 200
-            
+
         finally:
             loop.close()
-            
+
     except Exception as e:
         logger.error(f"Quick scrape error: {e}")
         return jsonify({
@@ -157,20 +154,19 @@ def scrape_quick():
             "message": str(e)[:500]
         }), 500
 
-
 @app.route('/stats', methods=['GET'])
 def stats():
     """Get scraping statistics from BigQuery"""
     try:
         from google.cloud import bigquery
         client = bigquery.Client()
-        
+
         # Get today's stats - check both datasets
         results = None
         for dataset_table in ['simple_scraping.content', 'comprehensive_scraping.all_content']:
             try:
                 query = f"""
-                SELECT 
+                SELECT
                     COUNT(*) as total_items,
                     COUNT(DISTINCT {'url' if 'simple' in dataset_table else 'source_url'}) as unique_sources,
                     COUNT(DISTINCT source_type) as source_types,
@@ -178,13 +174,13 @@ def stats():
                 FROM `bobs-house-ai.{dataset_table}`
                 WHERE DATE(scraped_at) = CURRENT_DATE()
                 """
-                
+
                 results = list(client.query(query).result())
                 if results and results[0].total_items > 0:
                     break
             except:
                 continue
-        
+
         if results:
             row = results[0]
             return jsonify({
@@ -196,13 +192,12 @@ def stats():
                 },
                 "status": "success"
             })
-        
+
         return jsonify({"today": {}, "status": "no_data"})
-        
+
     except Exception as e:
         logger.error(f"Stats error: {e}")
         return jsonify({"error": str(e)[:500]}), 500
-
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -211,25 +206,25 @@ def search():
         query_text = request.args.get('q', '')
         topic = request.args.get('topic', '')
         limit = min(int(request.args.get('limit', 10)), 50)
-        
+
         if not query_text:
             return jsonify({"error": "Query parameter 'q' required"}), 400
-        
+
         from google.cloud import bigquery
         client = bigquery.Client()
-        
+
         # Build query
         sql = """
         SELECT title, content, source_url, topic, scraped_at
         FROM `bobs-house-ai.comprehensive_scraping.all_content`
         WHERE LOWER(content) LIKE LOWER(@query)
         """
-        
+
         if topic:
             sql += " AND topic = @topic"
-        
+
         sql += f" ORDER BY scraped_at DESC LIMIT {limit}"
-        
+
         # Execute query
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
@@ -237,9 +232,9 @@ def search():
                 bigquery.ScalarQueryParameter("topic", "STRING", topic) if topic else None
             ]
         )
-        
+
         results = client.query(sql, job_config=job_config).result()
-        
+
         items = []
         for row in results:
             items.append({
@@ -249,30 +244,29 @@ def search():
                 "topic": row.topic,
                 "scraped_at": row.scraped_at.isoformat() if row.scraped_at else None
             })
-        
+
         return jsonify({
             "query": query_text,
             "results": items,
             "count": len(items)
         })
-        
+
     except Exception as e:
         logger.error(f"Search error: {e}")
         return jsonify({"error": str(e)[:500]}), 500
-
 
 @app.route('/api/process', methods=['POST'])
 def api_process():
     """Process scraped content - stores in BigQuery and/or Neo4j"""
     try:
         data = request.get_json() or {}
-        
+
         # Validate required fields
         if not data.get('url') or not data.get('content'):
             return jsonify({
                 "error": "Missing required fields: url and content"
             }), 400
-        
+
         # Prepare content for storage
         content_item = {
             'url': data.get('url'),
@@ -283,11 +277,11 @@ def api_process():
             'metadata': data.get('metadata', {}),
             'timestamp': data.get('timestamp', datetime.now().isoformat())
         }
-        
+
         # Store in BigQuery
         scraper = get_scraper()
         stored = False
-        
+
         if hasattr(scraper, 'store_to_bigquery'):
             # Use existing storage method
             loop = asyncio.new_event_loop()
@@ -299,20 +293,20 @@ def api_process():
             # Direct BigQuery insert
             from google.cloud import bigquery
             client = bigquery.Client(project="bobs-house-ai")
-            
+
             table_id = "bobs-house-ai.comprehensive_scraping.all_content"
             table = client.get_table(table_id)
-            
+
             # Add required fields
             content_item['source'] = 'api_process'
             content_item['scraped_at'] = datetime.now().isoformat()
-            
+
             errors = client.insert_rows_json(table, [content_item])
             stored = len(errors) == 0
-            
+
             if errors:
                 logger.error(f"BigQuery insert errors: {errors}")
-        
+
         # Also try to store in Neo4j if router is available
         neo4j_stored = False
         try:
@@ -321,7 +315,7 @@ def api_process():
             neo4j_stored = integration.process_scraped_data(content_item)
         except Exception as e:
             logger.warning(f"Neo4j storage not available: {e}")
-        
+
         return jsonify({
             "status": "processed",
             "bigquery_stored": stored,
@@ -329,7 +323,7 @@ def api_process():
             "url": content_item['url'],
             "timestamp": content_item['timestamp']
         })
-        
+
     except Exception as e:
         logger.error(f"Process error: {e}")
         return jsonify({
@@ -337,39 +331,37 @@ def api_process():
             "details": str(e)[:500]
         }), 500
 
-
 @app.route('/topics', methods=['GET'])
 def topics():
     """Get available topics and counts"""
     try:
         from google.cloud import bigquery
         client = bigquery.Client()
-        
+
         query = """
         SELECT topic, COUNT(*) as count
         FROM `bobs-house-ai.comprehensive_scraping.all_content`
         GROUP BY topic
         ORDER BY count DESC
         """
-        
+
         results = client.query(query).result()
-        
+
         topics_list = []
         for row in results:
             topics_list.append({
                 "topic": row.topic,
                 "count": row.count
             })
-        
+
         return jsonify({
             "topics": topics_list,
             "total": len(topics_list)
         })
-        
+
     except Exception as e:
         logger.error(f"Topics error: {e}")
         return jsonify({"error": str(e)[:500]}), 500
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

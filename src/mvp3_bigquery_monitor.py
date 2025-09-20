@@ -18,7 +18,6 @@ from google.cloud import bigquery
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class MVP3BigQueryMonitor:
     """Monitor MVP3 diagnostic submissions in BigQuery"""
 
@@ -218,7 +217,6 @@ class MVP3BigQueryMonitor:
             ],
         }
 
-
 async def main():
     """Run the monitor standalone"""
     monitor = MVP3BigQueryMonitor()
@@ -242,7 +240,6 @@ async def main():
     # Start monitoring loop
     logger.info("🚀 Starting continuous monitoring...")
     await monitor.monitor_loop(interval_seconds=30)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

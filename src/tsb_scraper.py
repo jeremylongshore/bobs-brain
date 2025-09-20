@@ -21,7 +21,6 @@ from neo4j import GraphDatabase
 
 logger = logging.getLogger(__name__)
 
-
 class TSBScraper:
     """
     Scrapes Technical Service Bulletins from various sources
@@ -472,7 +471,6 @@ class TSBScraper:
 
         return found_tsbs
 
-
 async def main():
     """Test the TSB scraper"""
     logging.basicConfig(level=logging.INFO)
@@ -503,7 +501,6 @@ async def main():
     print(f"✅ Scraped {truck_count} truck TSBs")
 
     print("\n📊 Data stored in BigQuery: tsb_knowledge.service_bulletins")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

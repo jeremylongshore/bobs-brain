@@ -21,7 +21,6 @@ from playwright.async_api import Browser, Page, async_playwright
 
 logger = logging.getLogger(__name__)
 
-
 class ForumIntelligenceScraper:
     """
     Advanced forum scraper that discovers, classifies, and extracts
@@ -1404,7 +1403,6 @@ class ForumIntelligenceScraper:
         finally:
             await self.close_browser()
 
-
 async def main():
     """Main function for testing"""
     scraper = ForumIntelligenceScraper()
@@ -1413,7 +1411,6 @@ async def main():
     report = await scraper.run_comprehensive_scrape()
 
     print(json.dumps(report, indent=2))
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

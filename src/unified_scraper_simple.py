@@ -19,7 +19,6 @@ from google.cloud import bigquery
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class SimpleUnifiedScraper:
     """
     Simplified scraper that focuses on actually storing data
@@ -260,7 +259,6 @@ class SimpleUnifiedScraper:
             logger.error(f"Storage error: {e}")
             return False
 
-
 async def main():
     """Test the simple scraper"""
     scraper = SimpleUnifiedScraper()
@@ -286,7 +284,6 @@ async def main():
         print(f"\n  ⚠️ Errors: {len(results['errors'])}")
 
     print("\n✅ Data stored in: simple_scraping.content")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

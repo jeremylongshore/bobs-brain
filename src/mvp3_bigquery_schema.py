@@ -14,7 +14,6 @@ from google.cloud import bigquery
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class MVP3BigQuerySchema:
     """
     Massive expansion-ready BigQuery schema matching MVP3 forms
@@ -380,7 +379,6 @@ class MVP3BigQuerySchema:
             "schema_version": self.schema_version,
         }
 
-
 def main():
     """Create the MVP3 BigQuery schema"""
     schema_manager = MVP3BigQuerySchema()
@@ -394,7 +392,6 @@ def main():
     print(f"Schema version: {result['schema_version']}")
     print("\n🚀 Ready for massive expansion and ecosystem unleashing!")
     print("=" * 60)
-
 
 if __name__ == "__main__":
     main()

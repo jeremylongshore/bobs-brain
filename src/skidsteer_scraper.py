@@ -20,7 +20,6 @@ from forum_scraper import ForumIntelligenceScraper
 
 logger = logging.getLogger(__name__)
 
-
 class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
     """
     Specialized scraper for skid steer and compact equipment knowledge
@@ -811,7 +810,6 @@ class SkidSteerKnowledgeScraper(ForumIntelligenceScraper):
         if not errors:
             logger.info(f"✅ Stored {len(tips)} operator tips")
 
-
 async def main():
     """Main function to run skid steer scraper"""
     scraper = SkidSteerKnowledgeScraper()
@@ -820,7 +818,6 @@ async def main():
     results = await scraper.scrape_skidsteer_forums()
 
     print(json.dumps(results, indent=2))
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

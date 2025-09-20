@@ -30,29 +30,28 @@ from forum_scraper import ForumIntelligenceScraper
 
 logger = logging.getLogger(__name__)
 
-
 class CircleOfLifeScraperIntegration:
     """
     Integrates web scraping with Circle of Life learning system
     Runs automatically overnight to build knowledge base
     """
-    
+
     def __init__(self, project_id="bobs-house-ai"):
         self.project_id = project_id
         self.circle_of_life = CircleOfLife()
         self.skidsteer_scraper = SkidSteerKnowledgeScraper(project_id)
         self.forum_scraper = ForumIntelligenceScraper(project_id)
         self.bq_client = bigquery.Client(project=project_id)
-        
+
         # Initialize tracking tables
         self._init_tracking_tables()
-        
+
         logger.info("🔄 Circle of Life Scraper Integration initialized")
 
     def _init_tracking_tables(self):
         """Initialize tables for tracking scraping operations"""
         dataset_id = f"{self.project_id}.circle_of_life"
-        
+
         # Create scraping history table
         table_id = f"{dataset_id}.scraping_history"
         schema = [
@@ -68,7 +67,7 @@ class CircleOfLifeScraperIntegration:
             bigquery.SchemaField("errors", "STRING"),
             bigquery.SchemaField("metadata", "JSON"),
         ]
-        
+
         table = bigquery.Table(table_id, schema=schema)
         try:
             self.bq_client.create_table(table, exists_ok=True)
@@ -82,13 +81,13 @@ class CircleOfLifeScraperIntegration:
         Runs comprehensive scraping focused on Bobcat S740
         """
         logger.info("🌙 Starting overnight Circle of Life scraping operation")
-        
+
         scrape_id = f"overnight_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         start_time = datetime.now()
-        
+
         # Log scraping start
         await self._log_scraping_start(scrape_id, "comprehensive", start_time)
-        
+
         results = {
             "scrape_id": scrape_id,
             "start_time": start_time.isoformat(),
@@ -96,17 +95,17 @@ class CircleOfLifeScraperIntegration:
             "total_data_collected": 0,
             "errors": []
         }
-        
+
         try:
             # Phase 1: Scrape Bobcat S740 specific content
             logger.info("🚜 Phase 1: Scraping Bobcat S740 and skid steer forums...")
             skidsteer_results = await self.skidsteer_scraper.scrape_skidsteer_forums()
             results["skidsteer_scraping"] = skidsteer_results
             results["phases_completed"].append("skidsteer")
-            
+
             # Process S740 data into Circle of Life
             await self._process_s740_into_learning(skidsteer_results)
-            
+
             # Phase 2: Scrape general repair forums
             logger.info("🔧 Phase 2: Scraping general repair forums...")
             forum_search_queries = [
@@ -118,41 +117,41 @@ class CircleOfLifeScraperIntegration:
                 "DPF regeneration Bobcat",
                 "loader attachment problems"
             ]
-            
+
             forum_results = await self.forum_scraper.run_comprehensive_scrape(forum_search_queries)
             results["forum_scraping"] = forum_results
             results["phases_completed"].append("forums")
-            
+
             # Phase 3: Extract patterns and learn
             logger.info("🧠 Phase 3: Extracting patterns and learning...")
             learning_results = await self._extract_and_learn_patterns()
             results["learning"] = learning_results
             results["phases_completed"].append("learning")
-            
+
             # Phase 4: Update Bob's knowledge base
             logger.info("📚 Phase 4: Updating Bob's knowledge base...")
             await self._update_bobs_knowledge()
             results["phases_completed"].append("knowledge_update")
-            
+
             # Phase 5: Generate daily insights report
             logger.info("📊 Phase 5: Generating insights report...")
             insights = await self._generate_daily_insights()
             results["daily_insights"] = insights
             results["phases_completed"].append("insights")
-            
+
             # Calculate totals
             results["total_data_collected"] = (
                 skidsteer_results.get("issues_found", 0) +
                 skidsteer_results.get("hacks_found", 0) +
                 forum_results.get("threads_scraped", 0)
             )
-            
+
             results["status"] = "completed"
             results["end_time"] = datetime.now().isoformat()
-            
+
             # Log successful completion
             await self._log_scraping_complete(scrape_id, results)
-            
+
             logger.info(f"""
             ✅ Overnight Scraping Complete!
             ==============================
@@ -160,19 +159,19 @@ class CircleOfLifeScraperIntegration:
             Duration: {(datetime.now() - start_time).total_seconds() / 60:.1f} minutes
             Total Data Collected: {results['total_data_collected']}
             Phases Completed: {', '.join(results['phases_completed'])}
-            
+
             Bobcat S740 Issues Found: {skidsteer_results.get('issues_found', 0)}
             Equipment Hacks Found: {skidsteer_results.get('hacks_found', 0)}
             Forums Scraped: {forum_results.get('forums_discovered', 0)}
             Threads Analyzed: {forum_results.get('threads_scraped', 0)}
             """)
-            
+
         except Exception as e:
             logger.error(f"Overnight scraping failed: {e}")
             results["status"] = "failed"
             results["errors"].append(str(e))
             await self._log_scraping_error(scrape_id, str(e))
-        
+
         return results
 
     async def _process_s740_into_learning(self, skidsteer_results: Dict):
@@ -180,7 +179,7 @@ class CircleOfLifeScraperIntegration:
         try:
             # Query newly scraped S740 issues
             query = f"""
-            SELECT 
+            SELECT
                 problem_type,
                 problem_description,
                 solution,
@@ -190,9 +189,9 @@ class CircleOfLifeScraperIntegration:
             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`
             WHERE DATE(scraped_at) = CURRENT_DATE()
             """
-            
+
             results = self.bq_client.query(query).result()
-            
+
             for row in results:
                 # Create learning insight
                 insight = {
@@ -205,24 +204,24 @@ class CircleOfLifeScraperIntegration:
                     "timestamp": datetime.now(),
                     "source": "skidsteer_scraper"
                 }
-                
+
                 # Store in Circle of Life diagnostic insights
                 table_id = f"{self.project_id}.circle_of_life.diagnostic_insights"
                 errors = self.bq_client.insert_rows_json(table_id, [insight])
-                
+
                 if not errors:
                     logger.debug(f"✅ Processed S740 issue into learning: {row.problem_type}")
-                
+
                 # Extract patterns
                 if row.error_codes:
                     for code in row.error_codes:
                         await self._record_error_code_pattern(code, row.problem_type, row.solution)
-                
+
                 # Record parts patterns
                 if row.parts_needed:
                     for part in row.parts_needed:
                         await self._record_parts_pattern(part, row.problem_type)
-                        
+
         except Exception as e:
             logger.error(f"Failed to process S740 data: {e}")
 
@@ -234,12 +233,12 @@ class CircleOfLifeScraperIntegration:
             "equipment_patterns": 0,
             "seasonal_patterns": 0
         }
-        
+
         try:
             # Analyze problem frequency patterns
             query = f"""
             WITH problem_frequency AS (
-                SELECT 
+                SELECT
                     problem_category,
                     COUNT(*) as frequency,
                     AVG(confidence_score) as avg_confidence
@@ -251,9 +250,9 @@ class CircleOfLifeScraperIntegration:
             SELECT * FROM problem_frequency
             ORDER BY frequency DESC
             """
-            
+
             results = self.bq_client.query(query).result()
-            
+
             for row in results:
                 # Store pattern in learning_patterns table
                 pattern = {
@@ -265,14 +264,14 @@ class CircleOfLifeScraperIntegration:
                     "last_seen": datetime.now(),
                     "metadata": {"category": row.problem_category}
                 }
-                
+
                 table_id = f"{self.project_id}.circle_of_life.learning_patterns"
                 self.bq_client.insert_rows_json(table_id, [pattern])
                 patterns_found["problem_patterns"] += 1
-            
+
             # Analyze solution effectiveness patterns
             query = f"""
-            SELECT 
+            SELECT
                 solution,
                 COUNT(*) as usage_count,
                 AVG(CASE WHEN verified THEN 1 ELSE 0 END) as success_rate
@@ -281,9 +280,9 @@ class CircleOfLifeScraperIntegration:
             GROUP BY solution
             HAVING COUNT(*) > 3
             """
-            
+
             results = self.bq_client.query(query).result()
-            
+
             for row in results:
                 pattern = {
                     "pattern_id": f"sol_eff_{datetime.now().timestamp()}",
@@ -294,16 +293,16 @@ class CircleOfLifeScraperIntegration:
                     "last_seen": datetime.now(),
                     "metadata": {"usage_count": row.usage_count}
                 }
-                
+
                 table_id = f"{self.project_id}.circle_of_life.learning_patterns"
                 self.bq_client.insert_rows_json(table_id, [pattern])
                 patterns_found["solution_patterns"] += 1
-            
+
             logger.info(f"📊 Extracted patterns: {patterns_found}")
-            
+
         except Exception as e:
             logger.error(f"Failed to extract patterns: {e}")
-        
+
         return patterns_found
 
     async def _record_error_code_pattern(self, code: str, problem_type: str, solution: str):
@@ -322,10 +321,10 @@ class CircleOfLifeScraperIntegration:
                     "solution_preview": solution[:200] if solution else ""
                 }
             }
-            
+
             table_id = f"{self.project_id}.circle_of_life.learning_patterns"
             self.bq_client.insert_rows_json(table_id, [pattern])
-            
+
         except Exception as e:
             logger.debug(f"Failed to record error code pattern: {e}")
 
@@ -344,10 +343,10 @@ class CircleOfLifeScraperIntegration:
                     "problem_type": problem_type
                 }
             }
-            
+
             table_id = f"{self.project_id}.circle_of_life.learning_patterns"
             self.bq_client.insert_rows_json(table_id, [pattern])
-            
+
         except Exception as e:
             logger.debug(f"Failed to record parts pattern: {e}")
 
@@ -357,7 +356,7 @@ class CircleOfLifeScraperIntegration:
             # Create knowledge summary for Bob
             query = f"""
             WITH latest_knowledge AS (
-                SELECT 
+                SELECT
                     'S740_ISSUE' as knowledge_type,
                     problem_type as category,
                     problem_description as content,
@@ -367,10 +366,10 @@ class CircleOfLifeScraperIntegration:
                     source_url
                 FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`
                 WHERE DATE(scraped_at) = CURRENT_DATE()
-                
+
                 UNION ALL
-                
-                SELECT 
+
+                SELECT
                     'EQUIPMENT_HACK' as knowledge_type,
                     hack_type as category,
                     description as content,
@@ -383,7 +382,7 @@ class CircleOfLifeScraperIntegration:
             )
             INSERT INTO `{self.project_id}.knowledge_base.bob_knowledge`
             (knowledge_id, knowledge_type, category, content, answer, metadata, created_at, source)
-            SELECT 
+            SELECT
                 GENERATE_UUID() as knowledge_id,
                 knowledge_type,
                 category,
@@ -394,16 +393,16 @@ class CircleOfLifeScraperIntegration:
                 source_url as source
             FROM latest_knowledge
             """
-            
+
             # First ensure the knowledge base table exists
             self._ensure_knowledge_base_table()
-            
+
             # Execute the knowledge update
             job = self.bq_client.query(query)
             job.result()  # Wait for completion
-            
+
             logger.info("✅ Updated Bob's knowledge base with new scraped data")
-            
+
         except Exception as e:
             logger.error(f"Failed to update Bob's knowledge: {e}")
 
@@ -412,12 +411,12 @@ class CircleOfLifeScraperIntegration:
         dataset_id = f"{self.project_id}.knowledge_base"
         dataset = bigquery.Dataset(dataset_id)
         dataset.location = "US"
-        
+
         try:
             self.bq_client.create_dataset(dataset, exists_ok=True)
         except:
             pass
-        
+
         table_id = f"{dataset_id}.bob_knowledge"
         schema = [
             bigquery.SchemaField("knowledge_id", "STRING", mode="REQUIRED"),
@@ -429,7 +428,7 @@ class CircleOfLifeScraperIntegration:
             bigquery.SchemaField("created_at", "TIMESTAMP"),
             bigquery.SchemaField("source", "STRING"),
         ]
-        
+
         table = bigquery.Table(table_id, schema=schema)
         try:
             self.bq_client.create_table(table, exists_ok=True)
@@ -445,11 +444,11 @@ class CircleOfLifeScraperIntegration:
             "equipment_focus": "Bobcat S740",
             "recommendations": []
         }
-        
+
         try:
             # Get top problems found today
             query = f"""
-            SELECT 
+            SELECT
                 problem_type,
                 COUNT(*) as count
             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`
@@ -458,15 +457,15 @@ class CircleOfLifeScraperIntegration:
             ORDER BY count DESC
             LIMIT 5
             """
-            
+
             results = self.bq_client.query(query).result()
-            
+
             for row in results:
                 insights["top_problems"].append({
                     "type": row.problem_type,
                     "occurrences": row.count
                 })
-            
+
             # Count new solutions
             query = f"""
             SELECT COUNT(DISTINCT solution) as new_solutions
@@ -474,26 +473,26 @@ class CircleOfLifeScraperIntegration:
             WHERE DATE(scraped_at) = CURRENT_DATE()
             AND solution IS NOT NULL AND solution != ''
             """
-            
+
             result = list(self.bq_client.query(query).result())[0]
             insights["new_solutions"] = result.new_solutions
-            
+
             # Generate recommendations
             if insights["top_problems"]:
                 top_problem = insights["top_problems"][0]["type"]
                 insights["recommendations"].append(
                     f"Focus on {top_problem} issues - high frequency detected"
                 )
-            
+
             insights["recommendations"].append(
                 f"Added {insights['new_solutions']} new solutions to knowledge base"
             )
-            
+
             logger.info(f"📊 Generated daily insights: {insights}")
-            
+
         except Exception as e:
             logger.error(f"Failed to generate insights: {e}")
-        
+
         return insights
 
     async def _log_scraping_start(self, scrape_id: str, scrape_type: str, start_time: datetime):
@@ -506,10 +505,10 @@ class CircleOfLifeScraperIntegration:
                 "status": "running",
                 "metadata": {"initiated_by": "scheduled"}
             }
-            
+
             table_id = f"{self.project_id}.circle_of_life.scraping_history"
             self.bq_client.insert_rows_json(table_id, [record])
-            
+
         except Exception as e:
             logger.error(f"Failed to log scraping start: {e}")
 
@@ -519,7 +518,7 @@ class CircleOfLifeScraperIntegration:
             # Update the scraping history record
             query = f"""
             UPDATE `{self.project_id}.circle_of_life.scraping_history`
-            SET 
+            SET
                 end_time = CURRENT_TIMESTAMP(),
                 status = 'completed',
                 forums_scraped = {results.get('forum_scraping', {}).get('forums_discovered', 0)},
@@ -529,9 +528,9 @@ class CircleOfLifeScraperIntegration:
                 metadata = PARSE_JSON('{json.dumps({"phases": results.get("phases_completed", [])})}')
             WHERE scrape_id = '{scrape_id}'
             """
-            
+
             self.bq_client.query(query).result()
-            
+
         except Exception as e:
             logger.error(f"Failed to log scraping completion: {e}")
 
@@ -540,15 +539,15 @@ class CircleOfLifeScraperIntegration:
         try:
             query = f"""
             UPDATE `{self.project_id}.circle_of_life.scraping_history`
-            SET 
+            SET
                 end_time = CURRENT_TIMESTAMP(),
                 status = 'failed',
                 errors = '{error}'
             WHERE scrape_id = '{scrape_id}'
             """
-            
+
             self.bq_client.query(query).result()
-            
+
         except Exception as e:
             logger.error(f"Failed to log scraping error: {e}")
 
@@ -557,11 +556,11 @@ class CircleOfLifeScraperIntegration:
         if not scheduler_v1:
             logger.warning("Cloud Scheduler module not available - skipping scheduler setup")
             return
-            
+
         try:
             scheduler_client = scheduler_v1.CloudSchedulerClient()
             parent = f"projects/{self.project_id}/locations/us-central1"
-            
+
             job = scheduler_v1.Job(
                 name=f"{parent}/jobs/circle-of-life-scraper",
                 description="Overnight scraping for Bobcat S740 and equipment knowledge",
@@ -577,26 +576,24 @@ class CircleOfLifeScraperIntegration:
                     )
                 )
             )
-            
+
             try:
                 response = scheduler_client.create_job(parent=parent, job=job)
                 logger.info(f"✅ Cloud Scheduler job created: {response.name}")
             except AlreadyExists:
                 logger.info("Cloud Scheduler job already exists")
-                
+
         except Exception as e:
             logger.error(f"Failed to set up Cloud Scheduler: {e}")
-
 
 async def main():
     """Main function for testing Circle of Life scraper"""
     integration = CircleOfLifeScraperIntegration()
-    
+
     # Run overnight scraping
     results = await integration.run_overnight_scraping()
-    
-    print(json.dumps(results, indent=2, default=str))
 
+    print(json.dumps(results, indent=2, default=str))
 
 if __name__ == "__main__":
     logging.basicConfig(
