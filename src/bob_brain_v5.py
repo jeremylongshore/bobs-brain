@@ -240,14 +240,8 @@ class BobBrainV5:
     def _init_circle_of_life(self):
         """Initialize Circle of Life learning system"""
         try:
-            # Try multiple import methods for compatibility
-            try:
-                import src.circle_of_life as col_module
-            except ImportError:
-                try:
-                    from . import circle_of_life as col_module
-                except ImportError:
-                    import circle_of_life as col_module
+            # Import Circle of Life learning system
+            import circle_of_life as col_module
 
             self.circle_of_life = col_module.get_circle_of_life()
             logger.info("🔄 Circle of Life: Learning system initialized")
