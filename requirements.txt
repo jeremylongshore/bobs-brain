@@ -6,7 +6,10 @@ fastapi==0.111.0
 feedparser==6.0.*
 flask==2.3.3
 google-cloud-aiplatform==1.38.0
+google-cloud-bigquery==3.25.0
+google-cloud-datastore==2.19.0
 google-cloud-firestore==2.11.1
+google-generativeai==0.8.3
 langchain-community==0.2.5
 langchain==0.2.5
 numpy==1.24.3
@@ -21,3 +24,6 @@ uvicorn==0.30.0
 vertexai
 youtube-transcript-api==0.6.*
 yt-dlp==2024.8.*
+
+# Type stubs for mypy
+types-requests
