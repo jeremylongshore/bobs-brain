@@ -1,4 +1,5 @@
-name: Deploy GitHub Pages
+# Simple GitHub Pages deployment
+name: Deploy Docs to Pages
 
 on:
   push:
@@ -6,57 +7,50 @@ on:
     paths:
       - 'docs/**'
       - 'README.md'
-      - 'CONTRIBUTING.md'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  # Build job
+  build:
+    if: github.repository == 'jeremylongshore/bobs-brain'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
           bundler-cache: true
-          working-directory: docs
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
-        with:
-          enablement: true
-
-      - name: Install Jekyll dependencies
-        run: |
-          cd docs
-          bundle install
-
+          working-directory: './docs'
       - name: Build with Jekyll
         run: |
           cd docs
-          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+          bundle exec jekyll build --verbose
         env:
           JEKYLL_ENV: production
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_site
+          path: './docs/_site'
 
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
