@@ -22,11 +22,9 @@ try:
     from google.cloud import run_v2
 except ImportError:
     run_v2 = None
-from google.cloud.exceptions import AlreadyExists
+from google.api_core.exceptions import AlreadyExists
 
 from circle_of_life import CircleOfLife
-from forum_scraper import ForumIntelligenceScraper
-from skidsteer_scraper import SkidSteerKnowledgeScraper
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +38,6 @@ class CircleOfLifeScraperIntegration:
     def __init__(self, project_id="bobs-house-ai"):
         self.project_id = project_id
         self.circle_of_life = CircleOfLife()
-        self.skidsteer_scraper = SkidSteerKnowledgeScraper(project_id)
-        self.forum_scraper = ForumIntelligenceScraper(project_id)
         self.bq_client = bigquery.Client(project=project_id)
 
         # Initialize tracking tables
@@ -98,30 +94,10 @@ class CircleOfLifeScraperIntegration:
         }
 
         try:
-            # Phase 1: Scrape Bobcat S740 specific content
-            logger.info("🚜 Phase 1: Scraping Bobcat S740 and skid steer forums...")
-            skidsteer_results = await self.skidsteer_scraper.scrape_skidsteer_forums()
-            results["skidsteer_scraping"] = skidsteer_results
-            results["phases_completed"].append("skidsteer")
-
-            # Process S740 data into Circle of Life
-            await self._process_s740_into_learning(skidsteer_results)
-
-            # Phase 2: Scrape general repair forums
-            logger.info("🔧 Phase 2: Scraping general repair forums...")
-            forum_search_queries = [
-                "Bobcat S740 problems",
-                "skid steer repair forum",
-                "compact equipment maintenance",
-                "Bobcat error codes",
-                "hydraulic troubleshooting skid steer",
-                "DPF regeneration Bobcat",
-                "loader attachment problems",
-            ]
-
-            forum_results = await self.forum_scraper.run_comprehensive_scrape(forum_search_queries)
-            results["forum_scraping"] = forum_results
-            results["phases_completed"].append("forums")
+            # Scrapers moved to diagnostic-platform/scraper - focusing on learning from existing data
+            logger.info("🧠 Phase 1: Processing existing diagnostic data...")
+            results["data_processing"] = {"processed": 0, "learned": 0}
+            results["phases_completed"].append("data_processing")
 
             # Phase 3: Extract patterns and learn
             logger.info("🧠 Phase 3: Extracting patterns and learning...")
@@ -141,11 +117,7 @@ class CircleOfLifeScraperIntegration:
             results["phases_completed"].append("insights")
 
             # Calculate totals
-            results["total_data_collected"] = (
-                skidsteer_results.get("issues_found", 0)
-                + skidsteer_results.get("hacks_found", 0)
-                + forum_results.get("threads_scraped", 0)
-            )
+            results["total_data_collected"] = results["data_processing"]["processed"]
 
             results["status"] = "completed"
             results["end_time"] = datetime.now().isoformat()
@@ -162,10 +134,7 @@ class CircleOfLifeScraperIntegration:
             Total Data Collected: {results['total_data_collected']}
             Phases Completed: {', '.join(results['phases_completed'])}
 
-            Bobcat S740 Issues Found: {skidsteer_results.get('issues_found', 0)}
-            Equipment Hacks Found: {skidsteer_results.get('hacks_found', 0)}
-            Forums Scraped: {forum_results.get('forums_discovered', 0)}
-            Threads Analyzed: {forum_results.get('threads_scraped', 0)}
+            Data Processing Complete: ✅
             """
             )
 

@@ -1,0 +1,1851 @@
+{
+  "errors": [],
+  "generated_at": "2025-09-20T19:02:06Z",
+  "metrics": {
+    "_totals": {
+      "CONFIDENCE.HIGH": 30,
+      "CONFIDENCE.LOW": 30,
+      "CONFIDENCE.MEDIUM": 5,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 18,
+      "SEVERITY.LOW": 13,
+      "SEVERITY.MEDIUM": 34,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 6746,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/bob_brain_v5.py": {
+      "CONFIDENCE.HIGH": 5,
+      "CONFIDENCE.LOW": 8,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 1,
+      "SEVERITY.LOW": 4,
+      "SEVERITY.MEDIUM": 9,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 1126,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/bobs/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/circle_of_life.py": {
+      "CONFIDENCE.HIGH": 3,
+      "CONFIDENCE.LOW": 6,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 3,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 6,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 420,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/circle_of_life_scraper.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 8,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 8,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 468,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/ecosystem_integration.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 471,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/enhanced_bob/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/forum_scraper.py": {
+      "CONFIDENCE.HIGH": 5,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 4,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 1169,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/memory/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/mvp3_bigquery_monitor.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 2,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 2,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 190,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/mvp3_bigquery_schema.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 314,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/neo4j_unified_scraper.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 271,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/scraper_cloud_run.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 2,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 277,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/scraper_neo4j_router.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 1,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 262,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/skidsteer_scraper.py": {
+      "CONFIDENCE.HIGH": 8,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 8,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 719,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/tools/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/tsb_scraper.py": {
+      "CONFIDENCE.HIGH": 3,
+      "CONFIDENCE.LOW": 3,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 1,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 3,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 394,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/unified_scraper_api.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 130,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/unified_scraper_simple.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 228,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "src/youtube_equipment_scraper.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 307,
+      "nosec": 0,
+      "skipped_tests": 0
+    }
+  },
+  "results": [
+    {
+      "code": "326                             response=bot_response,\n327                             id=hashlib.md5(f\"{user_message}{bot_response}\".encode()).hexdigest(),\n328                         )\n",
+      "col_offset": 31,
+      "end_col_offset": 84,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 327,
+      "line_range": [
+        327
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "437                 try:\n438                     query_sql = f\"\"\"\n439                     SELECT message, response, timestamp\n440                     FROM `{self.project_id}.conversations.history`\n441                     WHERE user = @user\n442                     AND (LOWER(message) LIKE LOWER(@pattern) OR LOWER(response) LIKE LOWER(@pattern))\n443                     ORDER BY timestamp DESC\n444                     LIMIT 3\n445                     \"\"\"\n446 \n",
+      "col_offset": 36,
+      "end_col_offset": 26,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 438,
+      "line_range": [
+        438,
+        439,
+        440,
+        441,
+        442,
+        443,
+        444,
+        445
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "489                 try:\n490                     query_sql = f\"\"\"\n491                     SELECT message, response, timestamp\n492                     FROM `{self.project_id}.conversations.history`\n493                     WHERE user = @user\n494                     ORDER BY timestamp DESC\n495                     LIMIT @limit\n496                     \"\"\"\n497 \n",
+      "col_offset": 36,
+      "end_col_offset": 26,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 490,
+      "line_range": [
+        490,
+        491,
+        492,
+        493,
+        494,
+        495,
+        496
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "532             try:\n533                 manual_query = f\"\"\"\n534                 SELECT content, source\n535                 FROM `{self.project_id}.knowledge_base.repair_manuals`\n536                 WHERE LOWER(content) LIKE LOWER(@pattern)\n537                 LIMIT 3\n538                 \"\"\"\n539 \n",
+      "col_offset": 35,
+      "end_col_offset": 22,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 533,
+      "line_range": [
+        533,
+        534,
+        535,
+        536,
+        537,
+        538
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "547                     knowledge.append(f\"\ud83d\udcd6 Manual: {row.content[:200]}... (Source: {row.source})\")\n548             except Exception:\n549                 pass\n550 \n",
+      "col_offset": 12,
+      "end_col_offset": 20,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 548,
+      "line_range": [
+        548,
+        549
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "552             try:\n553                 forum_query = f\"\"\"\n554                 SELECT question, answer, upvotes\n555                 FROM `{self.project_id}.knowledge_base.forum_posts`\n556                 WHERE LOWER(question) LIKE LOWER(@pattern) OR LOWER(answer) LIKE LOWER(@pattern)\n557                 ORDER BY upvotes DESC\n558                 LIMIT 3\n559                 \"\"\"\n560 \n",
+      "col_offset": 34,
+      "end_col_offset": 22,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 553,
+      "line_range": [
+        553,
+        554,
+        555,
+        556,
+        557,
+        558,
+        559
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "568                     knowledge.append(f\"\ud83d\udcac Forum: Q: {row.question}\\nA: {row.answer} (\ud83d\udc4d {row.upvotes})\")\n569             except Exception:\n570                 pass\n571 \n",
+      "col_offset": 12,
+      "end_col_offset": 20,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 569,
+      "line_range": [
+        569,
+        570
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "573             try:\n574                 scraped_query = f\"\"\"\n575                 SELECT repair_type, AVG(quoted_price) as avg_price, COUNT(*) as num_quotes\n576                 FROM `{self.project_id}.scraped_data.repair_quotes`\n577                 WHERE LOWER(repair_type) LIKE LOWER(@pattern)\n578                 GROUP BY repair_type\n579                 LIMIT 3\n580                 \"\"\"\n581 \n",
+      "col_offset": 36,
+      "end_col_offset": 22,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 574,
+      "line_range": [
+        574,
+        575,
+        576,
+        577,
+        578,
+        579,
+        580
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "589                     knowledge.append(f\"\ud83d\udcb0 {row.repair_type}: Avg ${row.avg_price:.2f} ({row.num_quotes} quotes)\")\n590             except Exception:\n591                 pass\n592 \n",
+      "col_offset": 12,
+      "end_col_offset": 20,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 590,
+      "line_range": [
+        590,
+        591
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "606             # Query S740 issues and solutions\n607             s740_query = f\"\"\"\n608             SELECT\n609                 problem_type,\n610                 problem_description,\n611                 solution,\n612                 ARRAY_TO_STRING(parts_needed, ', ') as parts,\n613                 ARRAY_TO_STRING(error_codes, ', ') as codes,\n614                 difficulty,\n615                 cost_estimate\n616             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n617             WHERE LOWER(problem_description) LIKE LOWER(@pattern)\n618                OR LOWER(solution) LIKE LOWER(@pattern)\n619                OR LOWER(ARRAY_TO_STRING(error_codes, ' ')) LIKE LOWER(@pattern)\n620             LIMIT 5\n621             \"\"\"\n622 \n",
+      "col_offset": 29,
+      "end_col_offset": 18,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 607,
+      "line_range": [
+        607,
+        608,
+        609,
+        610,
+        611,
+        612,
+        613,
+        614,
+        615,
+        616,
+        617,
+        618,
+        619,
+        620,
+        621
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "642             # Query equipment hacks\n643             hack_query = f\"\"\"\n644             SELECT\n645                 hack_type,\n646                 title,\n647                 description,\n648                 benefits,\n649                 cost\n650             FROM `{self.project_id}.skidsteer_knowledge.equipment_hacks`\n651             WHERE equipment_model = 'S740'\n652               AND (LOWER(description) LIKE LOWER(@pattern)\n653                    OR LOWER(benefits) LIKE LOWER(@pattern))\n654             LIMIT 3\n655             \"\"\"\n656 \n",
+      "col_offset": 29,
+      "end_col_offset": 18,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 643,
+      "line_range": [
+        643,
+        644,
+        645,
+        646,
+        647,
+        648,
+        649,
+        650,
+        651,
+        652,
+        653,
+        654,
+        655
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "667             # Query maintenance schedules\n668             maintenance_query = f\"\"\"\n669             SELECT\n670                 service_type,\n671                 interval_hours,\n672                 description,\n673                 ARRAY_TO_STRING(parts_required, ', ') as parts,\n674                 dealer_cost,\n675                 diy_cost\n676             FROM `{self.project_id}.skidsteer_knowledge.maintenance_schedules`\n677             WHERE equipment_model = 'Bobcat S740'\n678               AND LOWER(service_type) LIKE LOWER(@pattern)\n679             LIMIT 3\n680             \"\"\"\n681 \n",
+      "col_offset": 36,
+      "end_col_offset": 18,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 668,
+      "line_range": [
+        668,
+        669,
+        670,
+        671,
+        672,
+        673,
+        674,
+        675,
+        676,
+        677,
+        678,
+        679,
+        680
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "1267                 )\n1268             except Exception:\n1269                 pass  # Don't fail if Slack notification fails\n1270 \n",
+      "col_offset": 12,
+      "end_col_offset": 20,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 1268,
+      "line_range": [
+        1268,
+        1269
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "1481     logger.info(\"\ud83d\udd04 Circle of Life: Continuous learning from MVP3 diagnostics\")\n1482     app.run(host=\"0.0.0.0\", port=port, debug=False)\n",
+      "col_offset": 17,
+      "end_col_offset": 26,
+      "filename": "src/bob_brain_v5.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 605,
+        "link": "https://cwe.mitre.org/data/definitions/605.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible binding to all interfaces.",
+      "line_number": 1482,
+      "line_range": [
+        1482
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
+      "test_id": "B104",
+      "test_name": "hardcoded_bind_all_interfaces"
+    },
+    {
+      "code": "172             insight = {\n173                 \"insight_id\": hashlib.md5(str(entity.key).encode()).hexdigest(),\n174                 \"problem_category\": self._categorize_problem(entity.get(\"problem_description\", \"\")),\n",
+      "col_offset": 30,
+      "end_col_offset": 67,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 173,
+      "line_range": [
+        173
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "231             # Query for most common problems\n232             common_problems_query = f\"\"\"\n233             SELECT\n234                 problem_category,\n235                 COUNT(*) as frequency,\n236                 AVG(confidence_score) as avg_confidence\n237             FROM `{self.bob_project}.circle_of_life.diagnostic_insights`\n238             WHERE timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)\n239             GROUP BY problem_category\n240             ORDER BY frequency DESC\n241             LIMIT 20\n242             \"\"\"\n243 \n",
+      "col_offset": 40,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 232,
+      "line_range": [
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "251             # Query for effective solutions\n252             solutions_query = f\"\"\"\n253             SELECT\n254                 problem_category,\n255                 solution_provided,\n256                 AVG(confidence_score) as effectiveness\n257             FROM `{self.bob_project}.circle_of_life.diagnostic_insights`\n258             WHERE solution_provided IS NOT NULL\n259             GROUP BY problem_category, solution_provided\n260             HAVING effectiveness > 0.7\n261             ORDER BY effectiveness DESC\n262             \"\"\"\n263 \n",
+      "col_offset": 34,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 252,
+      "line_range": [
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "294                         {\n295                             \"pattern_id\": hashlib.md5(f\"{pattern_type}_{key}\".encode()).hexdigest(),\n296                             \"pattern_type\": pattern_type,\n",
+      "col_offset": 42,
+      "end_col_offset": 87,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 295,
+      "line_range": [
+        295
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "330             # Query for similar problems and their solutions\n331             similar_query = f\"\"\"\n332             SELECT\n333                 problem_description,\n334                 solution_provided,\n335                 confidence_score\n336             FROM `{self.bob_project}.circle_of_life.diagnostic_insights`\n337             WHERE problem_category = @category\n338             AND confidence_score > 0.6\n339             ORDER BY confidence_score DESC\n340             LIMIT 5\n341             \"\"\"\n342 \n",
+      "col_offset": 32,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 331,
+      "line_range": [
+        331,
+        332,
+        333,
+        334,
+        335,
+        336,
+        337,
+        338,
+        339,
+        340,
+        341
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "388         feedback = {\n389             \"feedback_id\": hashlib.md5(f\"{problem}{datetime.now()}\".encode()).hexdigest(),\n390             \"original_problem\": problem[:500],\n",
+      "col_offset": 27,
+      "end_col_offset": 77,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 389,
+      "line_range": [
+        389
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "426             # Count total insights\n427             count_query = f\"\"\"\n428             SELECT\n429                 COUNT(*) as total,\n430                 COUNT(DISTINCT problem_category) as categories\n431             FROM `{self.bob_project}.circle_of_life.diagnostic_insights`\n432             \"\"\"\n433 \n",
+      "col_offset": 30,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 427,
+      "line_range": [
+        427,
+        428,
+        429,
+        430,
+        431,
+        432
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "439             # Count patterns\n440             patterns_query = f\"\"\"\n441             SELECT COUNT(DISTINCT pattern_id) as patterns\n442             FROM `{self.bob_project}.circle_of_life.learning_patterns`\n443             \"\"\"\n444 \n",
+      "col_offset": 33,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 440,
+      "line_range": [
+        440,
+        441,
+        442,
+        443
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "449             # Calculate learning rate from feedback\n450             feedback_query = f\"\"\"\n451             SELECT\n452                 COUNT(*) as total_feedback,\n453                 COUNTIF(success = true) as successful\n454             FROM `{self.bob_project}.circle_of_life.feedback_loop`\n455             WHERE timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)\n456             \"\"\"\n457 \n",
+      "col_offset": 33,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 450,
+      "line_range": [
+        450,
+        451,
+        452,
+        453,
+        454,
+        455,
+        456
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "183             # Query newly scraped S740 issues\n184             query = f\"\"\"\n185             SELECT\n186                 problem_type,\n187                 problem_description,\n188                 solution,\n189                 parts_needed,\n190                 error_codes,\n191                 difficulty\n192             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n193             WHERE DATE(scraped_at) = CURRENT_DATE()\n194             \"\"\"\n195 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 184,
+      "line_range": [
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "241             # Analyze problem frequency patterns\n242             query = f\"\"\"\n243             WITH problem_frequency AS (\n244                 SELECT\n245                     problem_category,\n246                     COUNT(*) as frequency,\n247                     AVG(confidence_score) as avg_confidence\n248                 FROM `{self.project_id}.circle_of_life.diagnostic_insights`\n249                 WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)\n250                 GROUP BY problem_category\n251                 HAVING COUNT(*) > 5\n252             )\n253             SELECT * FROM problem_frequency\n254             ORDER BY frequency DESC\n255             \"\"\"\n256 \n",
+      "col_offset": 24,
+      "end_col_offset": 22,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 242,
+      "line_range": [
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "275             # Analyze solution effectiveness patterns\n276             query = f\"\"\"\n277             SELECT\n278                 solution,\n279                 COUNT(*) as usage_count,\n280                 AVG(CASE WHEN verified THEN 1 ELSE 0 END) as success_rate\n281             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n282             WHERE solution IS NOT NULL AND solution != ''\n283             GROUP BY solution\n284             HAVING COUNT(*) > 3\n285             \"\"\"\n286 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 276,
+      "line_range": [
+        276,
+        277,
+        278,
+        279,
+        280,
+        281,
+        282,
+        283,
+        284,
+        285
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "356             # Create knowledge summary for Bob\n357             query = f\"\"\"\n358             WITH latest_knowledge AS (\n359                 SELECT\n360                     'S740_ISSUE' as knowledge_type,\n361                     problem_type as category,\n362                     problem_description as content,\n363                     solution as answer,\n364                     ARRAY_TO_STRING(parts_needed, ', ') as parts,\n365                     difficulty,\n366                     source_url\n367                 FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n368                 WHERE DATE(scraped_at) = CURRENT_DATE()\n369 \n370                 UNION ALL\n371 \n372                 SELECT\n373                     'EQUIPMENT_HACK' as knowledge_type,\n374                     hack_type as category,\n375                     description as content,\n376                     benefits as answer,\n377                     ARRAY_TO_STRING(tools_needed, ', ') as parts,\n378                     'moderate' as difficulty,\n379                     source_url\n380                 FROM `{self.project_id}.skidsteer_knowledge.equipment_hacks`\n381                 WHERE DATE(scraped_at) = CURRENT_DATE()\n382             )\n383             INSERT INTO `{self.project_id}.knowledge_base.bob_knowledge`\n384             (knowledge_id, knowledge_type, category, content, answer, metadata, created_at, source)\n385             SELECT\n386                 GENERATE_UUID() as knowledge_id,\n387                 knowledge_type,\n388                 category,\n389                 content,\n390                 answer,\n391                 TO_JSON_STRING(STRUCT(parts as parts, difficulty as difficulty)) as metadata,\n392                 CURRENT_TIMESTAMP() as created_at,\n393                 source_url as source\n394             FROM latest_knowledge\n395             \"\"\"\n396 \n",
+      "col_offset": 24,
+      "end_col_offset": 22,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 357,
+      "line_range": [
+        357,
+        358,
+        359,
+        360,
+        361,
+        362,
+        363,
+        364,
+        365,
+        366,
+        367,
+        368,
+        369,
+        370,
+        371,
+        372,
+        373,
+        374,
+        375,
+        376,
+        377,
+        378,
+        379,
+        380,
+        381,
+        382,
+        383,
+        384,
+        385,
+        386,
+        387,
+        388,
+        389,
+        390,
+        391,
+        392,
+        393,
+        394,
+        395
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "416             self.bq_client.create_dataset(dataset, exists_ok=True)\n417         except Exception:\n418             pass\n419 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 417,
+      "line_range": [
+        417,
+        418
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "434             self.bq_client.create_table(table, exists_ok=True)\n435         except Exception:\n436             pass\n437 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 435,
+      "line_range": [
+        435,
+        436
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "449             # Get top problems found today\n450             query = f\"\"\"\n451             SELECT\n452                 problem_type,\n453                 COUNT(*) as count\n454             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n455             WHERE DATE(scraped_at) = CURRENT_DATE()\n456             GROUP BY problem_type\n457             ORDER BY count DESC\n458             LIMIT 5\n459             \"\"\"\n460 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 450,
+      "line_range": [
+        450,
+        451,
+        452,
+        453,
+        454,
+        455,
+        456,
+        457,
+        458,
+        459
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "466             # Count new solutions\n467             query = f\"\"\"\n468             SELECT COUNT(DISTINCT solution) as new_solutions\n469             FROM `{self.project_id}.skidsteer_knowledge.bobcat_s740_issues`\n470             WHERE DATE(scraped_at) = CURRENT_DATE()\n471             AND solution IS NOT NULL AND solution != ''\n472             \"\"\"\n473 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 467,
+      "line_range": [
+        467,
+        468,
+        469,
+        470,
+        471,
+        472
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "511             # Update the scraping history record\n512             query = f\"\"\"\n513             UPDATE `{self.project_id}.circle_of_life.scraping_history`\n514             SET\n515                 end_time = CURRENT_TIMESTAMP(),\n516                 status = 'completed',\n517                 forums_scraped = {results.get('forum_scraping', {}).get('forums_discovered', 0)},\n518                 threads_scraped = {results.get('forum_scraping', {}).get('threads_scraped', 0)},\n519                 solutions_found = {results.get('skidsteer_scraping', {}).get('solutions_found', 0)},\n520                 s740_issues_found = {results.get('skidsteer_scraping', {}).get('issues_found', 0)},\n521                 metadata = PARSE_JSON('{json.dumps({\"phases\": results.get(\"phases_completed\", [])})}')\n522             WHERE scrape_id = '{scrape_id}'\n523             \"\"\"\n524 \n",
+      "col_offset": 24,
+      "end_col_offset": 20,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 512,
+      "line_range": [
+        512,
+        513,
+        514,
+        515,
+        516,
+        517,
+        518,
+        519,
+        520,
+        521,
+        522,
+        523
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "532         try:\n533             query = f\"\"\"\n534             UPDATE `{self.project_id}.circle_of_life.scraping_history`\n535             SET\n536                 end_time = CURRENT_TIMESTAMP(),\n537                 status = 'failed',\n538                 errors = '{error}'\n539             WHERE scrape_id = '{scrape_id}'\n540             \"\"\"\n541 \n",
+      "col_offset": 24,
+      "end_col_offset": 20,
+      "filename": "src/circle_of_life_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 533,
+      "line_range": [
+        533,
+        534,
+        535,
+        536,
+        537,
+        538,
+        539,
+        540
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "417             # Check if Bob can query the submission\n418             query = f\"\"\"\n419                 SELECT submission_id\n420                 FROM `{table_id}`\n421                 WHERE submission_id = '{test_submission['submission_id']}'\n422             \"\"\"\n423             result = self.bigquery_client.query(query).result()\n",
+      "col_offset": 24,
+      "end_col_offset": 22,
+      "filename": "src/ecosystem_integration.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 418,
+      "line_range": [
+        418,
+        419,
+        420,
+        421,
+        422
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "508             forum_info = {\n509                 \"forum_id\": hashlib.md5(url.encode()).hexdigest(),\n510                 \"url\": url,\n",
+      "col_offset": 28,
+      "end_col_offset": 53,
+      "filename": "src/forum_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 509,
+      "line_range": [
+        509
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "948             thread_data = {\n949                 \"thread_id\": hashlib.md5(url.encode()).hexdigest(),\n950                 \"forum_id\": forum_info[\"forum_id\"],\n",
+      "col_offset": 29,
+      "end_col_offset": 54,
+      "filename": "src/forum_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 949,
+      "line_range": [
+        949
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "1166 \n1167         except Exception:\n1168             pass\n1169 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/forum_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 1167,
+      "line_range": [
+        1167,
+        1168
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "1211             solution_data = {\n1212                 \"solution_id\": hashlib.md5(f\"{thread_data['thread_id']}_solution\".encode()).hexdigest(),\n1213                 \"problem_category\": self._categorize_problem(thread_data.get(\"problem_description\", \"\")),\n",
+      "col_offset": 31,
+      "end_col_offset": 91,
+      "filename": "src/forum_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 1212,
+      "line_range": [
+        1212
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "1372             report = {\n1373                 \"scrape_id\": hashlib.md5(f\"scrape_{datetime.now().isoformat()}\".encode()).hexdigest(),\n1374                 \"timestamp\": datetime.now().isoformat(),\n",
+      "col_offset": 29,
+      "end_col_offset": 89,
+      "filename": "src/forum_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 1373,
+      "line_range": [
+        1373
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "41         try:\n42             query = f\"\"\"\n43             SELECT\n44                 submission_id,\n45                 full_name,\n46                 email,\n47                 equipment_type,\n48                 problem_description,\n49                 selected_service,\n50                 payment_status,\n51                 ai_analysis,\n52                 created_at\n53             FROM `{self.project_id}.{self.dataset_id}.{self.table_id}`\n54             WHERE created_at > @last_check\n55             ORDER BY created_at DESC\n56             LIMIT 10\n57             \"\"\"\n58 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/mvp3_bigquery_monitor.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 42,
+      "line_range": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "136         try:\n137             query = f\"\"\"\n138             SELECT\n139                 DATE(created_at) as date,\n140                 COUNT(*) as total_submissions,\n141                 COUNT(DISTINCT email) as unique_customers,\n142                 SUM(payment_amount) as revenue,\n143                 AVG(ai_confidence_score) as avg_confidence,\n144                 COUNTIF(payment_status = 'completed') as paid_submissions,\n145                 COUNTIF(email_sent) as emails_sent\n146             FROM `{self.project_id}.{self.dataset_id}.{self.table_id}`\n147             WHERE DATE(created_at) = CURRENT_DATE()\n148             GROUP BY date\n149             \"\"\"\n150 \n",
+      "col_offset": 24,
+      "end_col_offset": 18,
+      "filename": "src/mvp3_bigquery_monitor.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 137,
+      "line_range": [
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "323         view_id = f\"{self.dataset_id}.daily_summary\"\n324         view_query = f\"\"\"\n325         SELECT\n326             DATE(created_at) as date,\n327             COUNT(*) as total_submissions,\n328             COUNT(DISTINCT email) as unique_customers,\n329             SUM(payment_amount) as revenue,\n330             AVG(ai_confidence_score) as avg_confidence,\n331             COUNTIF(payment_status = 'completed') as paid_submissions,\n332             COUNTIF(email_sent) as emails_sent,\n333             ARRAY_AGG(DISTINCT equipment_category IGNORE NULLS) as categories\n334         FROM `{self.dataset_id}.diagnostic_submissions`\n335         WHERE created_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 90 DAY)\n336         GROUP BY date\n337         ORDER BY date DESC\n338         \"\"\"\n339 \n",
+      "col_offset": 25,
+      "end_col_offset": 14,
+      "filename": "src/mvp3_bigquery_schema.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 324,
+      "line_range": [
+        324,
+        325,
+        326,
+        327,
+        328,
+        329,
+        330,
+        331,
+        332,
+        333,
+        334,
+        335,
+        336,
+        337,
+        338
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "376     logger.info(f\"Starting Neo4j Unified Scraper on port {port}\")\n377     app.run(host=\"0.0.0.0\", port=port, debug=False)\n",
+      "col_offset": 17,
+      "end_col_offset": 26,
+      "filename": "src/neo4j_unified_scraper.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 605,
+        "link": "https://cwe.mitre.org/data/definitions/605.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible binding to all interfaces.",
+      "line_number": 377,
+      "line_range": [
+        377
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
+      "test_id": "B104",
+      "test_name": "hardcoded_bind_all_interfaces"
+    },
+    {
+      "code": "179             try:\n180                 query = f\"\"\"\n181                 SELECT\n182                     COUNT(*) as total_items,\n183                     COUNT(DISTINCT {'url' if 'simple' in dataset_table else 'source_url'}) as unique_sources,\n184                     COUNT(DISTINCT source_type) as source_types,\n185                     MAX(scraped_at) as last_scrape\n186                 FROM `bobs-house-ai.{dataset_table}`\n187                 WHERE DATE(scraped_at) = CURRENT_DATE()\n188                 \"\"\"\n189 \n",
+      "col_offset": 28,
+      "end_col_offset": 35,
+      "filename": "src/scraper_cloud_run.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 180,
+      "line_range": [
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "192                     break\n193             except Exception:\n194                 continue\n195 \n",
+      "col_offset": 12,
+      "end_col_offset": 24,
+      "filename": "src/scraper_cloud_run.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Continue detected.",
+      "line_number": 193,
+      "line_range": [
+        193,
+        194
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b112_try_except_continue.html",
+      "test_id": "B112",
+      "test_name": "try_except_continue"
+    },
+    {
+      "code": "377     logger.info(f\"Starting Unified Scraper API on port {port}\")\n378     app.run(host=\"0.0.0.0\", port=port, debug=False)\n",
+      "col_offset": 17,
+      "end_col_offset": 26,
+      "filename": "src/scraper_cloud_run.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 605,
+        "link": "https://cwe.mitre.org/data/definitions/605.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible binding to all interfaces.",
+      "line_number": 378,
+      "line_range": [
+        378
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
+      "test_id": "B104",
+      "test_name": "hardcoded_bind_all_interfaces"
+    },
+    {
+      "code": "201         \"\"\"Generate unique ID for content\"\"\"\n202         return hashlib.md5(text.encode()).hexdigest()\n203 \n",
+      "col_offset": 15,
+      "end_col_offset": 41,
+      "filename": "src/scraper_neo4j_router.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 202,
+      "line_range": [
+        202
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "294         issue_data = {\n295             \"issue_id\": hashlib.md5(f\"{url}_s740\".encode()).hexdigest(),\n296             \"problem_type\": self._identify_problem_type(content_lower),\n",
+      "col_offset": 24,
+      "end_col_offset": 59,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 295,
+      "line_range": [
+        295
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "529         hack_data = {\n530             \"hack_id\": hashlib.md5(f\"{url}_hack\".encode()).hexdigest(),\n531             \"equipment_model\": model,\n",
+      "col_offset": 23,
+      "end_col_offset": 58,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 530,
+      "line_range": [
+        530
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "647         results = {\n648             \"scrape_id\": hashlib.md5(f\"skidsteer_{datetime.now().isoformat()}\".encode()).hexdigest(),\n649             \"timestamp\": datetime.now().isoformat(),\n",
+      "col_offset": 25,
+      "end_col_offset": 88,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 648,
+      "line_range": [
+        648
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "766             {\n767                 \"schedule_id\": hashlib.md5(\"s740_engine_oil\".encode()).hexdigest(),\n768                 \"equipment_model\": \"Bobcat S740\",\n",
+      "col_offset": 31,
+      "end_col_offset": 70,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 767,
+      "line_range": [
+        767
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "782             {\n783                 \"schedule_id\": hashlib.md5(\"s740_hydraulic\".encode()).hexdigest(),\n784                 \"equipment_model\": \"Bobcat S740\",\n",
+      "col_offset": 31,
+      "end_col_offset": 69,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 783,
+      "line_range": [
+        783
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "798             {\n799                 \"schedule_id\": hashlib.md5(\"s740_dpf\".encode()).hexdigest(),\n800                 \"equipment_model\": \"Bobcat S740\",\n",
+      "col_offset": 31,
+      "end_col_offset": 63,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 799,
+      "line_range": [
+        799
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "827             {\n828                 \"tip_id\": hashlib.md5(\"s740_warmup\".encode()).hexdigest(),\n829                 \"equipment_type\": \"Bobcat S740\",\n",
+      "col_offset": 26,
+      "end_col_offset": 61,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 828,
+      "line_range": [
+        828
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "842             {\n843                 \"tip_id\": hashlib.md5(\"s740_grease\".encode()).hexdigest(),\n844                 \"equipment_type\": \"Bobcat S740\",\n",
+      "col_offset": 26,
+      "end_col_offset": 61,
+      "filename": "src/skidsteer_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 843,
+      "line_range": [
+        843
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "119             self.bq_client.create_dataset(dataset, exists_ok=True)\n120         except Exception:\n121             pass\n122 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 120,
+      "line_range": [
+        120,
+        121
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "148             logger.info(\"\u2705 TSB table ready\")\n149         except Exception:\n150             pass\n151 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 149,
+      "line_range": [
+        149,
+        150
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "166 \n167             response = requests.get(base_url, params=params)\n168 \n",
+      "col_offset": 23,
+      "end_col_offset": 60,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 167,
+      "line_range": [
+        167
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
+    },
+    {
+      "code": "200         try:\n201             response = requests.get(\n202                 manufacturer_info[\"url\"], headers={\"User-Agent\": \"Mozilla/5.0 BobBrain TSB Scraper\"}\n203             )\n204 \n",
+      "col_offset": 23,
+      "end_col_offset": 13,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 201,
+      "line_range": [
+        201,
+        202,
+        203
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
+    },
+    {
+      "code": "297             # Generate unique ID\n298             tsb_id = hashlib.md5(\n299                 f\"{tsb_data.get('manufacturer', '')}{tsb_data.get('tsb_number', '')}{datetime.now()}\".encode()\n300             ).hexdigest()\n301 \n",
+      "col_offset": 21,
+      "end_col_offset": 13,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 327,
+        "link": "https://cwe.mitre.org/data/definitions/327.html"
+      },
+      "issue_severity": "HIGH",
+      "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "line_number": 298,
+      "line_range": [
+        298,
+        299,
+        300
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html",
+      "test_id": "B324",
+      "test_name": "hashlib"
+    },
+    {
+      "code": "447 \n448                 response = requests.get(search_url, headers={\"User-Agent\": \"Mozilla/5.0 BobBrain TSB Scraper\"})\n449 \n",
+      "col_offset": 27,
+      "end_col_offset": 111,
+      "filename": "src/tsb_scraper.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 448,
+      "line_range": [
+        448
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
+    },
+    {
+      "code": "175     logger.info(f\"Starting Unified Scraper API on port {port}\")\n176     app.run(host=\"0.0.0.0\", port=port, debug=False)\n",
+      "col_offset": 17,
+      "end_col_offset": 26,
+      "filename": "src/unified_scraper_api.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 605,
+        "link": "https://cwe.mitre.org/data/definitions/605.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible binding to all interfaces.",
+      "line_number": 176,
+      "line_range": [
+        176
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
+      "test_id": "B104",
+      "test_name": "hardcoded_bind_all_interfaces"
+    },
+    {
+      "code": "36         self.reddit_client_id = \"YKAoW2Lv9XT6JhRILFTUnA\"\n37         self.reddit_client_secret = \"j2_7jbkphmqrQZuWXJb_W1py156naQ\"\n38         self.reddit_access_token = None\n",
+      "col_offset": 36,
+      "end_col_offset": 68,
+      "filename": "src/unified_scraper_simple.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: 'j2_7jbkphmqrQZuWXJb_W1py156naQ'",
+      "line_number": 37,
+      "line_range": [
+        37
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    },
+    {
+      "code": "126             self.bq_client.create_dataset(dataset, exists_ok=True)\n127         except Exception:\n128             pass\n129 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/youtube_equipment_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 127,
+      "line_range": [
+        127,
+        128
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "151             logger.info(\"\u2705 YouTube transcript table ready\")\n152         except Exception:\n153             pass\n154 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "src/youtube_equipment_scraper.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 152,
+      "line_range": [
+        152,
+        153
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    }
+  ]
+}

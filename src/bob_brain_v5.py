@@ -13,9 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from flask import Flask, jsonify, request
-from google import genai
+import google.generativeai as genai
 from google.cloud import bigquery, datastore
-from google.genai import types
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -324,7 +323,7 @@ class BobBrainV5:
                             user=user,
                             message=user_message,
                             response=bot_response,
-                            id=hashlib.md5(f"{user_message}{bot_response}".encode()).hexdigest(),
+                            id=hashlib.md5(f"{user_message}{bot_response}".encode(), usedforsecurity=False).hexdigest(),
                         )
                     logger.info("💾 Stored conversation in Neo4j")
                 except Exception as e:
