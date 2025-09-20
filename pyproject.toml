@@ -1,3 +1,17 @@
+[project]
+name = "bobs-brain"
+version = "0.1.0"
+description = "Bob's Brain AI Assistant"
+authors = [{name = "Jeremy Longshore"}]
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.black]
 line-length = 120
 target-version = ['py311']

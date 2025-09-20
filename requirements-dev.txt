@@ -1,6 +1,8 @@
 # Development dependencies for Bob's Brain
-pytest>=7.0.0
-pytest-cov>=4.0.0
+pytest>=8.2,<9
+pytest-cov>=5
+pytest-xdist>=3
+pluggy>=1.5
 pytest-asyncio>=0.21.0
 flake8>=6.0.0
 black>=23.0.0

@@ -16,23 +16,42 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
+    - name: Cache pip
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml', '**/setup.cfg') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install dependencies
+    - name: Install deps
       run: |
         python -m pip install --upgrade pip
-        make ci-install
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # dev extras for pytest plugins if defined
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        # ensure pytest + common plugins present and compatible
+        pip install "pytest>=8.2" pytest-cov pytest-xdist
+
+    - name: Install package (editable)
+      run: |
+        if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then
+          pip install -e .
+        fi
+
+    - name: Print discovery context
+      run: |
+        python -V
+        python - <<'PY'
+        import sys, os; print("PWD", os.getcwd()); print("PYTHONPATH", os.environ.get("PYTHONPATH")); print("sys.path head:", sys.path[:5])
+        PY
+        pytest --version
+        find . -type f \( -name "test_*.py" -o -name "*_test.py" \) | sort | sed 's/^/FOUND: /'
 
     - name: Lint with flake8
       run: |
@@ -58,9 +77,21 @@ jobs:
       run: |
         python -m safety check
 
-    - name: Test with pytest
+    - name: Run tests
+      env:
+        # Avoid path surprises; add src if using src-layout
+        PYTHONPATH: ${{ github.workspace }}/src
       run: |
-        make ci-test-xml
+        pytest --maxfail=1 --disable-warnings --junitxml=reports/junit.xml --cov=bob_brain_v5 --cov=circle_of_life --cov-report=xml
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          reports/junit.xml
+          coverage.xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
