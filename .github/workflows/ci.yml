@@ -82,6 +82,10 @@ jobs:
         # Avoid path surprises; add src if using src-layout
         PYTHONPATH: ${{ github.workspace }}/src
       run: |
+        mkdir -p reports
+        echo "Running pytest with discovery check..."
+        pytest --collect-only -v
+        echo "Running full test suite..."
         pytest --maxfail=1 --disable-warnings --junitxml=reports/junit.xml --cov=bob_brain_v5 --cov=circle_of_life --cov-report=xml
 
     - name: Upload test reports
