@@ -1,46 +1,60 @@
-# GitHub Pages Configuration for Bob's Brain
+# GitHub Pages Configuration for Bob's Brain Documentation
 
-title: Bob's Brain - AI Assistant Platform
-description: From Simple Template to Ferrari-Level Intelligence
-author: Jeremy Longshore
-theme: jekyll-theme-cayman
+# Site settings
+title: "Bob's Brain - AI Assistant Ecosystem"
+description: "Intelligent AI assistant ecosystem with multiple specialized branches for different use cases"
+baseurl: ""
+url: "https://jeremylongshore.github.io/bobs-brain"
 
-# Navigation
-navigation:
-  - title: Home
-    url: /
-  - title: Simple Template
-    url: /simple-template
-  - title: Knowledge Graph
-    url: /knowledge-graph
-  - title: Production System
-    url: /production-system
-  - title: Ferrari Edition
-    url: /ferrari-edition
-  - title: Documentation
-    url: /documentation
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
 
 # Plugins
 plugins:
-  - jekyll-seo-tag
+  - jekyll-feed
   - jekyll-sitemap
+  - jekyll-seo-tag
 
-# Exclude files
-exclude:
-  - Gemfile
-  - Gemfile.lock
-  - README.md
-  - .gitignore
+# Navigation
+navigation:
+  - title: "Home"
+    url: "/"
+  - title: "Branch Guide"
+    url: "/BRANCH_GUIDE"
+  - title: "Contributing"
+    url: "/CONTRIBUTING"
+  - title: "GitHub"
+    url: "https://github.com/jeremylongshore/bobs-brain"
 
-# Markdown settings
-markdown: kramdown
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
+# Social links
+github_username: jeremylongshore
+repository: "jeremylongshore/bobs-brain"
 
-# Site settings
-url: https://jeremylongshore.github.io
-baseurl: /bobs-brain
+# SEO
+lang: "en-US"
+author: "Jeremy Longshore"
 
-# Google Analytics (optional)
-# google_analytics: UA-XXXXXXXXX-X
+# Enable Mermaid diagrams
+mermaid:
+  src: 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "docs"
+      type: "pages"
+    values:
+      layout: "page"
