@@ -136,7 +136,8 @@ logs/
 deploy_to_cloud_run.sh
 setup_bob.sh
 
-# Local test scripts
-test_*.py
+# Local test scripts in scripts/ only (not tests/ directory)
+scripts/testing/test_*.py
+scripts/testing/verify_*.py
 verify_*.py.env
 .env
