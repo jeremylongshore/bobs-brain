@@ -1,6 +1,7 @@
 # 🧠 Bob's Brain - AI-Powered Assistant Ecosystem
 
 [![CI/CD](https://github.com/jeremylongshore/bobs-brain/workflows/CI/badge.svg)](https://github.com/jeremylongshore/bobs-brain/actions)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://jeremylongshore.github.io/bobs-brain)
 [![Cloud Run](https://img.shields.io/badge/Google%20Cloud-Run-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/run)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Slack](https://img.shields.io/badge/Slack-Integration-4A154B?logo=slack&logoColor=white)](https://slack.com)
@@ -100,10 +101,14 @@ graph TB
 
 ## 📚 Documentation
 
+> **🌐 [Complete Documentation Site](https://jeremylongshore.github.io/bobs-brain)** - Comprehensive guides for all branches and use cases
+
+### Key Documentation
+- [**Branch Guide**](docs/BRANCH_GUIDE.md) - Navigate between different project branches and versions
+- [**Contributing Guide**](CONTRIBUTING.md) - How to contribute to the project
 - [**Architecture Guide**](docs/ARCHITECTURE.md) - System design and component overview
 - [**Deployment Guide**](docs/DEPLOYMENT.md) - Production deployment instructions
 - [**API Reference**](docs/API.md) - REST endpoint documentation
-- [**Contributing Guide**](CONTRIBUTING.md) - How to contribute to the project
 - [**Security Guide**](docs/SECURITY.md) - Security best practices
 
 ## 🛠️ Development
