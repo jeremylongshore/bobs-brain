@@ -13,6 +13,7 @@ anthropic>=0.34
 google-generativeai>=0.8.3
 apscheduler>=3.10
 requests>=2.31.0
+types-requests>=2.31.0
 black
 isort
 flake8
