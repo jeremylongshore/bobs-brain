@@ -19,13 +19,7 @@ def llm_client():
                 max_tokens=2048,
                 messages=[{"role": "user", "content": prompt}],
             )
-            return "".join(
-                [
-                    b.text
-                    for b in msg.content
-                    if getattr(b, "type", "") == "text"
-                ]
-            )
+            return "".join([b.text for b in msg.content if getattr(b, "type", "") == "text"])
 
         return call
 
@@ -55,9 +49,7 @@ def llm_client():
         return call
 
     if p == "ollama":
-        base = os.getenv(
-            "OLLAMA_BASE_URL", "http://localhost:11434"
-        ).rstrip("/")
+        base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
         model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
         def call(prompt: str):
@@ -72,9 +64,7 @@ def llm_client():
 
     if p == "vertex":
         # stub hook for your Vertex wrapper if you use it
-        raise NotImplementedError(
-            "Vertex wrapper not wired in this minimal repo."
-        )
+        raise NotImplementedError("Vertex wrapper not wired in this minimal repo.")
     raise ValueError(f"Unknown PROVIDER={p}")
 
 
@@ -82,9 +72,7 @@ def llm_client():
 def state_db():
     from sqlalchemy import create_engine
 
-    return create_engine(
-        os.getenv("DATABASE_URL", "sqlite:///./bb.db"), future=True
-    )
+    return create_engine(os.getenv("DATABASE_URL", "sqlite:///./bb.db"), future=True)
 
 
 # ----- Vector store -----
@@ -95,13 +83,9 @@ def vector_store():
 
         return PersistentClient(path=os.getenv("CHROMA_DIR", ".chroma"))
     if vb == "pgvector":
-        raise NotImplementedError(
-            "PGVector wrapper out of scope for minimal repo."
-        )
+        raise NotImplementedError("PGVector wrapper out of scope for minimal repo.")
     if vb == "pinecone":
-        raise NotImplementedError(
-            "Pinecone wrapper out of scope for minimal repo."
-        )
+        raise NotImplementedError("Pinecone wrapper out of scope for minimal repo.")
     raise ValueError(f"Unknown VECTOR_BACKEND={vb}")
 
 

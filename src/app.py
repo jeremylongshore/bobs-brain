@@ -22,15 +22,11 @@ from src.providers import (
 )
 from src.skills import load_skills
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("bobs-brain")
 
 app = Flask(__name__)
-CORS(
-    app, resources={r"/api/*": {"origins": "*"}, r"/slack/*": {"origins": "*"}}
-)
+CORS(app, resources={r"/api/*": {"origins": "*"}, r"/slack/*": {"origins": "*"}})
 limiter = Limiter(get_remote_address, app=app, default_limits=["60/minute"])
 
 API_KEY = os.getenv("BB_API_KEY")
@@ -76,9 +72,8 @@ SKILLS = load_skills()
 
 
 def llm_insights(payload: dict):
-    prompt = (
-        "Return ONLY JSON array of {pattern, action, confidence} based on: "
-        + json.dumps(payload.get("analysis", {}))
+    prompt = "Return ONLY JSON array of {pattern, action, confidence} based on: " + json.dumps(
+        payload.get("analysis", {})
     )
     txt = LLM(prompt)
     try:
@@ -87,9 +82,7 @@ def llm_insights(payload: dict):
         return []
 
 
-COL = CircleOfLife(
-    neo4j_driver=GRAPH, bq_client=None, llm_call=llm_insights, logger=log
-)
+COL = CircleOfLife(neo4j_driver=GRAPH, bq_client=None, llm_call=llm_insights, logger=log)
 
 
 @app.get("/")
@@ -199,9 +192,7 @@ if os.getenv("COL_SCHEDULE"):
         except Exception as e:
             log.warning("CoL scheduled run failed: %s", e)
 
-    SCHED.add_job(
-        scheduled_col, CronTrigger.from_crontab(os.getenv("COL_SCHEDULE"))
-    )
+    SCHED.add_job(scheduled_col, CronTrigger.from_crontab(os.getenv("COL_SCHEDULE")))
     SCHED.start()
 
 if __name__ == "__main__":
