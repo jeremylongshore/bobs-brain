@@ -44,7 +44,7 @@ jobs:
 
     - name: Check import sorting with isort
       run: |
-        python -m isort --check-only src/
+        python -m isort --check-only src/ --profile black
 
     - name: Type check with mypy
       run: |

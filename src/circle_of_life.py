@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from google.api_core import retry
+
 # Google Cloud imports
 from google.cloud import bigquery, datastore
 
