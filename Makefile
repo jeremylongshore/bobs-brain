@@ -44,6 +44,11 @@ test:
 	$(PYTHON) -m pytest tests/ -v --cov=src --cov-report=term-missing
 	@echo "✅ Tests completed"
 
+ci-test-xml:
+	@echo "🧪 Running test suite with XML coverage..."
+	$(PYTHON) -m pytest tests/ -v --cov=src --cov-report=xml
+	@echo "✅ Tests completed"
+
 lint-check:
 	@echo "🔍 Running code linting..."
 	$(PYTHON) -m flake8 src/ tests/ --max-line-length=120
