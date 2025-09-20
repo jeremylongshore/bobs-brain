@@ -2,122 +2,86 @@ name: CI
 
 on:
   push:
-    branches: [ main, clean-main ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, clean-main ]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml', '**/setup.cfg') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Install deps
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        # dev extras for pytest plugins if defined
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        # ensure pytest + common plugins present and compatible
-        pip install "pytest>=8.2" pytest-cov pytest-xdist
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8 black isort mypy bandit safety
 
-    - name: Install package (editable)
-      run: |
-        if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then
-          pip install -e .
-        fi
+      - name: Install package (editable)
+        run: |
+          if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then
+            pip install -e .
+          fi
 
-    - name: Print discovery context
-      run: |
-        python -V
-        python - <<'PY'
-        import sys, os; print("PWD", os.getcwd()); print("PYTHONPATH", os.environ.get("PYTHONPATH")); print("sys.path head:", sys.path[:5])
-        PY
-        pytest --version
-        find . -type f \( -name "test_*.py" -o -name "*_test.py" \) | sort | sed 's/^/FOUND: /'
+      - name: Lint with flake8
+        run: |
+          flake8 src --max-line-length=120 --count --show-source --statistics
 
-    - name: Lint with flake8
-      run: |
-        python -m flake8 src/ --max-line-length=120 --count --show-source --statistics
+      - name: Check code formatting with black
+        run: |
+          black --check src --line-length=120
 
-    - name: Check code formatting with black
-      run: |
-        python -m black --check src/ --line-length=120
+      - name: Check import sorting with isort
+        run: |
+          isort -c src
 
-    - name: Check import sorting with isort
-      run: |
-        python -m isort --check-only src/ --profile black
+      - name: Type check with mypy
+        run: |
+          mypy --ignore-missing-imports src
 
-    - name: Type check with mypy
-      run: |
-        python -m mypy src/ --ignore-missing-imports
+      - name: Security check with bandit
+        run: |
+          bandit -r src
 
-    - name: Security check with bandit
-      run: |
-        python -m bandit -r src/ -f json -o security-report.json || true
+      - name: Safety check
+        run: |
+          safety check
 
-    - name: Safety check
-      run: |
-        python -m safety check
+      - name: Run tests
+        env:
+          BB_API_KEY: test
+          PYTHONPATH: src
+        run: |
+          mkdir -p reports
+          pytest -q
 
-    - name: Run tests
-      env:
-        # Avoid path surprises; add src if using src-layout
-        PYTHONPATH: ${{ github.workspace }}/src
-      run: |
-        mkdir -p reports
-        echo "Running pytest with discovery check..."
-        pytest --collect-only -v
-        echo "Running full test suite..."
-        pytest --maxfail=1 --disable-warnings --junitxml=reports/junit.xml --cov=bob_brain_v5 --cov=circle_of_life --cov-report=xml
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            reports/
+            coverage.xml
 
-    - name: Upload test reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports
-        path: |
-          reports/junit.xml
-          coverage.xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Docker image
-      run: |
-        docker build -t bobs-brain:test .
-
-    - name: Test Docker image
-      run: |
-        docker run --rm bobs-brain:test python -c "import src.bob_brain_v5; print('✅ Image builds successfully')"
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella

@@ -18,6 +18,7 @@ class TestBasic(unittest.TestCase):
         try:
             import src.bob_brain_v5  # noqa: F401
             import src.circle_of_life  # noqa: F401
+
             self.assertTrue(True)
         except ImportError as e:
             self.fail(f"Failed to import modules: {e}")
