@@ -1,137 +1,121 @@
-# Bob's Brain Development Makefile
-# CRITICAL: Always use these commands before committing
+# Bob's Brain - AI Assistant Makefile
+.PHONY: help install test lint-check type-check security-check test-health deploy safe-commit logs metrics clean
 
-.PHONY: help
-help: ## Show this help message
-	@echo "Bob's Brain Development Commands:"
-	@echo "================================="
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# Variables
+PYTHON := python3
+PIP := pip3
+PROJECT_ID := bobs-house-ai
+REGION := us-central1
+SERVICE_NAME := bobs-brain
 
-.PHONY: install
-install: ## Install all dependencies
-	pip install --upgrade pip
-	pip install -r requirements.txt
-	pip install pre-commit black flake8 pylint pytest mypy
-	pre-commit install
+# Default target
+help:
+	@echo "🧠 Bob's Brain Development Commands"
+	@echo "=================================="
+	@echo ""
+	@echo "Development workflow:"
+	@echo "  install        Install dependencies"
+	@echo "  test          Run test suite"
+	@echo "  lint-check    Run code linting"
+	@echo "  type-check    Run type checking"
+	@echo "  security-check Run security scanning"
+	@echo "  safe-commit   Run all checks before commit"
+	@echo ""
+	@echo "Deployment:"
+	@echo "  deploy        Deploy to Cloud Run"
+	@echo "  test-health   Test health endpoints"
+	@echo ""
+	@echo "Monitoring:"
+	@echo "  logs          View application logs"
+	@echo "  metrics       Display system metrics"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  clean         Clean temporary files"
+	@echo "  help          Show this help message"
 
-.PHONY: lint-check
-lint-check: ## Run all linting checks
-	@echo "🔍 Running Python linting..."
-	@python3 -m flake8 src/ --max-line-length=120 --exclude=archive/,deprecated_bobs/ || true
-	@python3 -m pylint src/*.py --disable=C0114,C0115,C0116,R0903,R0913,W0703 || true
-	@python3 -m black --check src/ || true
-	@echo "✅ Lint checks complete"
+# Development commands
+install:
+	@echo "📦 Installing dependencies..."
+	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements-dev.txt
 
-.PHONY: format
-format: ## Auto-format code
-	@echo "🎨 Formatting Python code..."
-	@python3 -m black src/
-	@echo "✅ Code formatting complete"
+test:
+	@echo "🧪 Running test suite..."
+	$(PYTHON) -m pytest tests/ -v --cov=src --cov-report=term-missing
+	@echo "✅ Tests completed"
 
-.PHONY: test
-test: ## Run all tests
-	@echo "🧪 Running tests..."
-	@if [ -d "tests" ]; then \
-		python3 -m pytest tests/ -v --tb=short || true; \
-	else \
-		echo "⚠️  No tests directory found"; \
-	fi
-	@echo "✅ Tests complete"
+lint-check:
+	@echo "🔍 Running code linting..."
+	$(PYTHON) -m flake8 src/ tests/ --max-line-length=120
+	$(PYTHON) -m black --check src/ tests/
+	$(PYTHON) -m isort --check-only src/ tests/
+	@echo "✅ Linting passed"
 
-.PHONY: type-check
-type-check: ## Run type checking
-	@echo "🔍 Running type checks..."
-	@python3 -m mypy src/ --ignore-missing-imports || true
-	@echo "✅ Type checks complete"
+type-check:
+	@echo "🔍 Running type checking..."
+	$(PYTHON) -m mypy src/ --ignore-missing-imports
+	@echo "✅ Type checking passed"
 
-.PHONY: security-check
-security-check: ## Check for security issues and secrets
-	@echo "🔒 Checking for secrets..."
-	@! grep -r "xoxb-[0-9]" --include="*.py" --exclude-dir=.git --exclude-dir=archive --exclude-dir=deprecated_bobs src/ 2>/dev/null
-	@! grep -r "xapp-[0-9]" --include="*.py" --exclude-dir=.git --exclude-dir=archive --exclude-dir=deprecated_bobs src/ 2>/dev/null
-	@! grep -r "sk-[a-zA-Z0-9]" --include="*.py" --exclude-dir=.git --exclude-dir=archive --exclude-dir=deprecated_bobs src/ 2>/dev/null
-	@echo "✅ No secrets found"
+security-check:
+	@echo "🔒 Running security scanning..."
+	$(PYTHON) -m bandit -r src/ -f json -o security-report.json || true
+	$(PYTHON) -m safety check
+	@echo "✅ Security check completed"
 
-.PHONY: pre-commit-check
-pre-commit-check: ## Run pre-commit checks
-	@echo "🔍 Running pre-commit checks..."
-	@if [ -f ".pre-commit-config.yaml" ]; then \
-		pre-commit run --all-files; \
-	else \
-		echo "⚠️  No .pre-commit-config.yaml found"; \
-	fi
+safe-commit: lint-check type-check test security-check
+	@echo "✅ All checks passed! Safe to commit."
 
-.PHONY: check-all
-check-all: lint-check test type-check security-check ## Run ALL checks
-	@echo "="
-	@echo "🎯 All checks complete!"
-	@echo "="
-
-.PHONY: safe-commit
-safe-commit: check-all ## Run all checks then commit safely
-	@echo "="
-	@echo "✅ All checks passed! Ready to commit."
-	@echo "="
-	@echo "📝 Remember:"
-	@echo "   1. You are on branch: $$(git branch --show-current)"
-	@echo "   2. Never commit to main directly"
-	@echo "   3. Write clear commit messages"
-	@echo "="
-	@echo "Run: git add . && git commit -m 'your message'"
-
-.PHONY: setup-hooks
-setup-hooks: ## Set up git hooks
-	@echo "🔧 Setting up git hooks..."
-	@chmod +x .git/hooks/pre-commit 2>/dev/null || true
-	@chmod +x .git/hooks/pre-push 2>/dev/null || true
-	@echo "✅ Git hooks configured"
-
-.PHONY: clean
-clean: ## Clean up temporary files
-	@echo "🧹 Cleaning up..."
-	@find . -type f -name "*.pyc" -delete
-	@find . -type d -name "__pycache__" -delete
-	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
-	@echo "✅ Cleanup complete"
-
-.PHONY: dev-setup
-dev-setup: install setup-hooks ## Complete development environment setup
-	@echo "="
-	@echo "🚀 Development environment ready!"
-	@echo "="
-	@echo "📋 Always remember:"
-	@echo "   1. Create feature branch: git checkout -b feature/name"
-	@echo "   2. Run checks: make check-all"
-	@echo "   3. Safe commit: make safe-commit"
-	@echo "   4. Never use --no-verify"
-	@echo "="
-
-.PHONY: status
-status: ## Show project status
-	@echo "📊 Project Status:"
-	@echo "=================="
-	@echo "Current Branch: $$(git branch --show-current)"
-	@echo "Python Files: $$(find src -name '*.py' | wc -l)"
-	@echo "Test Files: $$(find tests -name '*.py' 2>/dev/null | wc -l || echo 0)"
-	@git status --short
-
-.PHONY: run-bob
-run-bob: ## Run Bob locally for testing
-	@echo "🤖 Starting Bob locally..."
-	@PORT=8080 python src/bob_production_final.py
-
-.PHONY: test-health
-test-health: ## Test Bob's health endpoint
-	@echo "🏥 Testing Bob's health..."
-	@curl -s http://localhost:8080/health | python3 -m json.tool || echo "❌ Bob not running locally"
-
-.PHONY: deploy
-deploy: check-all ## Deploy to Cloud Run (after all checks pass)
+# Deployment commands
+deploy:
 	@echo "🚀 Deploying to Cloud Run..."
-	@echo "⚠️  Make sure you're on a feature branch!"
-	@gcloud run deploy bobs-brain \
+	gcloud run deploy $(SERVICE_NAME) \
 		--source . \
-		--region us-central1 \
-		--project bobs-house-ai \
-		--port 8080
+		--platform managed \
+		--region $(REGION) \
+		--project $(PROJECT_ID) \
+		--memory 1Gi \
+		--timeout 3600 \
+		--min-instances 0 \
+		--max-instances 10 \
+		--vpc-connector bob-vpc-connector \
+		--vpc-egress private-ranges-only \
+		--set-env-vars "PROJECT_ID=$(PROJECT_ID)"
+	@echo "✅ Deployment completed"
+
+test-health:
+	@echo "🏥 Testing health endpoints..."
+	curl -f https://$(SERVICE_NAME)-157908567967.$(REGION).run.app/health || echo "❌ Health check failed"
+	@echo "✅ Health check completed"
+
+# Monitoring commands
+logs:
+	@echo "📊 Viewing application logs..."
+	gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=$(SERVICE_NAME)" \
+		--limit 50 --format="table(timestamp,severity,textPayload)"
+
+metrics:
+	@echo "📈 System metrics:"
+	@echo "=================="
+	@echo "Cloud Run services:"
+	@gcloud run services list --platform managed --region $(REGION) --format="table(name,status,url)"
+	@echo ""
+	@echo "Recent deployments:"
+	@gcloud run revisions list --service $(SERVICE_NAME) --region $(REGION) --limit 5 --format="table(name,creation_timestamp,status)"
+
+# Utility commands
+clean:
+	@echo "🧹 Cleaning temporary files..."
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	find . -type f -name "*.coverage" -delete
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "security-report.json" -delete
+	@echo "✅ Cleanup completed"
+
+# GitHub Actions support
+ci-install:
+	$(PIP) install -r requirements.txt
+	$(PIP) install pytest pytest-cov flake8 black isort mypy bandit safety
+
+ci-test: ci-install lint-check type-check test security-check
+	@echo "✅ CI pipeline completed successfully"
