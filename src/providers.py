@@ -14,8 +14,18 @@ def llm_client():
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
         def call(prompt: str):
-            msg = client.messages.create(model=m, max_tokens=2048, messages=[{"role": "user", "content": prompt}])
-            return "".join([b.text for b in msg.content if getattr(b, "type", "") == "text"])
+            msg = client.messages.create(
+                model=m,
+                max_tokens=2048,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return "".join(
+                [
+                    b.text
+                    for b in msg.content
+                    if getattr(b, "type", "") == "text"
+                ]
+            )
 
         return call
 
@@ -34,7 +44,10 @@ def llm_client():
             r = requests.post(
                 url,
                 headers={"Authorization": f"Bearer {key}"},
-                json={"model": m, "messages": [{"role": "user", "content": prompt}]},
+                json={
+                    "model": m,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
                 timeout=120,
             ).json()
             return r["choices"][0]["message"]["content"]
@@ -42,18 +55,26 @@ def llm_client():
         return call
 
     if p == "ollama":
-        base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+        base = os.getenv(
+            "OLLAMA_BASE_URL", "http://localhost:11434"
+        ).rstrip("/")
         model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
         def call(prompt: str):
-            r = requests.post(f"{base}/api/generate", json={"model": model, "prompt": prompt}, timeout=180).json()
+            r = requests.post(
+                f"{base}/api/generate",
+                json={"model": model, "prompt": prompt},
+                timeout=180,
+            ).json()
             return r.get("response", "")
 
         return call
 
     if p == "vertex":
         # stub hook for your Vertex wrapper if you use it
-        raise NotImplementedError("Vertex wrapper not wired in this minimal repo.")
+        raise NotImplementedError(
+            "Vertex wrapper not wired in this minimal repo."
+        )
     raise ValueError(f"Unknown PROVIDER={p}")
 
 
@@ -61,7 +82,9 @@ def llm_client():
 def state_db():
     from sqlalchemy import create_engine
 
-    return create_engine(os.getenv("DATABASE_URL", "sqlite:///./bb.db"), future=True)
+    return create_engine(
+        os.getenv("DATABASE_URL", "sqlite:///./bb.db"), future=True
+    )
 
 
 # ----- Vector store -----
@@ -72,9 +95,13 @@ def vector_store():
 
         return PersistentClient(path=os.getenv("CHROMA_DIR", ".chroma"))
     if vb == "pgvector":
-        raise NotImplementedError("PGVector wrapper out of scope for minimal repo.")
+        raise NotImplementedError(
+            "PGVector wrapper out of scope for minimal repo."
+        )
     if vb == "pinecone":
-        raise NotImplementedError("Pinecone wrapper out of scope for minimal repo.")
+        raise NotImplementedError(
+            "Pinecone wrapper out of scope for minimal repo."
+        )
     raise ValueError(f"Unknown VECTOR_BACKEND={vb}")
 
 
@@ -84,7 +111,10 @@ def graph_db():
         return None
     from neo4j import GraphDatabase
 
-    return GraphDatabase.driver(os.getenv("NEO4J_URI"), auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD")))
+    return GraphDatabase.driver(
+        os.getenv("NEO4J_URI"),
+        auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD")),
+    )
 
 
 # ----- Cache -----

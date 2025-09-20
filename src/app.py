@@ -12,18 +12,36 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
 from src.circle_of_life import CircleOfLife
 from src.policy import guard_request
-from src.providers import artifact_store, cache_client, graph_db, llm_client, state_db, vector_store
+from src.providers import (
+    artifact_store,
+    cache_client,
+    graph_db,
+    llm_client,
+    state_db,
+    vector_store,
+)
 from src.skills import load_skills
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
+)
 log = logging.getLogger("bobs-brain")
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}, r"/slack/*": {"origins": "*"}})
+CORS(
+    app, resources={r"/api/*": {"origins": "*"}, r"/slack/*": {"origins": "*"}}
+)
 limiter = Limiter(get_remote_address, app=app, default_limits=["60/minute"])
 
 API_KEY = os.getenv("BB_API_KEY")
-OPEN_PATHS = {"/", "/health", "/metrics", "/config", "/health/backends", "/slack/events"}
+OPEN_PATHS = {
+    "/",
+    "/health",
+    "/metrics",
+    "/config",
+    "/health/backends",
+    "/slack/events",
+}
 
 
 @app.before_request
@@ -58,16 +76,20 @@ SKILLS = load_skills()
 
 
 def llm_insights(payload: dict):
-    txt = LLM(
-        "Return ONLY JSON array of {pattern, action, confidence} based on: " + json.dumps(payload.get("analysis", {}))
+    prompt = (
+        "Return ONLY JSON array of {pattern, action, confidence} based on: "
+        + json.dumps(payload.get("analysis", {}))
     )
+    txt = LLM(prompt)
     try:
         return json.loads(txt)
     except Exception:
         return []
 
 
-COL = CircleOfLife(neo4j_driver=GRAPH, bq_client=None, llm_call=llm_insights, logger=log)
+COL = CircleOfLife(
+    neo4j_driver=GRAPH, bq_client=None, llm_call=llm_insights, logger=log
+)
 
 
 @app.get("/")
@@ -130,14 +152,18 @@ def api_query():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     # Simple answer for demo
-    answer = f"Query received: {body.get('query','')}"
+    answer = f"Query received: {body.get('query', '')}"
     return jsonify({"ok": True, "answer": answer})
 
 
 @app.post("/learn")
 def learn():
     body = request.get_json(force=True) or {}
-    ev = {"type": "correction", "correction": body.get("correction", ""), "context": body.get("context")}
+    ev = {
+        "type": "correction",
+        "correction": body.get("correction", ""),
+        "context": body.get("context"),
+    }
     result = COL.run_once([ev])
     return jsonify({"ok": True, "circle_of_life": result})
 
@@ -173,7 +199,9 @@ if os.getenv("COL_SCHEDULE"):
         except Exception as e:
             log.warning("CoL scheduled run failed: %s", e)
 
-    SCHED.add_job(scheduled_col, CronTrigger.from_crontab(os.getenv("COL_SCHEDULE")))
+    SCHED.add_job(
+        scheduled_col, CronTrigger.from_crontab(os.getenv("COL_SCHEDULE"))
+    )
     SCHED.start()
 
 if __name__ == "__main__":
