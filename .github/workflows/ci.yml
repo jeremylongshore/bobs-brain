@@ -40,7 +40,7 @@ jobs:
 
     - name: Check code formatting with black
       run: |
-        python -m black --check src/
+        python -m black --check src/ --line-length=120
 
     - name: Check import sorting with isort
       run: |
