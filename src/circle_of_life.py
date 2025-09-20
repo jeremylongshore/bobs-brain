@@ -11,17 +11,13 @@ COOLDOWN_SEC = int(os.getenv("BB_COL_COOLDOWN", "60"))
 
 
 def content_hash(obj: Any) -> str:
-    return hashlib.sha256(
-        json.dumps(obj, sort_keys=True, default=str).encode()
-    ).hexdigest()
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
 class CircleOfLife:
     """ingest -> analyze -> llm insights -> persist -> apply"""
 
-    def __init__(
-        self, neo4j_driver=None, bq_client=None, llm_call=None, logger=None
-    ):
+    def __init__(self, neo4j_driver=None, bq_client=None, llm_call=None, logger=None):
         self.driver = neo4j_driver
         self.bq = bq_client
         self.llm_call = llm_call
@@ -90,27 +86,11 @@ class CircleOfLife:
                     )
                     g += 1
         # bq stub: count items that pass threshold
-        bq = (
-            len(
-                [
-                    i
-                    for i in insights
-                    if float(i.get("confidence", 0)) >= CONFIDENCE_MIN
-                ]
-            )
-            if self.bq
-            else 0
-        )
+        bq = len([i for i in insights if float(i.get("confidence", 0)) >= CONFIDENCE_MIN]) if self.bq else 0
         return g, bq
 
     def apply(self, insights: List[Dict]) -> int:
-        return len(
-            [
-                i
-                for i in insights
-                if float(i.get("confidence", 0)) >= CONFIDENCE_MIN
-            ]
-        )
+        return len([i for i in insights if float(i.get("confidence", 0)) >= CONFIDENCE_MIN])
 
     def run_once(self, events: List[Dict]) -> Dict:
         if not self.ready():

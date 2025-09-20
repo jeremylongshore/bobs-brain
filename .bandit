@@ -1,0 +1,5 @@
+[bandit]
+# Allow common Flask development patterns
+# B110: try_except_pass - acceptable for metrics collection
+# B104: hardcoded_bind_all_interfaces - required for containerized apps
+skips = B110,B104

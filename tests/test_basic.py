@@ -16,7 +16,7 @@ class TestBasic(unittest.TestCase):
     def test_imports(self):
         """Test that main modules can be imported"""
         try:
-            import src.bob_brain_v5  # noqa: F401
+            import src.app  # noqa: F401
             import src.circle_of_life  # noqa: F401
 
             self.assertTrue(True)
