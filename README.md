@@ -305,3 +305,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 ---
 
 **Built for sovereignty • Designed for modularity • Ready to deploy**
+\![CI](https://github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/actions/workflows/ci.yml/badge.svg?branch=main)
