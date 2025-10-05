@@ -1,0 +1,42 @@
+# Bob's Brain v5 - Sovereign Modular Agent
+# Python 3.11+
+
+# Core web framework
+flask==3.0.0
+flask-cors==4.0.0
+flask-limiter==3.5.0
+gunicorn==21.2.0
+
+# LLM Providers
+anthropic==0.34.2
+google-generativeai==0.7.2
+openai==1.40.0  # For OpenRouter compatibility
+requests==2.32.3
+
+# LlamaIndex - Multi-source knowledge integration (NEW)
+llama-index==0.10.67
+llama-index-vector-stores-chroma==0.1.10
+chromadb==0.5.5
+sqlalchemy==2.0.32
+
+# Database backends
+neo4j==5.23.1  # Graph database (optional)
+redis==5.0.8   # Cache (optional)
+boto3==1.34.162  # S3 artifacts (optional)
+
+# Utilities
+apscheduler==3.10.4  # Scheduling
+prometheus-client==0.20.0  # Metrics
+python-dotenv==1.0.1  # Environment management
+
+# Optional: Local embeddings (free alternative to OpenAI)
+# sentence-transformers==3.0.1
+
+# Development dependencies (optional)
+# pytest==8.3.2
+# pytest-cov==5.0.0
+# black==24.8.0
+# isort==5.13.2
+# flake8==7.1.1
+# mypy==1.11.2
+# bandit==1.7.9

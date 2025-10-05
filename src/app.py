@@ -11,6 +11,7 @@ from flask_limiter.util import get_remote_address
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
 from src.circle_of_life import CircleOfLife
+from src.knowledge_orchestrator import get_knowledge_orchestrator
 from src.policy import guard_request
 from src.providers import (
     artifact_store,
@@ -69,6 +70,7 @@ GRAPH = graph_db()
 CACHE = cache_client()
 ARTS = artifact_store()
 SKILLS = load_skills()
+KNOWLEDGE = get_knowledge_orchestrator()  # LlamaIndex multi-source knowledge
 
 
 def llm_insights(payload: dict):
@@ -171,6 +173,39 @@ def api_skill():
         return jsonify({"error": "unknown skill"}), 404
     out = fn(payload)
     return jsonify({"ok": True, "result": out})
+
+
+@app.post("/api/knowledge")
+def api_knowledge():
+    """
+    Query multi-source knowledge (Research + Knowledge DB + Analytics)
+
+    POST /api/knowledge
+    {
+        "query": "What are LLM gateway best practices?",
+        "mode": "auto"  // auto, research, knowledge, analytics, all
+    }
+    """
+    body = request.get_json(force=True) or {}
+    query = body.get("query", "")
+    mode = body.get("mode", "auto")
+
+    if not query:
+        return jsonify({"error": "query required"}), 400
+
+    try:
+        result = KNOWLEDGE.query(query, mode=mode)
+        return jsonify({"ok": True, **result})
+    except Exception as e:
+        log.error(f"Knowledge query failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.get("/api/knowledge/status")
+def knowledge_status():
+    """Check knowledge orchestrator status"""
+    status = KNOWLEDGE.get_status()
+    return jsonify(status)
 
 
 @app.post("/slack/events")
