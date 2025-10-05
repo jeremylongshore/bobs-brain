@@ -60,7 +60,7 @@ class BobWithFullVertexAI:
         self.graphiti = Graphiti(
             uri="bolt://10.128.0.2:7687",
             user="neo4j",
-            password="BobBrain2025",
+            password="<REDACTED_NEO4J_PASSWORD>",
             llm_client=VertexAILLM(),        # Vertex for LLM
             embedder=VertexAIEmbedder()       # Vertex for embeddings
         )

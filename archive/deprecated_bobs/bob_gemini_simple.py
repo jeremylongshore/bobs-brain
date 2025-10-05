@@ -24,7 +24,7 @@ class BobGemini:
     
     def __init__(self):
         # Initialize Gemini with API key
-        api_key = os.environ.get('GOOGLE_API_KEY', 'AIzaSyBK4lVEXg_2R9TjPSV-6g8R5hVqGT8fCZo')
+        api_key = os.environ.get('GOOGLE_API_KEY', '<REDACTED_GOOGLE_API_KEY>')
         genai.configure(api_key=api_key)
         
         # Use Gemini 1.5 Flash (fast and smart)

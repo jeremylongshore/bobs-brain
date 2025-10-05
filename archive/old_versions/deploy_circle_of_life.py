@@ -140,7 +140,7 @@ def main():
         f"GCP_LOCATION={REGION}",
         f"NEO4J_URI=bolt://{neo4j_ip}:7687",
         "NEO4J_USER=neo4j",
-        "NEO4J_PASSWORD=BobBrain2025",
+        "NEO4J_PASSWORD=<REDACTED_NEO4J_PASSWORD>",
         f"SLACK_BOT_TOKEN={slack_bot_token}",
         f"SLACK_APP_TOKEN={slack_app_token}",
         f"SLACK_SIGNING_SECRET={slack_signing_secret}",

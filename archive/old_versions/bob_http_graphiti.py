@@ -44,7 +44,7 @@ class BobGraphiti:
         self.graphiti = Graphiti(
             uri=neo4j_uri,
             user=os.environ.get('NEO4J_USER', 'neo4j'),
-            password=os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            password=os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
         )
 
         # Initialize Vertex AI for responses

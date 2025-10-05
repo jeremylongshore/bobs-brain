@@ -124,7 +124,7 @@ class BobFinal:
             # Neo4j connection (running on GCP VM)
             neo4j_uri = os.environ.get('NEO4J_URI', 'bolt://10.128.0.2:7687')
             neo4j_user = os.environ.get('NEO4J_USER', 'neo4j')
-            neo4j_password = os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            neo4j_password = os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
             
             # For now, initialize Graphiti for storage only
             # TODO: Implement custom Vertex AI LLM and Embedder clients

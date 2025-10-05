@@ -60,7 +60,7 @@ gcloud run jobs create ecosystem-integration-phase5 \
     --parallelism 1 \
     --task-timeout 30m \
     --vpc-connector bob-vpc-connector \
-    --set-env-vars="NEO4J_PASSWORD=bobshouse123" \
+    --set-env-vars="NEO4J_PASSWORD=$(gcloud secrets versions access latest --secret=neo4j-password)" \
     --service-account bobs-brain@$PROJECT_ID.iam.gserviceaccount.com
 
 echo -e "${YELLOW}Step 4: Executing the integration job...${NC}"

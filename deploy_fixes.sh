@@ -27,7 +27,7 @@ gcloud run deploy bobs-brain \
     --min-instances 0 \
     --max-instances 10 \
     --vpc-connector bob-vpc-connector \
-    --set-env-vars="SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN},SLACK_APP_TOKEN=${SLACK_APP_TOKEN},NEO4J_PASSWORD=bobshouse123,GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
+    --set-env-vars="SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN},SLACK_APP_TOKEN=${SLACK_APP_TOKEN},NEO4J_PASSWORD=$(gcloud secrets versions access latest --secret=neo4j-password),GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
     --quiet
 
 echo -e "${GREEN}✅ Bob's Brain deployed with new endpoints:${NC}"
@@ -51,7 +51,7 @@ gcloud run deploy unified-scraper \
     --min-instances 0 \
     --max-instances 5 \
     --vpc-connector bob-vpc-connector \
-    --set-env-vars="NEO4J_PASSWORD=bobshouse123,GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
+    --set-env-vars="NEO4J_PASSWORD=$(gcloud secrets versions access latest --secret=neo4j-password),GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
     --quiet
 
 echo -e "${GREEN}✅ Unified Scraper deployed with process endpoint${NC}"

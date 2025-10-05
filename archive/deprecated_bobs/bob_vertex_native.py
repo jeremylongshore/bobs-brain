@@ -30,7 +30,7 @@ class BobVertexNative:
     def __init__(self):
         # Configure Gemini with the NEW protocol
         # This uses google-generativeai which is the recommended way for Gemini
-        genai.configure(api_key=os.environ.get('GOOGLE_API_KEY') or 'AIzaSyBK4lVEXg_2R9TjPSV-6g8R5hVqGT8fCZo')
+        genai.configure(api_key=os.environ.get('GOOGLE_API_KEY') or '<REDACTED_GOOGLE_API_KEY>')
         
         # Initialize the model with latest protocol
         self.model = genai.GenerativeModel('gemini-1.5-flash')
@@ -43,7 +43,7 @@ class BobVertexNative:
         self.graphiti = Graphiti(
             uri=os.environ.get('NEO4J_URI', 'bolt://10.128.0.2:7687'),
             user=os.environ.get('NEO4J_USER', 'neo4j'),
-            password=os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            password=os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
         )
         logger.info("✅ Connected to Graphiti knowledge graph")
         

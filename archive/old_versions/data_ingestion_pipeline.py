@@ -50,7 +50,7 @@ class DataIngestionPipeline:
         self.graphiti = Graphiti(
             uri=os.environ.get('NEO4J_URI', 'bolt://10.128.0.2:7687'),
             user=os.environ.get('NEO4J_USER', 'neo4j'),
-            password=os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            password=os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
         )
         logger.info("🧠 Graphiti initialized as central knowledge graph")
         
@@ -67,7 +67,7 @@ class DataIngestionPipeline:
         logger.info("🗄️ BigQuery ready for analytics")
         
         # Configure AI for entity extraction
-        genai.configure(api_key=os.environ.get('GOOGLE_API_KEY', 'AIzaSyBK4lVEXg_2R9TjPSV-6g8R5hVqGT8fCZo'))
+        genai.configure(api_key=os.environ.get('GOOGLE_API_KEY', '<REDACTED_GOOGLE_API_KEY>'))
         self.ai_model = genai.GenerativeModel('gemini-1.5-flash')
         logger.info("🤖 AI model ready for entity extraction")
         

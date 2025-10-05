@@ -136,7 +136,7 @@ class EcosystemIntegration:
         try:
             driver = AsyncGraphDatabase.driver(
                 self.neo4j_uri,
-                auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "bobshouse123")),
+                auth=("neo4j", os.environ.get("NEO4J_PASSWORD", "<REDACTED_NEO4J_PASSWORD>")),
             )
 
             async with driver.session() as session:

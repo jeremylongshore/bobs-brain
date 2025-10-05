@@ -11,7 +11,7 @@ cd /home/jeremylongshore/bobs-brain
 export GOOGLE_CLOUD_PROJECT=bobs-house-ai
 export NEO4J_URI=bolt://10.128.0.2:7687
 export NEO4J_USER=neo4j
-export NEO4J_PASSWORD=BobBrain2025
+export NEO4J_PASSWORD=<REDACTED_NEO4J_PASSWORD>
 
 # Function to trigger scrapers via Cloud Run
 trigger_scrapers() {
@@ -108,7 +108,7 @@ while [ $CURRENT_HOUR -lt $HOURS_TO_RUN ]; do
     python3 -c "
 from neo4j import GraphDatabase
 try:
-    driver = GraphDatabase.driver('bolt://10.128.0.2:7687', auth=('neo4j', 'BobBrain2025'))
+    driver = GraphDatabase.driver('bolt://10.128.0.2:7687', auth=('neo4j', '<REDACTED_NEO4J_PASSWORD>'))
     with driver.session() as session:
         result = session.run('MATCH (n) RETURN count(n) as total')
         total = result.single()['total']

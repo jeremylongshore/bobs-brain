@@ -30,7 +30,7 @@ class BobUnifiedGraphiti:
         self.graphiti = Graphiti(
             uri=os.environ.get('NEO4J_URI', 'bolt://10.128.0.2:7687'),
             user=os.environ.get('NEO4J_USER', 'neo4j'),
-            password=os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            password=os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
         )
         logger.info("🧠 Graphiti initialized as central brain")
         

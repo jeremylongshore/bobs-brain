@@ -45,7 +45,7 @@ class BobGraphitiGemini:
         
         # 1. GEMINI - Intelligence layer (NEW SDK)
         # This is the CORRECT way to use Gemini
-        api_key = os.environ.get('GOOGLE_API_KEY', 'AIzaSyBK4lVEXg_2R9TjPSV-6g8R5hVqGT8fCZo')
+        api_key = os.environ.get('GOOGLE_API_KEY', '<REDACTED_GOOGLE_API_KEY>')
         genai.configure(api_key=api_key)
         
         # Initialize Gemini 1.5 Flash (best for speed + intelligence)
@@ -64,7 +64,7 @@ class BobGraphitiGemini:
         self.graphiti = Graphiti(
             uri=os.environ.get('NEO4J_URI', 'bolt://10.128.0.2:7687'),
             user=os.environ.get('NEO4J_USER', 'neo4j'),
-            password=os.environ.get('NEO4J_PASSWORD', 'BobBrain2025')
+            password=os.environ.get('NEO4J_PASSWORD', '<REDACTED_NEO4J_PASSWORD>')
         )
         logger.info("✅ Graphiti knowledge graph connected")
         

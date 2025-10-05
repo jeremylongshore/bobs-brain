@@ -22,7 +22,7 @@ def check_neo4j():
         from neo4j import GraphDatabase
         driver = GraphDatabase.driver(
             'bolt://localhost:7687', 
-            auth=('neo4j', 'BobBrain2025')
+            auth=('neo4j', '<REDACTED_NEO4J_PASSWORD>')
         )
         with driver.session() as session:
             result = session.run('RETURN 1 AS num')

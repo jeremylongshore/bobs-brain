@@ -25,7 +25,7 @@ async def migrate_firestore_to_graphiti():
     graphiti = Graphiti(
         uri="bolt://10.128.0.2:7687",
         user="neo4j",
-        password="BobBrain2025"
+        password="<REDACTED_NEO4J_PASSWORD>"
     )
     print("   ✅ Connected to Graphiti")
     
@@ -136,7 +136,7 @@ async def migrate_firestore_to_graphiti():
     print("\n6. Graph Statistics...")
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver("bolt://10.128.0.2:7687", auth=("neo4j", "BobBrain2025"))
+        driver = GraphDatabase.driver("bolt://10.128.0.2:7687", auth=("neo4j", "<REDACTED_NEO4J_PASSWORD>"))
         
         with driver.session() as session:
             # Count nodes

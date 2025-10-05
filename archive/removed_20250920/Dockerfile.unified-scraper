@@ -24,7 +24,7 @@ ENV PYTHONPATH=/app/src:$PYTHONPATH
 ENV GOOGLE_CLOUD_PROJECT=bobs-house-ai
 ENV NEO4J_URI=bolt://10.128.0.2:7687
 ENV NEO4J_USER=neo4j
-ENV NEO4J_PASSWORD=BobBrain2025
+ENV NEO4J_PASSWORD=<REDACTED_NEO4J_PASSWORD>
 
 # Run the unified scraper API server
 CMD ["python", "src/unified_scraper_api.py"]

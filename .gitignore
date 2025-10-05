@@ -116,11 +116,28 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+*.mypy_cache/
+**/.mypy_cache/
 .dmypy.json
 dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# CI/CD artifacts and reports
+ci-artifacts/
+reports/
+test_reports/
+*.xml
+junit.xml
+test_results*.json
+
+# Testing artifacts
+.pytest_cache/
+.cache/
+.tox/
+*.cover
+.hypothesis/
 
 # IDE
 .vscode/
@@ -141,3 +158,85 @@ scripts/testing/test_*.py
 scripts/testing/verify_*.py
 verify_*.py.env
 .env
+
+# === SECURITY PATTERNS ===
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+**/secrets/
+**/credentials/
+service-account*.json
+gcp-key*.json
+firebase-adminsdk*.json
+google-credentials*.json
+
+# Environment files (comprehensive)
+.env
+.env.*
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+.env.staging
+*.env
+
+# Cloud provider credentials
+.gcloud/
+.config/gcloud/
+.aws/
+.azure/
+.kube/
+.kubectl/
+.docker/config.json
+
+# API keys and tokens
+*api_key*
+*apikey*
+*api-key*
+*access_token*
+*auth_token*
+*secret_key*
+*secret-key*
+*.token
+token.txt
+tokens.json
+
+# Database passwords
+*password*
+*passwd*
+neo4j.conf
+mongodb.conf
+redis.conf
+postgresql.conf
+
+# IDE configurations that might contain secrets
+.vscode/settings.json
+.vscode/launch.json
+.idea/workspace.xml
+.idea/deployment.xml
+*.sublime-workspace
+
+# SSH keys
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+*.ppk
+authorized_keys
+known_hosts
+
+# Security tools output
+security-report*.json
+vulnerability-scan*.txt
+audit-*.log
+*.secrets.baseline
+
+# Deployment scripts with potential secrets
+deploy_*.sh.local
+setup_*.sh.local
+*-credentials.sh
+*-secrets.sh
