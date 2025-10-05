@@ -1,5 +1,0 @@
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-f', 'Dockerfile.scraper', '-t', 'gcr.io/bobs-house-ai/unified-scraper:latest', '.']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/bobs-house-ai/unified-scraper:latest']

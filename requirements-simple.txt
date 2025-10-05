@@ -1,9 +1,0 @@
-# Simplified requirements - let pip resolve dependencies
-flask
-gunicorn
-slack-sdk
-google-cloud-aiplatform
-google-cloud-bigquery
-google-cloud-firestore
-vertexai
-python-dotenv

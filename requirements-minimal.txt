@@ -1,8 +1,0 @@
-flask==2.3.3
-beautifulsoup4==4.12.*
-feedparser==6.0.*
-requests>=2.32.2
-google-cloud-bigquery==3.11.*
-neo4j==5.20.*
-youtube-transcript-api==0.6.*
-aiohttp==3.9.*
