@@ -439,40 +439,11 @@ def router_status():
     return jsonify(status)
 
 
-@app.post("/slack/events")
-def slack_events():
-    """
-    Slack Event Handler
+# Deduplication cache for Slack events (prevent retries from processing twice)
+_slack_event_cache = {}
 
-    Responds to messages in Slack using:
-    1. Smart Router to pick LLM provider (Ollama/Groq/Gemini/Claude)
-    2. Knowledge Orchestrator for context from knowledge bases
-    3. Circle of Life for learning
-    """
-    payload = request.get_json(silent=True) or {}
-
-    # Handle Slack URL verification (first-time setup)
-    if payload.get("type") == "url_verification":
-        return jsonify({"challenge": payload.get("challenge")})
-
-    event = payload.get("event", {})
-    event_type = event.get("type")
-
-    # Ignore bot messages to prevent loops
-    if event.get("bot_id") or event.get("user") == "USLACKBOT":
-        return jsonify({"ok": True})
-
-    # Only respond to messages
-    if event_type not in ["message", "app_mention"]:
-        return jsonify({"ok": True})
-
-    text = event.get("text", "")
-    channel = event.get("channel")
-    user = event.get("user")
-
-    if not text or not channel:
-        return jsonify({"ok": True})
-
+def _process_slack_message(text, channel, user, event_id):
+    """Background processing of Slack messages"""
     try:
         # 1. Check cache first (exact match)
         cached_result = get_cached_llm_response(text)
@@ -493,8 +464,7 @@ def slack_events():
                 # Still add to conversation history
                 add_to_conversation(user, "user", text)
                 add_to_conversation(user, "assistant", cached_result['answer'])
-
-                return jsonify({"ok": True, "cached": True})
+                return
             except Exception as e:
                 log.error(f"Failed to send cached Slack message: {e}")
                 # Fall through to generate new response
@@ -518,21 +488,14 @@ def slack_events():
                 log.warning(f"Knowledge query failed: {e}")
 
         # 5. Generate answer using selected provider
-        # Set environment for llm_client() to use selected provider
         original_provider = os.getenv("PROVIDER")
         original_model = os.getenv("MODEL")
 
         os.environ["PROVIDER"] = routing['provider']
         os.environ["MODEL"] = routing['model']
 
-        # Get fresh LLM client with new provider
         llm = llm_client()
-
-        # Build prompt WITH conversation history
         prompt = build_conversation_prompt(conversation_history, text, knowledge_context)
-        log.info(f"Built prompt with {len(conversation_history)} context messages")
-
-        # Generate answer
         answer = llm(prompt)
 
         # Restore original provider settings
@@ -541,8 +504,8 @@ def slack_events():
         if original_model:
             os.environ["MODEL"] = original_model
 
-        # 6. Cache the response for future use
-        cache_llm_response(text, answer, ttl=3600)  # Cache for 1 hour
+        # 6. Cache the response
+        cache_llm_response(text, answer, ttl=3600)
 
         # 7. Add to conversation history
         add_to_conversation(user, "user", text)
@@ -552,10 +515,7 @@ def slack_events():
         try:
             from slack_sdk import WebClient
             slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
-
-            # Format response with routing info
             response_text = f"{answer}\n\n_[via {routing['provider']}]_"
-
             slack_client.chat_postMessage(
                 channel=channel,
                 text=response_text,
@@ -563,12 +523,8 @@ def slack_events():
                 unfurl_media=False
             )
             log.info(f"Sent Slack response to channel {channel}")
-        except ImportError:
-            log.error("slack_sdk not installed. Install with: pip install slack-sdk")
-            return jsonify({"error": "Slack SDK not available"}), 500
         except Exception as e:
             log.error(f"Failed to send Slack message: {e}")
-            return jsonify({"error": str(e)}), 500
 
         # 9. Learn from interaction
         COL.run_once([{
@@ -583,11 +539,72 @@ def slack_events():
         # Track cost
         ROUTER.track_cost(routing['estimated_cost'])
 
-        return jsonify({"ok": True, "provider": routing['provider']})
-
     except Exception as e:
-        log.error(f"Slack event handler failed: {e}")
-        return jsonify({"error": str(e)}), 500
+        log.error(f"Background Slack processing failed: {e}")
+    finally:
+        # Remove from dedup cache after processing (keep for 60 seconds)
+        import threading
+        threading.Timer(60, lambda: _slack_event_cache.pop(event_id, None)).start()
+
+
+@app.post("/slack/events")
+def slack_events():
+    """
+    Slack Event Handler
+
+    Responds to messages in Slack using:
+    1. Smart Router to pick LLM provider (Ollama/Groq/Gemini/Claude)
+    2. Knowledge Orchestrator for context from knowledge bases
+    3. Circle of Life for learning
+
+    IMPORTANT: Returns HTTP 200 immediately to prevent Slack retries.
+    Processes messages in background thread.
+    """
+    payload = request.get_json(silent=True) or {}
+
+    # Handle Slack URL verification (first-time setup)
+    if payload.get("type") == "url_verification":
+        return jsonify({"challenge": payload.get("challenge")})
+
+    event = payload.get("event", {})
+    event_type = event.get("type")
+    event_id = payload.get("event_id", "")
+
+    # Deduplicate: Slack retries if we don't respond fast enough
+    if event_id and event_id in _slack_event_cache:
+        log.info(f"Ignoring duplicate event: {event_id}")
+        return jsonify({"ok": True})
+
+    if event_id:
+        _slack_event_cache[event_id] = True
+
+    # Ignore bot messages to prevent loops
+    if event.get("bot_id") or event.get("user") == "USLACKBOT":
+        return jsonify({"ok": True})
+
+    # Only respond to messages
+    if event_type not in ["message", "app_mention"]:
+        return jsonify({"ok": True})
+
+    text = event.get("text", "")
+    channel = event.get("channel")
+    user = event.get("user")
+
+    if not text or not channel:
+        return jsonify({"ok": True})
+
+    # Process message in background thread to return HTTP 200 immediately
+    import threading
+    thread = threading.Thread(
+        target=_process_slack_message,
+        args=(text, channel, user, event_id),
+        daemon=True
+    )
+    thread.start()
+
+    # Return HTTP 200 immediately to acknowledge receipt
+    log.info(f"Queued Slack message from {user} in {channel} for background processing")
+    return jsonify({"ok": True})
 
 
 # Scheduler
