@@ -1,0 +1,158 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "major | minor | patch | auto"
+        default: "auto"
+        required: true
+      dry_run:
+        description: "Do everything except tag/release/publish"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - ".github/RELEASE_TRIGGER"
+
+permissions:
+  contents: write
+  issues: write
+  discussions: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Verify readiness
+        run: |
+          test -z "$(git status --porcelain)" || { echo "Uncommitted changes found"; exit 1; }
+          if [ -f package.json ] && jq -e ".scripts.test" package.json >/dev/null; then
+            npm ci
+            npm test
+          fi
+
+      - name: Determine previous tag
+        id: prev
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "prev=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Decide bump
+        id: bump
+        run: |
+          INPUT="${{ github.event.inputs.bump || '' }}"
+          if [ "$INPUT" != "" ] && [ "$INPUT" != "auto" ]; then
+            echo "type=$INPUT" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          RANGE="${{ steps.prev.outputs.prev }}..HEAD"
+          BRK=$(git log --pretty=%B $RANGE | grep -ciE "BREAKING CHANGE" || true)
+          FEAT=$(git log --pretty=%s $RANGE | grep -ciE "^feat(\(|: )" || true)
+          if [ "$BRK" -gt 0 ]; then T=major
+          elif [ "$FEAT" -gt 0 ]; then T=minor
+          else T=patch
+          fi
+          echo "type=$T" >> $GITHUB_OUTPUT
+
+      - name: Compute next version
+        id: ver
+        run: |
+          PREV="${{ steps.prev.outputs.prev }}"
+          PREV="${PREV#v}"
+          IFS=. read -r MA MI PA <<EOF
+          $PREV
+EOF
+          case "${{ steps.bump.outputs.type }}" in
+            major) MA=$((MA+1)); MI=0; PA=0 ;;
+            minor) MI=$((MI+1)); PA=0 ;;
+            patch) PA=$((PA+1)) ;;
+            *) echo "Invalid bump"; exit 1 ;;
+          esac
+          NEW="$MA.$MI.$PA"
+          echo "new=$NEW" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW" >> $GITHUB_OUTPUT
+
+      - name: Update version files
+        run: |
+          set -e
+          NEW="${{ steps.ver.outputs.new }}"
+          touched=0
+          if [ -f package.json ]; then
+            jq --arg v "$NEW" ".version=\$v" package.json > package.tmp && mv package.tmp package.json
+            if [ -f package-lock.json ]; then npm i --package-lock-only >/dev/null 2>&1 || true; fi
+            touched=1
+          fi
+          if [ -f version.txt ]; then echo "$NEW" > version.txt; touched=1; fi
+          if [ "$touched" -eq 0 ]; then echo "$NEW" > version.txt; fi
+          git add -A
+          git commit -m "chore: release v$NEW" || echo "No content change"
+
+      - name: Generate changelog entry
+        id: clog
+        run: |
+          set -e
+          NEW="${{ steps.ver.outputs.new }}"
+          PREV="${{ steps.prev.outputs.prev }}"
+          DATE=$(date +%Y-%m-%d)
+          NOTES=$(mktemp)
+          {
+            echo "# Release v$NEW"
+            echo
+            echo "**Release Date**: $DATE"
+            echo
+            echo "## Changes since $PREV"
+            echo
+            git log --pretty="- %s (%h)" "$PREV"..HEAD
+          } > "$NOTES"
+          if [ -f CHANGELOG.md ]; then
+            tmp=$(mktemp)
+            cat "$NOTES" > "$tmp"
+            echo -e "\n---\n" >> "$tmp"
+            cat CHANGELOG.md >> "$tmp"
+            mv "$tmp" CHANGELOG.md
+          else
+            cp "$NOTES" CHANGELOG.md
+          fi
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for v$NEW" || echo "No changelog delta"
+          echo "notes=$NOTES" >> $GITHUB_OUTPUT
+
+      - name: Sync README version references
+        run: |
+          NEW="${{ steps.ver.outputs.new }}"
+          [ -f README.md ] && sed -i "s/\\bv[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\b/v$NEW/g" README.md || true
+          git add README.md 2>/dev/null || true
+          git commit -m "docs: README version sync v$NEW" || echo "No README delta"
+
+      - name: Create tag and push
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          git push origin HEAD
+
+      - name: Create GitHub Release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file "${{ steps.clog.outputs.notes }}"
