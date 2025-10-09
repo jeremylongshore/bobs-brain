@@ -64,6 +64,27 @@ export BB_API_KEY=test
 python -m flask --app src.app run --host 0.0.0.0 --port 8080
 ```
 
+## Public Access (Slack/External)
+
+**Option 1: Cloudflare Tunnel (Recommended for testing)**
+```bash
+# Install cloudflared
+curl -sLO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+# Start tunnel (gets random public URL)
+cloudflared tunnel --url http://localhost:8080
+
+# For background: nohup cloudflared tunnel --url http://localhost:8080 > cloudflared.log 2>&1 &
+```
+
+**Option 2: Deploy to Cloud Run**
+```bash
+gcloud run deploy bobs-brain --source . --region us-central1
+```
+
+**See full setup guide:** `~/security/bobs-brain-cloudflare-tunnel-setup.md`
+
 ## Choose your model
 ```bash
 PROVIDER=anthropic|google|openrouter|ollama
@@ -112,31 +133,54 @@ Create a Slack app and point Events API to `/slack/events`. Add signature verifi
 
 ## Directory Structure
 
+This project follows professional directory standards (see `.directory-standards.md`).
+
 ```
 bobs-brain/
-├── src/                        # Python source code (production)
-│   ├── app.py                  # Flask application entry point
-│   ├── circle_of_life.py       # ML learning pipeline
-│   ├── policy.py               # Request validation
-│   ├── providers.py            # Pluggable LLM/storage backends
-│   └── skills/                 # Modular skill system
-├── tests/                      # Test suites (pytest)
+├── 01-Docs/                    # Project documentation
+│   ├── 001-sec-security-policy.md
+│   └── 002-ref-contributing-guide.md
+├── 02-Src/                     # Python source code (production)
+│   ├── core/                   # Core application
+│   │   ├── app.py              # Flask application entry point
+│   │   └── providers.py        # Pluggable LLM/storage backends
+│   ├── features/               # Feature modules
+│   │   ├── circle_of_life.py   # ML learning pipeline
+│   │   ├── knowledge_orchestrator.py  # Multi-source knowledge
+│   │   └── skills/             # Modular skill system
+│   └── shared/                 # Shared utilities
+│       ├── policy.py           # Request validation
+│       └── util.py             # Common utilities
+├── 03-Tests/                   # Test suites (pytest)
 │   ├── unit/                   # Unit tests
-│   └── integration/            # Integration tests
-├── scripts/                    # Automation scripts
+│   ├── integration/            # Integration tests
+│   └── e2e/                    # End-to-end tests
+├── 04-Assets/                  # Static assets and configurations
+│   └── configs/                # Config files (.env.example, pytest.ini, etc.)
+├── 05-Scripts/                 # Automation scripts
+│   ├── build/                  # Build scripts (start-bob.sh)
 │   ├── deploy/                 # Deployment automation (Cloud Run, etc.)
+│   ├── research/               # Research scripts (ingest docs)
 │   └── testing/                # Test utilities
-├── docs/                       # Project documentation
+├── 06-Infrastructure/          # Infrastructure as code
+│   ├── ci-cd/                  # CI/CD configuration
+│   │   └── github-actions/     # GitHub Actions workflows
+│   └── docker/                 # Docker configurations
+│       └── Dockerfile          # Main service container
+├── 99-Archive/                 # Historical code
+│   ├── deprecated/             # Deprecated features
+│   └── legacy/                 # Legacy code
 ├── claudes-docs/               # AI-generated documentation
 │   ├── audits/                 # System audits
-│   ├── reports/                # After-action reports
-│   └── analysis/               # Technical analysis
-├── archive/                    # Historical code (deprecated versions)
-├── .github/workflows/          # CI/CD pipelines
-├── Dockerfile                  # Main service container
+│   ├── reports/                # After-action reports, test results
+│   ├── analysis/               # Technical analysis
+│   └── tasks/                  # Task tracking
+├── .directory-standards.md     # Directory standards reference
 ├── requirements.txt            # Python dependencies
 ├── Makefile                    # Development commands
-└── CLAUDE.md                   # AI assistant guidance
+├── README.md                   # This file
+├── CLAUDE.md                   # AI assistant guidance
+└── CHANGELOG.md                # Version history
 ```
 
 ## CI/CD

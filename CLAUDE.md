@@ -15,11 +15,13 @@ Bob's Brain is a sovereign modular AI agent with pluggable LLM providers, config
 - **API-first**: REST endpoints with API key auth, Prometheus metrics, health checks with backend probes
 
 ### Core Components
-- **Main Service**: `src/app.py` - Flask app with API routes, auth, rate limiting, metrics
-- **Providers**: `src/providers.py` - LLM client factory, storage backend initialization
-- **Circle of Life**: `src/circle_of_life.py` - Learning pipeline (ingest → analyze → insights → persist → apply)
-- **Skills**: `src/skills/` - Extensible capabilities (web search, code runner, etc.)
-- **Policy**: `src/policy.py` - Request validation and guardrails
+- **Main Service**: `02-Src/core/app.py` - Flask app with API routes, auth, rate limiting, metrics
+- **Providers**: `02-Src/core/providers.py` - LLM client factory, storage backend initialization
+- **Circle of Life**: `02-Src/features/circle_of_life.py` - Learning pipeline (ingest → analyze → insights → persist → apply)
+- **Knowledge Orchestrator**: `02-Src/features/knowledge_orchestrator.py` - Multi-source knowledge integration
+- **Smart Router**: `02-Src/features/smart_router.py` - Intelligent routing and task orchestration
+- **Skills**: `02-Src/features/skills/` - Extensible capabilities (web search, code runner, etc.)
+- **Policy**: `02-Src/shared/policy.py` - Request validation and guardrails
 
 ### Technology Stack
 - **Runtime**: Python 3.11+, Flask + Gunicorn
@@ -38,21 +40,39 @@ make run              # Runs with BB_API_KEY=test on port 8080
 # Development workflow
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # Configure providers and backends
+cp 04-Assets/configs/.env.example .env  # Configure providers and backends
 export BB_API_KEY=test
 python -m flask --app src.app run --host 0.0.0.0 --port 8080
+
+# Alternative: use numbered path (symlink exists: src -> 02-Src)
+python -m flask --app 02-Src.core.app run --host 0.0.0.0 --port 8080
 ```
 
 ### Code Quality
 ```bash
-make fmt              # Format code with isort + black
+make fmt              # Format code with isort + black (runs on src/)
 make test             # Run pytest suite (BB_API_KEY=test)
 
 # Manual quality checks (if you have the tools)
-isort src && black src          # Format
-pytest -q                       # Test
-mypy src --ignore-missing-imports  # Type check
-bandit -r src                   # Security scan
+isort src && black src          # Format (src is symlink to 02-Src)
+pytest -q                       # Test (runs 03-Tests/)
+mypy 02-Src --ignore-missing-imports  # Type check
+bandit -r 02-Src                # Security scan
+```
+
+### Deployment & Scripts
+```bash
+# Deploy to Google Cloud Run
+05-Scripts/deploy/deploy-to-cloudrun.sh
+
+# Create new GCP project for Bob
+05-Scripts/deploy/create-bob-project.sh
+
+# Store secrets in Secret Manager
+05-Scripts/deploy/store-secrets.sh
+
+# Test smart router
+05-Scripts/testing/test-smart-router.sh
 ```
 
 ### Testing Endpoints
@@ -171,31 +191,84 @@ COL_SCHEDULE="*/5 * * * *"  # Cron schedule (optional scheduler)
 - `POST /learn` - Submit correction for learning
   - Body: `{"correction": "feedback or pattern to learn"}`
 
-## Key File Locations
+## Directory Structure
 
-### Source Code
-- `src/app.py` - Main Flask application, routing, auth, metrics
-- `src/providers.py` - LLM and storage backend factory functions
-- `src/circle_of_life.py` - Learning pipeline implementation
-- `src/policy.py` - Request validation and guardrails
-- `src/util.py` - Utility functions
-- `src/skills/` - Extensible skill modules (web_search, code_runner)
+This project follows a numbered directory system (see `.directory-standards.md`).
+
+**Important**: A symlink `src -> 02-Src` exists for compatibility with Python tooling. You can reference code as either `src/` or `02-Src/` - they point to the same location.
+
+```
+bobs-brain/
+├── 01-Docs/                    # Documentation (using NNN-abv-description.ext format)
+├── 02-Src/                     # Python source code (symlinked as 'src/')
+│   ├── core/                   # Core application
+│   │   ├── app.py              # Main Flask application
+│   │   └── providers.py        # LLM and storage backend factories
+│   ├── features/               # Feature modules
+│   │   ├── circle_of_life.py   # Learning pipeline
+│   │   ├── knowledge_orchestrator.py  # Multi-source knowledge
+│   │   ├── smart_router.py     # Intelligent routing
+│   │   └── skills/             # Skill modules (web_search, code_runner)
+│   └── shared/                 # Shared utilities
+│       ├── policy.py           # Request validation
+│       └── util.py             # Common utilities
+├── 03-Tests/                   # Test suites
+│   └── unit/                   # Unit tests (test_basic, test_smoke, test_circle, test_config)
+├── 04-Assets/                  # Static assets and configs
+│   └── configs/                # Configuration files
+│       └── .env.example        # Environment variable template
+├── 05-Scripts/                 # Automation scripts
+│   ├── build/                  # Build scripts (start-bob.sh)
+│   ├── deploy/                 # Deployment automation (Cloud Run, GCP)
+│   ├── maintenance/            # Maintenance scripts
+│   ├── research/               # Research scripts
+│   └── testing/                # Test utilities
+├── 06-Infrastructure/          # Infrastructure as Code
+│   ├── ci-cd/                  # CI/CD configuration
+│   │   └── github-actions/     # GitHub Actions workflows
+│   └── docker/                 # Docker configurations
+├── 99-Archive/                 # Historical code
+│   ├── deprecated/             # Deprecated features
+│   └── legacy/                 # Legacy code (old Bob versions, scrapers)
+├── claudes-docs/               # AI-generated documentation
+│   ├── audits/                 # System audits
+│   ├── reports/                # After-action reports
+│   ├── analysis/               # Technical analysis
+│   └── tasks/                  # Task tracking
+├── requirements.txt            # Python dependencies
+├── Makefile                    # Development commands
+├── README.md                   # Project overview
+├── CLAUDE.md                   # This file
+└── .directory-standards.md     # Directory standards reference
+```
+
+### Key Implementation Files
+- `02-Src/core/app.py` - Flask app with routes, auth, rate limiting, metrics
+- `02-Src/core/providers.py` - Factory functions for LLM and storage backends
+- `02-Src/features/circle_of_life.py` - Learning pipeline implementation
+- `02-Src/features/smart_router.py` - Intelligent task routing and orchestration
+- `02-Src/features/knowledge_orchestrator.py` - Multi-source knowledge integration
+- `02-Src/shared/policy.py` - Request validation and guardrails
 
 ### Tests
-- `tests/test_basic.py` - Basic endpoint tests
-- `tests/test_smoke.py` - Smoke tests for core functionality
-- `tests/test_circle.py` - Circle of Life unit tests
-- `tests/test_config.py` - Configuration validation tests
+- `03-Tests/unit/test_basic.py` - Basic endpoint tests
+- `03-Tests/unit/test_smoke.py` - Smoke tests for core functionality
+- `03-Tests/unit/test_circle.py` - Circle of Life unit tests
+- `03-Tests/unit/test_config.py` - Configuration validation tests
 
-### Configuration
-- `.env.example` - Template for environment variables
-- `requirements.txt` - Python dependencies
-- `Makefile` - Common development commands
+## Smart Router
 
-### Archive
-- `archive/deprecated_bobs/` - Legacy Bob versions (18 files)
-- `archive/old_scrapers/` - Previous scraper implementations
-- `archive/old_versions/` - Historical code and migrations
+The Smart Router (`02-Src/features/smart_router.py`) provides intelligent task routing and orchestration:
+
+- **Task classification**: Automatically categorizes incoming queries
+- **Provider selection**: Routes tasks to optimal LLM provider based on task type
+- **Skill orchestration**: Coordinates use of web search, code execution, and other skills
+- **Context management**: Maintains conversation context across requests
+
+Use the test script to validate Smart Router functionality:
+```bash
+05-Scripts/testing/test-smart-router.sh
+```
 
 ## Circle of Life Learning System
 
@@ -236,28 +309,69 @@ if col.ready():
 
 Slack integration is **optional**. To enable:
 
-1. Create a Slack app at https://api.slack.com/apps
-2. Add Event Subscriptions pointing to `/slack/events`
-3. Set environment variables:
-   ```bash
-   SLACK_BOT_TOKEN=xoxb-...
-   SLACK_SIGNING_SECRET=...
-   ```
-4. Enable signature verification in production
+### Quick Setup with Cloudflare Tunnel
 
-The app will respond to mentions and DMs automatically.
+**1. Install Cloudflare Tunnel:**
+```bash
+curl -sLO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+```
+
+**2. Start Tunnel (get public URL):**
+```bash
+# Foreground (shows URL in terminal)
+cloudflared tunnel --url http://localhost:8080
+
+# Background (URL in logs)
+nohup cloudflared tunnel --url http://localhost:8080 > /tmp/cloudflared.log 2>&1 &
+grep "trycloudflare.com" /tmp/cloudflared.log
+```
+
+**3. Configure Slack App:**
+- Go to: https://api.slack.com/apps/A099YKLCM1N/event-subscriptions
+- Enable Events: ON
+- Request URL: `https://YOUR-TUNNEL-URL.trycloudflare.com/slack/events`
+- Subscribe to bot events: `message.channels`, `message.im`, `app_mention`
+- Save Changes
+
+**4. Set environment variables in `.env`:**
+```bash
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_SIGNING_SECRET=...
+SLACK_APP_ID=A099YKLCM1N
+```
+
+**5. Test in Slack:**
+- Open Slack and mention @Bob
+- Bob will respond with conversation memory and knowledge base context
+
+### Current Setup (2025-10-08)
+- **Public URL:** `https://editor-steering-width-innovation.trycloudflare.com`
+- **Slack App ID:** A099YKLCM1N
+- **Full Guide:** `~/security/bobs-brain-cloudflare-tunnel-setup.md`
+
+The app will respond to mentions and DMs automatically with:
+- Conversation memory (last 10 messages)
+- LLM response caching (1-hour)
+- Knowledge orchestrator integration
+- Smart routing to optimal LLM
 
 ## CI/CD
 
 ### GitHub Actions Workflow
+Workflows are located in `06-Infrastructure/ci-cd/github-actions/workflows/`:
+- **Security scanning**: Bandit (Python), Safety (dependencies), Gitleaks (secrets)
 - **Lint**: Code style checks (black, isort)
 - **Type check**: mypy validation
 - **Tests**: pytest with JUnit output
 - **Coverage**: Minimum 65% threshold enforced
-- **Artifacts**: JUnit XML and coverage.xml uploaded
+- **Artifacts**: JUnit XML, coverage.xml, and security reports uploaded
 
-### Badge
+### CI Badges
 ![CI](https://github.com/jeremylongshore/bobs-brain/actions/workflows/ci.yml/badge.svg?branch=main)
+![Security](https://github.com/jeremylongshore/bobs-brain/actions/workflows/security.yml/badge.svg?branch=main)
+
+**Note**: The actual `.github/workflows/` directory may not exist yet - workflows are stored in the numbered infrastructure directory.
 
 ## Directory Standards
 
@@ -270,7 +384,7 @@ Follow `.directory-standards.md` for structure and file naming.
 ## Development Best Practices
 
 ### Adding New LLM Providers
-Edit `src/providers.py` and add a new provider case:
+Edit `02-Src/core/providers.py` and add a new provider case to the `llm_client()` function:
 ```python
 if p == "my_provider":
     def call(prompt: str):
@@ -280,7 +394,13 @@ if p == "my_provider":
 ```
 
 ### Adding New Storage Backends
-Add backend initialization in corresponding function (`state_db()`, `vector_store()`, etc.):
+Add backend initialization in corresponding function in `02-Src/core/providers.py`:
+- `state_db()` - For state/conversation history backends
+- `vector_store()` - For vector/embedding backends
+- `graph_db()` - For graph database backends
+- `cache_client()` - For caching backends
+- `artifact_store()` - For artifact storage backends
+
 ```python
 if backend == "my_backend":
     # Initialize and return backend client
@@ -288,9 +408,9 @@ if backend == "my_backend":
 ```
 
 ### Adding Skills
-Create a new module in `src/skills/`:
+Create a new module in `02-Src/features/skills/`:
 ```python
-# src/skills/my_skill.py
+# 02-Src/features/skills/my_skill.py
 def my_skill(arg):
     """Skill description"""
     return result
@@ -300,7 +420,7 @@ SKILL_REGISTRY = {
 }
 ```
 
-Then import in `src/skills/__init__.py`.
+Then import in `02-Src/features/skills/__init__.py` and update the `load_skills()` function.
 
 ## Troubleshooting
 
@@ -317,7 +437,7 @@ curl -s http://localhost:8080/config | jq
 ```
 
 ### Rate Limiting
-Default limit is 60 requests/minute. Adjust in `src/app.py`:
+Default limit is 60 requests/minute. Adjust in `02-Src/core/app.py`:
 ```python
 limiter = Limiter(get_remote_address, app=app, default_limits=["60/minute"])
 ```
@@ -331,13 +451,15 @@ if col.ready():  # Returns False if within cooldown window
 
 ## Archive Notes
 
-This repo contains significant historical code in `archive/`:
-- **18 deprecated Bob versions** showing evolution from simple to complex architectures
+This repo contains significant historical code in `99-Archive/`:
+- **18 deprecated Bob versions** (in `99-Archive/legacy/`) showing evolution from simple to complex architectures
 - **Multiple scraper implementations** for YouTube, Reddit, forums, technical bulletins
 - **Migration scripts** for Firestore → Graphiti, AutoML setup, production data checks
 - **Dockerfiles** for various deployment strategies (simple, production, dual-memory, etc.)
 
 These are preserved for reference but are **not part of the current system**. The current architecture is clean, modular, and provider-agnostic.
+
+**Note**: The actual archived files may still be in the old `archive/` directory from before the numbered directory migration. Check both locations if searching for historical code.
 
 ## Performance & Cost Targets
 
@@ -352,7 +474,7 @@ These are preserved for reference but are **not part of the current system**. Th
 - **Rate Limiting**: 60 requests/minute default (Flask-Limiter)
 - **No Secrets in Code**: Use environment variables for all credentials
 - **CORS**: Enabled for `/api/*` and `/slack/*` routes (configure as needed)
-- **Request Validation**: `src/policy.py` provides input guardrails
+- **Request Validation**: `02-Src/shared/policy.py` provides input guardrails
 
 ## Main Branch Strategy
 

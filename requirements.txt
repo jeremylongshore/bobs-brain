@@ -14,7 +14,7 @@ openai==1.40.0  # For OpenRouter compatibility
 requests==2.32.3
 
 # LlamaIndex - Multi-source knowledge integration (NEW)
-llama-index==0.10.67
+llama-index==0.14.4
 llama-index-vector-stores-chroma==0.1.10
 chromadb==0.5.5
 sqlalchemy==2.0.32
@@ -40,3 +40,4 @@ python-dotenv==1.0.1  # Environment management
 # flake8==7.1.1
 # mypy==1.11.2
 # bandit==1.7.9
+groq==0.32.0
