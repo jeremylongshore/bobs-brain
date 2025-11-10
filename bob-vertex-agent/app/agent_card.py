@@ -8,7 +8,7 @@ AGENT_CARD = {
     # Product Identity
     "name": "Battalion Commander Bob",
     "product_name": "Battalion Commander Bob - Lead Intel Commander",
-    "version": "2.0.0",
+    "version": "0.3.0",
     "tier": "IAM1",  # Battalion Commander tier
     "business_model": "deployable_battalion_commander",
 

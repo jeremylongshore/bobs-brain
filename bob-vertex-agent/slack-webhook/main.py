@@ -39,42 +39,84 @@ def get_secret(secret_id):
 
 
 def query_agent_engine_stream(query: str, user_id: str, session_id: str = None):
-    """Query the Vertex AI Agent Engine using streaming"""
+    """
+    Query the Vertex AI Agent Engine using REST API.
+
+    Uses direct REST API calls instead of SDK to avoid dynamic registration issues
+    in Cloud Functions environment.
+    """
+    import requests
+    from google.auth.transport.requests import Request
+
     try:
-        from vertexai.preview import reasoning_engines
+        # Get credentials
+        credentials, _ = google.auth.default()
+        credentials.refresh(Request())
 
-        # Get the remote agent
-        remote_agent = reasoning_engines.ReasoningEngine(AGENT_ENGINE_ID)
+        # Build REST API URL
+        url = f"https://us-central1-aiplatform.googleapis.com/v1/{AGENT_ENGINE_ID}:streamQuery"
 
-        # Collect streaming response
-        full_response = []
+        # Headers with authentication
+        headers = {
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json"
+        }
 
-        # Use stream_query with session management
-        for event in remote_agent.stream_query(
-            input={
+        # Payload - do NOT include session_id to let ADK create new sessions
+        # This avoids "Invalid Session resource name" errors
+        payload = {
+            "input": {
                 "message": query,
-                "user_id": user_id,
-                "session_id": session_id  # Maintains conversation context
+                "user_id": user_id
+                # session_id omitted - let ADK handle session creation
             }
-        ):
-            # Extract text content from events
-            logger.info(f"Stream event: {event}")
-            if isinstance(event, dict):
-                if "output" in event:
-                    full_response.append(str(event["output"]))
-                elif "text" in event:
-                    full_response.append(event["text"])
-                else:
-                    # Try to extract text from various possible structures
-                    full_response.append(str(event))
+        }
 
-        response_text = "".join(full_response) if full_response else "No response"
-        logger.info(f"Agent response: {response_text[:200]}...")
+        logger.info(f"Querying Agent Engine via REST API for user {user_id}")
+
+        # Make streaming request
+        response = requests.post(url, json=payload, headers=headers, timeout=30, stream=True)
+
+        if response.status_code != 200:
+            error_msg = f"Agent Engine returned {response.status_code}: {response.text[:200]}"
+            logger.error(error_msg)
+            return f"Sorry, I'm having trouble connecting. Error: {response.status_code}"
+
+        # Parse streaming response
+        full_response = []
+        try:
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line.decode('utf-8'))
+                        logger.info(f"Stream event received: {str(data)[:200]}...")
+
+                        # Extract text from response structure: content.parts[].text
+                        if "content" in data and "parts" in data["content"]:
+                            for part in data["content"]["parts"]:
+                                if "text" in part:
+                                    full_response.append(part["text"])
+
+                    except json.JSONDecodeError as e:
+                        logger.warning(f"Failed to parse JSON line: {e}")
+                        continue
+        except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError) as e:
+            # Connection closed normally after streaming - this is expected
+            logger.info(f"Stream connection closed (normal): {type(e).__name__}")
+        finally:
+            # Always close the response to free resources
+            response.close()
+
+        response_text = "".join(full_response) if full_response else "I received your message but couldn't generate a response."
+        logger.info(f"Agent response ({len(response_text)} chars): {response_text[:200]}...")
         return response_text
 
+    except requests.Timeout:
+        logger.error("Request to Agent Engine timed out after 30 seconds")
+        return "Sorry, I'm taking too long to respond. Please try again."
     except Exception as e:
-        logger.error(f"Failed to query agent engine: {e}", exc_info=True)
-        return f"Sorry, I'm having trouble connecting. Error: {str(e)[:200]}"
+        logger.error(f"Failed to query agent engine: {type(e).__name__}: {e}", exc_info=True)
+        return f"Sorry, I'm having trouble connecting. Please try again later."
 
 
 def _process_slack_message(text, channel, user, event_id):
