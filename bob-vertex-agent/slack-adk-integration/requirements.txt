@@ -1,0 +1,12 @@
+# Core ADK and Vertex AI
+google-adk>=1.18.0
+google-cloud-aiplatform>=1.112.0
+
+# Web server and Slack
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+slack-bolt==1.18.0
+
+# Utilities
+python-dotenv==1.0.0
+jinja2==3.1.2
