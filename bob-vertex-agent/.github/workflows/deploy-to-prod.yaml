@@ -1,0 +1,90 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # This job targets the 'production' environment, which is automatically
+    # created by the Terraform setup in `deployment/terraform/github.tf`.
+    # To enable manual approval for deployments, you must add a protection
+    # rule to this environment in your GitHub repository settings.
+    #
+    # 1. Go to your repository's Settings > Environments.
+    # 2. Select the 'production' environment.
+    # 3. Under 'Protection rules', check the 'Required reviewers' box.
+    # 4. Add the specific users or teams who must approve the deployment.
+    #
+    # Once configured, the workflow will pause at this step and wait for an
+    # authorized user to approve it before proceeding.
+    environment:
+      name: production
+    concurrency: production
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          create_credentials_file: true
+          project_id: ${{ vars.CICD_PROJECT_ID }}
+      - name: Install uv and dependencies
+        run: |
+          pip install uv==0.8.13
+          uv sync --locked
+      - name: Deploy data ingestion pipeline (Production)
+        run: |
+          cd data_ingestion && pip install uv==0.8.13 && cd data_ingestion_pipeline && \
+          uv sync --locked && uv run python submit_pipeline.py
+        env:
+          PIPELINE_ROOT: ${{ vars.PIPELINE_GCS_ROOT_PROD }}
+          REGION: ${{ vars.REGION }}
+          DATA_STORE_REGION: ${{ vars.DATA_STORE_REGION }}
+          DATA_STORE_ID: ${{ vars.DATA_STORE_ID_PROD }}
+          PROJECT_ID: ${{ vars.PROD_PROJECT_ID }}
+          SERVICE_ACCOUNT: ${{ vars.PIPELINE_SA_EMAIL_PROD }}
+          PIPELINE_NAME: ${{ vars.PIPELINE_NAME }}
+          CRON_SCHEDULE: ${{ vars.PIPELINE_CRON_SCHEDULE }}
+          DISABLE_CACHING: "TRUE"
+
+      - name: Deploy to Production (Agent Engine)
+        run: |
+          uv export --no-hashes --no-sources --no-header --no-dev --no-emit-project --no-annotate --locked > app/app_utils/.requirements.txt
+          uv run python -m app.app_utils.deploy \
+            --project ${{ vars.PROD_PROJECT_ID }} \
+            --location ${{ vars.REGION }} \
+            --source-packages=./app \
+            --entrypoint-module=app.agent_engine_app \
+            --entrypoint-object=agent_engine \
+            --requirements-file=app/app_utils/.requirements.txt \
+            --set-env-vars="COMMIT_SHA=${{ github.sha }},ARTIFACTS_BUCKET_NAME=${{ vars.LOGS_BUCKET_NAME_PROD }},DATA_STORE_ID=${{ vars.DATA_STORE_ID_PROD }},DATA_STORE_REGION=${{ vars.DATA_STORE_REGION }}"
+

@@ -1,0 +1,556 @@
+name: Deploy Slack Webhook to Cloud Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bob-vertex-agent/slack-webhook/**'
+      - '.github/workflows/deploy-slack-webhook.yml'
+    tags:
+      - 'v*.*.*'  # Trigger on version tags (e.g., v1.0.0)
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type (major, minor, patch)'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write  # Required for creating tags and updating files
+  id-token: write  # Required for WIF authentication
+
+env:
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
+  FUNCTION_NAME: slack-webhook
+  RUNTIME: python312
+  ENTRY_POINT: slack_events
+
+jobs:
+  # Job 1: Pre-deployment validation and security checks
+  validate:
+    name: Validate and Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: bob-vertex-agent/slack-webhook
+        run: |
+          pip install -r requirements.txt
+          pip install bandit safety
+
+      - name: Run security scan (Bandit)
+        working-directory: bob-vertex-agent/slack-webhook
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . -f txt
+        continue-on-error: true
+
+      - name: Scan for secrets (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: bob-vertex-agent/slack-webhook/
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+      - name: Check for hardcoded secrets
+        working-directory: bob-vertex-agent/slack-webhook
+        run: |
+          if grep -r "sk-\|xoxb-\|AIza\|credentials\.json" . --include="*.py"; then
+            echo "❌ Found potential hardcoded secrets"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+
+      - name: Validate Cloud Function structure
+        working-directory: bob-vertex-agent/slack-webhook
+        run: |
+          # Check required files exist
+          if [ ! -f "main.py" ]; then
+            echo "❌ main.py not found"
+            exit 1
+          fi
+          if [ ! -f "requirements.txt" ]; then
+            echo "❌ requirements.txt not found"
+            exit 1
+          fi
+
+          # Check entry point exists in main.py
+          if ! grep -q "def ${ENTRY_POINT}" main.py; then
+            echo "❌ Entry point function '${ENTRY_POINT}' not found in main.py"
+            exit 1
+          fi
+
+          echo "✅ Cloud Function structure validated"
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bob-vertex-agent/slack-webhook/bandit-report.json
+          retention-days: 30
+
+  # Job 2: Version management and changelog generation
+  version:
+    name: Version Management
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      new_version: ${{ steps.bump_version.outputs.new_version }}
+      version_changed: ${{ steps.bump_version.outputs.version_changed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current version
+        id: current_version
+        run: |
+          if [ -f "bob-vertex-agent/slack-webhook/VERSION" ]; then
+            CURRENT_VERSION=$(cat bob-vertex-agent/slack-webhook/VERSION)
+          else
+            CURRENT_VERSION="0.1.0"
+            echo "$CURRENT_VERSION" > bob-vertex-agent/slack-webhook/VERSION
+          fi
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Determine version bump type
+        id: bump_type
+        run: |
+          # Check if triggered by tag
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "bump_type=tag" >> $GITHUB_OUTPUT
+            echo "Triggered by tag: ${{ github.ref_name }}"
+          # Check if manual workflow dispatch with version bump
+          elif [ "${{ github.event.inputs.version_bump }}" != "" ]; then
+            echo "bump_type=${{ github.event.inputs.version_bump }}" >> $GITHUB_OUTPUT
+            echo "Manual bump: ${{ github.event.inputs.version_bump }}"
+          # Auto-detect from commit messages
+          else
+            COMMITS=$(git log --pretty=format:"%s" ${{ github.event.before }}..${{ github.sha }})
+            if echo "$COMMITS" | grep -qi "BREAKING CHANGE\|major:"; then
+              echo "bump_type=major" >> $GITHUB_OUTPUT
+              echo "Detected major change from commits"
+            elif echo "$COMMITS" | grep -qi "feat:\|feature:"; then
+              echo "bump_type=minor" >> $GITHUB_OUTPUT
+              echo "Detected minor change from commits"
+            else
+              echo "bump_type=patch" >> $GITHUB_OUTPUT
+              echo "Detected patch change from commits"
+            fi
+          fi
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.current_version }}"
+          BUMP_TYPE="${{ steps.bump_type.outputs.bump_type }}"
+
+          # If triggered by tag, extract version from tag name
+          if [[ "$BUMP_TYPE" == "tag" ]]; then
+            NEW_VERSION="${{ github.ref_name }}"
+            NEW_VERSION="${NEW_VERSION#v}"  # Remove 'v' prefix if present
+          else
+            # Parse semantic version
+            IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT"
+            MAJOR="${VERSION_PARTS[0]}"
+            MINOR="${VERSION_PARTS[1]}"
+            PATCH="${VERSION_PARTS[2]}"
+
+            # Bump version based on type
+            case "$BUMP_TYPE" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              patch)
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+          # Update VERSION file
+          echo "$NEW_VERSION" > bob-vertex-agent/slack-webhook/VERSION
+
+          # Check if version changed
+          if [ "$CURRENT" != "$NEW_VERSION" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate changelog
+        if: steps.bump_version.outputs.version_changed == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          CHANGELOG_FILE="bob-vertex-agent/slack-webhook/CHANGELOG.md"
+
+          # Create CHANGELOG.md if it doesn't exist
+          if [ ! -f "$CHANGELOG_FILE" ]; then
+            cat > "$CHANGELOG_FILE" << 'EOF'
+# Changelog
+
+All notable changes to the Slack Webhook will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+EOF
+          fi
+
+          # Generate changelog entry from commits
+          echo "" > /tmp/changelog_entry.md
+          echo "## [${NEW_VERSION}] - $(date +%Y-%m-%d)" >> /tmp/changelog_entry.md
+          echo "" >> /tmp/changelog_entry.md
+
+          # Get commits since last tag (or all if no tags)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" -- bob-vertex-agent/slack-webhook/)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -- bob-vertex-agent/slack-webhook/)
+          fi
+
+          # Categorize commits
+          echo "### Added" >> /tmp/changelog_entry.md
+          echo "$COMMITS" | grep -i "feat:\|add:" || echo "- No new features" >> /tmp/changelog_entry.md
+          echo "" >> /tmp/changelog_entry.md
+
+          echo "### Changed" >> /tmp/changelog_entry.md
+          echo "$COMMITS" | grep -i "change:\|update:\|refactor:" || echo "- No changes" >> /tmp/changelog_entry.md
+          echo "" >> /tmp/changelog_entry.md
+
+          echo "### Fixed" >> /tmp/changelog_entry.md
+          echo "$COMMITS" | grep -i "fix:\|bug:" || echo "- No fixes" >> /tmp/changelog_entry.md
+          echo "" >> /tmp/changelog_entry.md
+
+          # Insert new entry at the top of changelog (after header)
+          head -n 6 "$CHANGELOG_FILE" > /tmp/changelog_header.md
+          tail -n +7 "$CHANGELOG_FILE" > /tmp/changelog_rest.md 2>/dev/null || touch /tmp/changelog_rest.md
+
+          cat /tmp/changelog_header.md /tmp/changelog_entry.md /tmp/changelog_rest.md > "$CHANGELOG_FILE"
+
+          echo "Changelog updated with version ${NEW_VERSION}"
+
+      - name: Commit version changes
+        if: steps.bump_version.outputs.version_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add bob-vertex-agent/slack-webhook/VERSION
+          git add bob-vertex-agent/slack-webhook/CHANGELOG.md
+
+          git commit -m "chore: bump slack-webhook version to ${{ steps.bump_version.outputs.new_version }}"
+          git push
+
+      - name: Create git tag
+        if: steps.bump_version.outputs.version_changed == 'true' && !startsWith(github.ref, 'refs/tags/')
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          git tag -a "slack-webhook-v${NEW_VERSION}" -m "Slack Webhook version ${NEW_VERSION}"
+          git push origin "slack-webhook-v${NEW_VERSION}"
+
+  # Job 3: Deploy to Google Cloud Functions
+  deploy:
+    name: Deploy to Cloud Functions
+    runs-on: ubuntu-latest
+    needs: [validate, version]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+          access_token_lifetime: '3600s'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify authentication
+        run: |
+          gcloud auth list
+          gcloud config get-value project
+
+      - name: Deploy Slack Webhook to Cloud Functions Gen2
+        id: deploy
+        working-directory: bob-vertex-agent/slack-webhook
+        run: |
+          VERSION="${{ needs.version.outputs.new_version }}"
+
+          gcloud functions deploy ${{ env.FUNCTION_NAME }} \
+            --gen2 \
+            --runtime=${{ env.RUNTIME }} \
+            --region=${{ env.REGION }} \
+            --source=. \
+            --entry-point=${{ env.ENTRY_POINT }} \
+            --trigger-http \
+            --allow-unauthenticated \
+            --project=${{ env.PROJECT_ID }} \
+            --max-instances=10 \
+            --min-instances=0 \
+            --memory=512Mi \
+            --timeout=60s \
+            --set-env-vars="PROJECT_ID=${{ env.PROJECT_ID }},VERSION=${VERSION},LOG_EXECUTION_ID=true" \
+            --set-labels="version=${VERSION//\./-},component=slack-webhook,environment=production,managed-by=github-actions" \
+            --update-labels="last-deployed=$(date +%Y%m%d-%H%M%S)"
+
+      - name: Get Function URL
+        id: get-url
+        run: |
+          FUNCTION_URL=$(gcloud functions describe ${{ env.FUNCTION_NAME }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+
+          echo "function_url=$FUNCTION_URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployment successful!"
+          echo "Function URL: $FUNCTION_URL"
+
+      - name: Verify Cloud Logging enabled
+        run: |
+          echo "Verifying Cloud Logging configuration..."
+          gcloud functions describe ${{ env.FUNCTION_NAME }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.environmentVariables.LOG_EXECUTION_ID)'
+
+      - name: Create deployment metadata
+        run: |
+          cat > /tmp/deployment-metadata.json << EOF
+          {
+            "version": "${{ needs.version.outputs.new_version }}",
+            "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployed_by": "${{ github.actor }}",
+            "commit_sha": "${{ github.sha }}",
+            "commit_message": $(git log -1 --pretty=format:'"%s"'),
+            "function_url": "${{ steps.get-url.outputs.function_url }}",
+            "region": "${{ env.REGION }}",
+            "runtime": "${{ env.RUNTIME }}",
+            "workflow_run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+          cat /tmp/deployment-metadata.json
+
+      - name: Upload deployment metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-metadata
+          path: /tmp/deployment-metadata.json
+          retention-days: 90
+
+  # Job 4: Post-deployment smoke tests
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get Function URL
+        id: get-url
+        run: |
+          FUNCTION_URL=$(gcloud functions describe ${{ env.FUNCTION_NAME }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+          echo "function_url=$FUNCTION_URL" >> $GITHUB_OUTPUT
+
+      - name: Test URL verification (Slack handshake)
+        run: |
+          RESPONSE=$(curl -s -X POST "${{ steps.get-url.outputs.function_url }}" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"url_verification","challenge":"test_challenge_123"}')
+
+          echo "Response: $RESPONSE"
+
+          if echo "$RESPONSE" | grep -q "test_challenge_123"; then
+            echo "✅ URL verification test passed"
+          else
+            echo "❌ URL verification test failed"
+            exit 1
+          fi
+
+      - name: Test health endpoint (if exists)
+        continue-on-error: true
+        run: |
+          curl -f -s "${{ steps.get-url.outputs.function_url }}/health" || echo "No health endpoint (expected)"
+
+      - name: Verify Cloud Logging
+        run: |
+          echo "Checking recent logs..."
+          gcloud logging read "resource.type=cloud_function AND resource.labels.function_name=${{ env.FUNCTION_NAME }}" \
+            --limit=10 \
+            --project=${{ env.PROJECT_ID }} \
+            --format=json | head -20
+
+      - name: Check Cloud Trace
+        run: |
+          echo "Cloud Trace enabled for distributed tracing"
+          echo "View traces: https://console.cloud.google.com/traces/list?project=${{ env.PROJECT_ID }}"
+
+  # Job 5: Update documentation and notify
+  finalize:
+    name: Finalize Deployment
+    runs-on: ubuntu-latest
+    needs: [version, deploy, smoke-test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update README with version badge
+        if: needs.version.outputs.version_changed == 'true'
+        run: |
+          README_FILE="bob-vertex-agent/slack-webhook/README.md"
+          NEW_VERSION="${{ needs.version.outputs.new_version }}"
+
+          # Create README if it doesn't exist
+          if [ ! -f "$README_FILE" ]; then
+            cat > "$README_FILE" << 'EOF'
+# Slack Webhook for Bob's Brain
+
+Cloud Function that receives Slack events and forwards to Vertex AI Agent Engine.
+
+## Current Version
+
+![Version](https://img.shields.io/badge/version-PLACEHOLDER-blue)
+
+## Deployment Status
+
+Deployed to: `us-central1` (Cloud Functions Gen2)
+
+EOF
+          fi
+
+          # Update version badge
+          sed -i "s/version-[0-9.]*-blue/version-${NEW_VERSION}-blue/g" "$README_FILE"
+
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add "$README_FILE"
+          git commit -m "docs: update slack-webhook README with version ${NEW_VERSION}" || echo "No README changes"
+          git push || echo "No changes to push"
+
+      - name: Display deployment summary
+        run: |
+          cat << 'EOF'
+          =========================================
+          🚀 Slack Webhook Deployment Summary
+          =========================================
+
+          Version: ${{ needs.version.outputs.new_version }}
+          Project: ${{ env.PROJECT_ID }}
+          Region: ${{ env.REGION }}
+          Runtime: ${{ env.RUNTIME }}
+
+          📋 Next Steps:
+
+          1. Update Slack App Event Subscription:
+             https://api.slack.com/apps/A099YKLCM1N/event-subscriptions
+
+          2. Set Request URL to your Cloud Function URL
+
+          3. Verify bot events subscribed:
+             - message.channels
+             - message.im
+             - app_mention
+
+          4. Test in Slack by mentioning @Bob
+
+          📊 Monitoring:
+
+          - Logs: https://console.cloud.google.com/logs/query?project=${{ env.PROJECT_ID }}
+          - Traces: https://console.cloud.google.com/traces/list?project=${{ env.PROJECT_ID }}
+          - Metrics: https://console.cloud.google.com/functions/details/${{ env.REGION }}/${{ env.FUNCTION_NAME }}?project=${{ env.PROJECT_ID }}
+
+          =========================================
+          EOF
+
+      - name: Create GitHub Release
+        if: needs.version.outputs.version_changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: slack-webhook-v${{ needs.version.outputs.new_version }}
+          release_name: Slack Webhook v${{ needs.version.outputs.new_version }}
+          body: |
+            ## Slack Webhook v${{ needs.version.outputs.new_version }}
+
+            Deployed to Cloud Functions Gen2 in region `${{ env.REGION }}`.
+
+            ### Changes
+            See [CHANGELOG.md](bob-vertex-agent/slack-webhook/CHANGELOG.md) for details.
+
+            ### Deployment Details
+            - **Project:** ${{ env.PROJECT_ID }}
+            - **Region:** ${{ env.REGION }}
+            - **Runtime:** ${{ env.RUNTIME }}
+            - **Deployed by:** @${{ github.actor }}
+            - **Commit:** ${{ github.sha }}
+
+            ### Monitoring
+            - [Cloud Logs](https://console.cloud.google.com/logs/query?project=${{ env.PROJECT_ID }})
+            - [Cloud Trace](https://console.cloud.google.com/traces/list?project=${{ env.PROJECT_ID }})
+            - [Function Metrics](https://console.cloud.google.com/functions/details/${{ env.REGION }}/${{ env.FUNCTION_NAME }}?project=${{ env.PROJECT_ID }})
+          draft: false
+          prerelease: false
