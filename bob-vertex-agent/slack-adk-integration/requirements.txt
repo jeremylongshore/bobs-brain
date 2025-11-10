@@ -3,8 +3,8 @@ google-adk>=1.18.0
 google-cloud-aiplatform>=1.112.0
 
 # Web server and Slack
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi>=0.115.0  # Compatible with anyio 4.x (required by ADK 1.18.0)
+uvicorn[standard]>=0.32.0  # Compatible with anyio 4.x
 slack-bolt==1.18.0
 
 # Utilities
