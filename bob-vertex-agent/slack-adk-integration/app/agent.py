@@ -49,7 +49,7 @@ def get_agent():
     memory_tool = PreloadMemoryTool()
 
     return LlmAgent(
-        name="battalion-commander-bob",  # Required by ADK 1.18.0+
+        name="battalion_commander_bob",  # Required by ADK 1.18.0+ (must be valid Python identifier)
         model="gemini-2.5-flash",  # Current production model
 
         instruction="""
