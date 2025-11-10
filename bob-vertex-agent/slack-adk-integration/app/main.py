@@ -60,7 +60,7 @@ logger.info(f"Initializing ADK Services for {PROJECT_ID}/{LOCATION}...")
 # VertexAiSessionService: Manages working memory (session history)
 # This connects to Vertex AI Agent Engine Sessions backend
 session_service = VertexAiSessionService(
-    project_id=PROJECT_ID,
+    project=PROJECT_ID,
     location=LOCATION,
     agent_engine_id=AGENT_ENGINE_ID
 )
