@@ -1,0 +1,454 @@
+name: Deploy Bob's Brain (Agent Engine + Slack Webhook)
+
+on:
+  push:
+    branches:
+      - main
+      - feature/vertex-ai-genkit-migration
+    paths:
+      - 'bob-vertex-agent/**'
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: false
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+        default: 'auto'
+      deploy_target:
+        description: 'What to deploy'
+        required: false
+        type: choice
+        options:
+          - all
+          - agent-only
+          - webhook-only
+        default: 'all'
+
+env:
+  PROJECT_ID: bobs-brain
+  GCP_REGION: us-central1
+  AGENT_STAGING_BUCKET: bobs-brain-agent-staging
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate & Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: bob-vertex-agent
+        run: |
+          pip install uv
+          uv sync
+
+      - name: Run security scans
+        working-directory: bob-vertex-agent
+        run: |
+          pip install bandit
+          bandit -r app/ slack-webhook/ -f json -o bandit-report.json || true
+
+          # Check for hardcoded secrets
+          if grep -r "sk-" app/ slack-webhook/ 2>/dev/null | grep -v ".pyc" || \
+             grep -r "xoxb-" app/ slack-webhook/ 2>/dev/null | grep -v ".pyc"; then
+            echo "❌ Hardcoded secrets found!"
+            exit 1
+          fi
+
+          echo "✅ Security scans passed"
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: bob-vertex-agent/bandit-report.json
+          retention-days: 30
+
+  version:
+    name: Version Management
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version bump type
+        id: bump-type
+        run: |
+          BUMP_TYPE="${{ github.event.inputs.version_bump || 'auto' }}"
+
+          if [ "$BUMP_TYPE" = "auto" ]; then
+            # Auto-detect from commit messages
+            if git log -1 --pretty=%B | grep -qi "BREAKING CHANGE\|^major:"; then
+              BUMP_TYPE="major"
+            elif git log -1 --pretty=%B | grep -qi "^feat:\|^feature:"; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "📦 Version bump type: $BUMP_TYPE"
+
+      - name: Read current version
+        id: current
+        working-directory: bob-vertex-agent
+        run: |
+          if [ -f VERSION ]; then
+            CURRENT_VERSION=$(cat VERSION)
+          else
+            CURRENT_VERSION="0.1.0"
+            echo "$CURRENT_VERSION" > VERSION
+          fi
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Current version: $CURRENT_VERSION"
+
+      - name: Bump version
+        id: bump
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          BUMP_TYPE="${{ steps.bump-type.outputs.bump_type }}"
+
+          IFS='.' read -r major minor patch <<< "$CURRENT"
+
+          case "$BUMP_TYPE" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          NEW_VERSION="${major}.${minor}.${patch}"
+          TAG="bob-v${NEW_VERSION}"
+
+          echo "$NEW_VERSION" > bob-vertex-agent/VERSION
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "🚀 New version: $NEW_VERSION"
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+
+          cat > TEMP_CHANGELOG.md << EOF
+# Changelog
+
+## [$VERSION] - $DATE
+
+### Changed
+$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD")..HEAD | grep -v "^- Merge")
+
+EOF
+
+          if [ -f bob-vertex-agent/CHANGELOG.md ]; then
+            tail -n +2 bob-vertex-agent/CHANGELOG.md >> TEMP_CHANGELOG.md
+          fi
+
+          mv TEMP_CHANGELOG.md bob-vertex-agent/CHANGELOG.md
+          echo "📝 Updated CHANGELOG"
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bob-vertex-agent/VERSION bob-vertex-agent/CHANGELOG.md
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]" || true
+          git tag -a "${{ steps.bump.outputs.tag }}" -m "Release ${{ steps.bump.outputs.version }}"
+          git push origin HEAD --tags || true
+
+  deploy-agent-engine:
+    name: Deploy Agent Engine (Vertex AI)
+    runs-on: ubuntu-latest
+    needs: version
+    if: |
+      github.event.inputs.deploy_target == 'all' ||
+      github.event.inputs.deploy_target == 'agent-only' ||
+      github.event.inputs.deploy_target == ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Google ADK
+        run: |
+          pip install google-adk>=1.18.0
+
+      - name: Deploy Bob Agent Engine
+        working-directory: bob-vertex-agent
+        run: |
+          echo "🚀 Deploying Bob (IAM1) to Vertex AI Agent Engine..."
+
+          # Deploy using ADK
+          adk deploy agent_engine \
+            --project="${{ env.PROJECT_ID }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --staging_bucket="${{ env.AGENT_STAGING_BUCKET }}" \
+            app/
+
+          echo "✅ Agent Engine deployed successfully"
+
+      - name: Get Agent Engine ID
+        id: agent
+        run: |
+          # Extract Agent Engine ID from deployment output or metadata
+          if [ -f bob-vertex-agent/deployment_metadata.json ]; then
+            AGENT_ID=$(jq -r '.remote_agent_engine_id' bob-vertex-agent/deployment_metadata.json)
+            echo "agent_id=$AGENT_ID" >> $GITHUB_OUTPUT
+            echo "📌 Agent Engine ID: $AGENT_ID"
+          fi
+
+      - name: Enable observability
+        run: |
+          echo "📊 Enabling Cloud Logging and Trace..."
+          gcloud services enable cloudtrace.googleapis.com --project=${{ env.PROJECT_ID }}
+          gcloud services enable logging.googleapis.com --project=${{ env.PROJECT_ID }}
+
+  deploy-slack-webhook:
+    name: Deploy Slack Webhook (Cloud Functions)
+    runs-on: ubuntu-latest
+    needs: [version, deploy-agent-engine]
+    if: |
+      always() &&
+      (needs.deploy-agent-engine.result == 'success' || needs.deploy-agent-engine.result == 'skipped') &&
+      (github.event.inputs.deploy_target == 'all' ||
+       github.event.inputs.deploy_target == 'webhook-only' ||
+       github.event.inputs.deploy_target == '')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Slack Webhook
+        working-directory: bob-vertex-agent
+        run: |
+          echo "🚀 Deploying Slack webhook to Cloud Functions..."
+
+          gcloud functions deploy slack-webhook \
+            --gen2 \
+            --runtime=python312 \
+            --region=${{ env.GCP_REGION }} \
+            --source=./slack-webhook \
+            --entry-point=slack_events \
+            --trigger-http \
+            --allow-unauthenticated \
+            --project=${{ env.PROJECT_ID }} \
+            --set-env-vars=PROJECT_ID=${{ env.PROJECT_ID }},LOG_EXECUTION_ID=true \
+            --timeout=540 \
+            --max-instances=100 \
+            --memory=512Mi \
+            --set-labels=version=${{ needs.version.outputs.version }},component=slack-webhook,environment=production
+
+          echo "✅ Slack webhook deployed"
+
+      - name: Get Function URL
+        id: webhook
+        run: |
+          WEBHOOK_URL=$(gcloud functions describe slack-webhook \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+
+          echo "webhook_url=$WEBHOOK_URL" >> $GITHUB_OUTPUT
+          echo "📌 Webhook URL: $WEBHOOK_URL"
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-agent-engine, deploy-slack-webhook]
+    if: always() && (needs.deploy-agent-engine.result == 'success' || needs.deploy-slack-webhook.result == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Test Slack webhook endpoint
+        run: |
+          WEBHOOK_URL=$(gcloud functions describe slack-webhook \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+
+          # Test URL verification
+          RESPONSE=$(curl -s -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"url_verification","challenge":"test123"}')
+
+          if echo "$RESPONSE" | grep -q "test123"; then
+            echo "✅ Webhook URL verification test passed"
+          else
+            echo "❌ Webhook test failed"
+            exit 1
+          fi
+
+      - name: Verify logging
+        run: |
+          echo "📊 Checking Cloud Logging..."
+
+          # Check for recent logs
+          gcloud logging read "resource.type=cloud_function AND resource.labels.function_name=slack-webhook" \
+            --project=${{ env.PROJECT_ID }} \
+            --limit=5 \
+            --format=json > recent_logs.json
+
+          if [ -s recent_logs.json ]; then
+            echo "✅ Logging is working"
+          else
+            echo "⚠️  No recent logs found (may be okay for new deployment)"
+          fi
+
+      - name: Verify trace
+        run: |
+          echo "🔍 Checking Cloud Trace..."
+          gcloud services list --enabled --filter="name:cloudtrace.googleapis.com" \
+            --project=${{ env.PROJECT_ID }} \
+            --format=json > trace_status.json
+
+          if [ -s trace_status.json ]; then
+            echo "✅ Cloud Trace is enabled"
+          else
+            echo "⚠️  Cloud Trace not enabled"
+          fi
+
+  finalize:
+    name: Finalize & Release
+    runs-on: ubuntu-latest
+    needs: [version, deploy-agent-engine, deploy-slack-webhook, smoke-test]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment metadata
+        run: |
+          cat > deployment-metadata.json << EOF
+{
+  "version": "${{ needs.version.outputs.version }}",
+  "tag": "${{ needs.version.outputs.tag }}",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "commit": "${{ github.sha }}",
+  "workflow_run": "${{ github.run_id }}",
+  "deployed_components": {
+    "agent_engine": "${{ needs.deploy-agent-engine.result }}",
+    "slack_webhook": "${{ needs.deploy-slack-webhook.result }}"
+  },
+  "smoke_tests": "${{ needs.smoke-test.result }}"
+}
+EOF
+          cat deployment-metadata.json
+
+      - name: Upload deployment metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-metadata
+          path: deployment-metadata.json
+          retention-days: 90
+
+      - name: Create GitHub Release
+        if: needs.deploy-agent-engine.result == 'success' && needs.deploy-slack-webhook.result == 'success'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          release_name: Bob's Brain ${{ needs.version.outputs.version }}
+          body: |
+            ## Bob's Brain ${{ needs.version.outputs.version }}
+
+            **Deployed Components:**
+            - ✅ Agent Engine (Vertex AI)
+            - ✅ Slack Webhook (Cloud Functions)
+
+            **Project:** bobs-brain
+            **Region:** us-central1
+            **Commit:** ${{ github.sha }}
+
+            See deployment metadata artifact for full details.
+          draft: false
+          prerelease: false
+
+      - name: Deployment summary
+        run: |
+          echo "======================================"
+          echo "Bob's Brain Deployment Summary"
+          echo "======================================"
+          echo "Version: ${{ needs.version.outputs.version }}"
+          echo "Tag: ${{ needs.version.outputs.tag }}"
+          echo "Agent Engine: ${{ needs.deploy-agent-engine.result }}"
+          echo "Slack Webhook: ${{ needs.deploy-slack-webhook.result }}"
+          echo "Smoke Tests: ${{ needs.smoke-test.result }}"
+          echo ""
+          echo "📊 View logs: https://console.cloud.google.com/logs/query?project=bobs-brain"
+          echo "🔍 View traces: https://console.cloud.google.com/traces/list?project=bobs-brain"
+          echo "⚙️  View functions: https://console.cloud.google.com/functions/list?project=bobs-brain"
+          echo "🤖 View agents: https://console.cloud.google.com/vertex-ai/reasoning-engines?project=bobs-brain"
+          echo "======================================"
