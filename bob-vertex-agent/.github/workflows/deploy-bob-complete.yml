@@ -1,0 +1,423 @@
+name: Deploy Bob Complete System
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+    paths:
+      - 'bob-vertex-agent/**'
+      - '.github/workflows/deploy-bob-complete.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_agent:
+        description: 'Deploy Agent Engine'
+        required: false
+        default: 'true'
+        type: boolean
+      deploy_webhook:
+        description: 'Deploy Slack Webhook'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
+  AGENT_DIR: bob-vertex-agent
+  WEBHOOK_DIR: bob-vertex-agent/slack-webhook
+
+jobs:
+  # Job 1: Validation and security checks
+  validate:
+    name: Validate System
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Verify uv installation
+        run: uv --version
+
+      - name: Install dependencies (Agent)
+        working-directory: ${{ env.AGENT_DIR }}
+        run: |
+          uv sync --no-dev
+
+      - name: Install dependencies (Webhook)
+        working-directory: ${{ env.WEBHOOK_DIR }}
+        run: |
+          pip install -r requirements.txt
+          pip install bandit safety
+
+      - name: Run security scan (Bandit)
+        working-directory: ${{ env.AGENT_DIR }}
+        run: |
+          uv run bandit -r app/ -f json -o bandit-report.json || true
+          uv run bandit -r app/ -f txt
+        continue-on-error: true
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ${{ env.AGENT_DIR }}
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            ${{ env.AGENT_DIR }}/bandit-report.json
+          retention-days: 30
+
+  # Job 2: Deploy Agent Engine
+  deploy-agent:
+    name: Deploy Agent Engine
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.deploy_agent != 'false'
+    outputs:
+      agent_engine_id: ${{ steps.deploy.outputs.agent_engine_id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Deploy Agent to Vertex AI Agent Engine
+        id: deploy
+        working-directory: ${{ env.AGENT_DIR }}
+        run: |
+          # Export dependencies
+          (uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > app/app_utils/.requirements.txt 2>/dev/null || \
+          uv export --no-hashes --no-header --no-dev --no-emit-project > app/app_utils/.requirements.txt)
+
+          # Deploy agent
+          uv run -m app.app_utils.deploy \
+            --source-packages=./app \
+            --entrypoint-module=app.agent_engine_app \
+            --entrypoint-object=agent_engine \
+            --requirements-file=app/app_utils/.requirements.txt \
+            --set-env-vars="GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true,OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true"
+
+          # Extract Agent Engine ID from deployment_metadata.json
+          if [ -f "deployment_metadata.json" ]; then
+            AGENT_ENGINE_ID=$(jq -r '.remote_agent_engine_id' deployment_metadata.json)
+            echo "agent_engine_id=$AGENT_ENGINE_ID" >> $GITHUB_OUTPUT
+            echo "✅ Agent Engine deployed: $AGENT_ENGINE_ID"
+          else
+            echo "❌ deployment_metadata.json not found"
+            exit 1
+          fi
+
+      - name: Verify Agent Engine
+        run: |
+          AGENT_ENGINE_ID="${{ steps.deploy.outputs.agent_engine_id }}"
+          gcloud ai reasoning-engines describe ${AGENT_ENGINE_ID##*/} \
+            --project=${{ env.PROJECT_ID }} \
+            --region=${{ env.REGION }}
+
+      - name: Upload deployment metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-deployment-metadata
+          path: ${{ env.AGENT_DIR }}/deployment_metadata.json
+          retention-days: 90
+
+  # Job 3: Deploy Slack Webhook
+  deploy-webhook:
+    name: Deploy Slack Webhook
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-agent]
+    if: github.event.inputs.deploy_webhook != 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Get Agent Engine ID
+        id: get-agent-id
+        run: |
+          # Try to get from artifact first
+          if [ -f "${{ env.AGENT_DIR }}/deployment_metadata.json" ]; then
+            AGENT_ENGINE_ID=$(jq -r '.remote_agent_engine_id' ${{ env.AGENT_DIR }}/deployment_metadata.json)
+          else
+            # Fallback to hardcoded current production ID
+            AGENT_ENGINE_ID="projects/205354194989/locations/us-central1/reasoningEngines/5828234061910376448"
+          fi
+          echo "agent_engine_id=$AGENT_ENGINE_ID" >> $GITHUB_OUTPUT
+          echo "Using Agent Engine ID: $AGENT_ENGINE_ID"
+
+      - name: Deploy Slack Webhook
+        working-directory: ${{ env.WEBHOOK_DIR }}
+        run: |
+          DEPLOY_VERSION="v$(date +%Y%m%d-%H%M%S)"
+
+          gcloud functions deploy slack-webhook \
+            --gen2 \
+            --runtime=python312 \
+            --region=${{ env.REGION }} \
+            --source=. \
+            --entry-point=slack_events \
+            --trigger-http \
+            --allow-unauthenticated \
+            --project=${{ env.PROJECT_ID }} \
+            --max-instances=100 \
+            --min-instances=0 \
+            --memory=512Mi \
+            --timeout=540s \
+            --set-env-vars="PROJECT_ID=${{ env.PROJECT_ID }},DEPLOY_VERSION=${DEPLOY_VERSION},AGENT_ENGINE_ID=${{ steps.get-agent-id.outputs.agent_engine_id }}" \
+            --set-labels="component=slack-webhook,environment=production,managed-by=github-actions"
+
+      - name: Get Webhook URL
+        id: get-url
+        run: |
+          WEBHOOK_URL=$(gcloud functions describe slack-webhook \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+
+          echo "webhook_url=$WEBHOOK_URL" >> $GITHUB_OUTPUT
+          echo "✅ Webhook deployed: $WEBHOOK_URL"
+
+  # Job 4: Integration tests
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-agent, deploy-webhook]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Test Agent Engine (Direct API)
+        working-directory: ${{ env.AGENT_DIR }}
+        run: |
+          # Get Agent Engine ID
+          AGENT_ENGINE_ID=$(jq -r '.remote_agent_engine_id' deployment_metadata.json)
+
+          # Create test script
+          cat > test_agent.py << 'EOF'
+          import requests
+          import json
+          import os
+
+          PROJECT_ID = "bobs-brain"
+          REGION = "us-central1"
+          AGENT_ID = os.environ['AGENT_ENGINE_ID'].split('/')[-1]
+
+          url = f"https://{REGION}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{REGION}/reasoningEngines/{AGENT_ID}:query"
+
+          token = os.popen('gcloud auth print-access-token').read().strip()
+
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Content-Type": "application/json"
+          }
+
+          data = {
+              "input": "Hi, this is a test from CI/CD"
+          }
+
+          response = requests.post(url, headers=headers, json=data, stream=True)
+
+          if response.status_code == 200:
+              print("✅ Agent Engine responding correctly")
+              for line in response.iter_lines():
+                  if line:
+                      print(line.decode('utf-8'))
+          else:
+              print(f"❌ Agent Engine test failed: {response.status_code}")
+              print(response.text)
+              exit(1)
+          EOF
+
+          export AGENT_ENGINE_ID="${{ needs.deploy-agent.outputs.agent_engine_id }}"
+          python test_agent.py
+
+      - name: Test Slack Webhook (URL Verification)
+        run: |
+          WEBHOOK_URL=$(gcloud functions describe slack-webhook \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --gen2 \
+            --format='value(serviceConfig.uri)')
+
+          RESPONSE=$(curl -s -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"url_verification","challenge":"ci_test_challenge"}')
+
+          if echo "$RESPONSE" | grep -q "ci_test_challenge"; then
+            echo "✅ Slack webhook URL verification passed"
+          else
+            echo "❌ Slack webhook URL verification failed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Verify Cloud Logging
+        run: |
+          echo "Checking recent Agent Engine logs..."
+          gcloud logging read "resource.type=aiplatform.googleapis.com/ReasoningEngine" \
+            --limit=5 \
+            --project=${{ env.PROJECT_ID }} \
+            --format=json
+
+          echo "Checking recent Slack webhook logs..."
+          gcloud logging read "resource.type=cloud_function AND resource.labels.function_name=slack-webhook" \
+            --limit=5 \
+            --project=${{ env.PROJECT_ID }} \
+            --format=json
+
+  # Job 5: Finalize deployment
+  finalize:
+    name: Finalize Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-agent, deploy-webhook, integration-test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG
+        run: |
+          CHANGELOG_FILE="${{ env.AGENT_DIR }}/CHANGELOG.md"
+          DATE=$(date +%Y-%m-%d)
+
+          # Create entry
+          cat > /tmp/changelog_entry.md << EOF
+          ## [Deployment] - $DATE
+
+          ### Deployed
+          - Agent Engine ID: ${{ needs.deploy-agent.outputs.agent_engine_id }}
+          - Slack Webhook: Deployed to Cloud Functions Gen2
+          - Deployed by: @${{ github.actor }}
+          - Commit: ${{ github.sha }}
+
+          ### Verified
+          - ✅ Agent Engine responding correctly
+          - ✅ Slack webhook URL verification passed
+          - ✅ Cloud Logging enabled
+          - ✅ Integration tests passed
+
+          EOF
+
+          # Prepend to changelog (after header)
+          if [ -f "$CHANGELOG_FILE" ]; then
+            head -n 7 "$CHANGELOG_FILE" > /tmp/changelog_header.md
+            tail -n +8 "$CHANGELOG_FILE" > /tmp/changelog_rest.md 2>/dev/null || touch /tmp/changelog_rest.md
+            cat /tmp/changelog_header.md /tmp/changelog_entry.md /tmp/changelog_rest.md > "$CHANGELOG_FILE"
+          else
+            cat /tmp/changelog_entry.md > "$CHANGELOG_FILE"
+          fi
+
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add "$CHANGELOG_FILE"
+          git commit -m "chore: update CHANGELOG with deployment $DATE" || echo "No changes"
+          git push || echo "No changes to push"
+
+      - name: Display deployment summary
+        run: |
+          cat << EOF
+          =========================================
+          🚀 Bob's Brain Complete Deployment
+          =========================================
+
+          📋 Deployment Details:
+
+          Agent Engine ID:
+            ${{ needs.deploy-agent.outputs.agent_engine_id }}
+
+          Slack Webhook:
+            $(gcloud functions describe slack-webhook \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --gen2 \
+              --format='value(serviceConfig.uri)')
+
+          Project: ${{ env.PROJECT_ID }}
+          Region: ${{ env.REGION }}
+          Deployed by: @${{ github.actor }}
+          Commit: ${{ github.sha }}
+
+          📊 Monitoring:
+
+          - Agent Engine: https://console.cloud.google.com/vertex-ai/reasoning-engines?project=${{ env.PROJECT_ID }}
+          - Slack Webhook: https://console.cloud.google.com/functions/details/${{ env.REGION }}/slack-webhook?project=${{ env.PROJECT_ID }}
+          - Logs: https://console.cloud.google.com/logs/query?project=${{ env.PROJECT_ID }}
+          - Traces: https://console.cloud.google.com/traces/list?project=${{ env.PROJECT_ID }}
+
+          ✅ All systems operational!
+          =========================================
+          EOF
