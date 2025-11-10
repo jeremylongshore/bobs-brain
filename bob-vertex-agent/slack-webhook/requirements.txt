@@ -1,0 +1,7 @@
+functions-framework==3.5.0
+google-cloud-secret-manager==2.18.2
+google-auth==2.23.4
+google-cloud-aiplatform==1.70.0
+google-cloud-firestore==2.14.0
+slack-sdk==3.26.1
+requests==2.31.0

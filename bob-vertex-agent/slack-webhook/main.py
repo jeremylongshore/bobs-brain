@@ -2,6 +2,11 @@
 Slack Webhook Integration for Bob's Vertex AI Agent Engine
 
 This Cloud Function receives Slack events and forwards them to Bob's Agent Engine.
+
+Uses Firestore for event deduplication and thread-local connection sessions
+to handle concurrent requests reliably.
+
+DEPLOYMENT: 2025-11-10 v2 - Comprehensive fix with Firestore + thread-local sessions
 """
 
 import functions_framework
@@ -9,21 +14,100 @@ import json
 import logging
 import os
 import threading
+from datetime import datetime, timedelta
 import google.auth
-from google.cloud import secretmanager
+from google.cloud import secretmanager, firestore
 from slack_sdk import WebClient
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global cache for Slack events to prevent duplicates
-_slack_event_cache = {}
-
 # Agent Engine configuration
 PROJECT_ID = os.getenv("PROJECT_ID", "bobs-brain")
 REGION = "us-central1"
 AGENT_ENGINE_ID = "projects/205354194989/locations/us-central1/reasoningEngines/5828234061910376448"
+
+# Firestore client for event deduplication
+_firestore_client = None
+
+# Thread-local storage for requests sessions
+_thread_sessions = threading.local()
+
+
+def get_firestore_client():
+    """Get or create Firestore client (lazy initialization)."""
+    global _firestore_client
+    if _firestore_client is None:
+        _firestore_client = firestore.Client(project=PROJECT_ID)
+    return _firestore_client
+
+
+def is_duplicate_event(event_id: str) -> bool:
+    """
+    Check if event has already been processed using Firestore.
+
+    Uses atomic document creation to prevent race conditions.
+    Returns True if event is duplicate, False if new.
+    """
+    if not event_id:
+        return False
+
+    try:
+        db = get_firestore_client()
+        doc_ref = db.collection('slack_events').document(event_id)
+
+        # Try to create document atomically
+        # If it already exists, this will raise an exception
+        doc_ref.create({
+            'processed_at': firestore.SERVER_TIMESTAMP,
+            'expires_at': datetime.utcnow() + timedelta(hours=1)
+        })
+
+        logger.info(f"New event: {event_id}")
+        return False  # Successfully created = new event
+
+    except Exception as e:
+        # Document already exists = duplicate
+        logger.info(f"Duplicate event detected: {event_id}")
+        return True
+
+
+def get_requests_session():
+    """
+    Get thread-local requests session with retry strategy.
+
+    Each thread gets its own isolated connection pool to prevent
+    SSL connection exhaustion under concurrent load.
+    """
+    if not hasattr(_thread_sessions, 'session'):
+        import requests
+
+        session = requests.Session()
+
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["POST"]
+        )
+
+        # Configure adapter with isolated connection pool
+        adapter = HTTPAdapter(
+            max_retries=retry_strategy,
+            pool_connections=1,  # Only 1 connection per thread
+            pool_maxsize=1       # Max 1 connection per thread
+        )
+
+        session.mount("https://", adapter)
+        _thread_sessions.session = session
+
+        logger.info(f"Created new requests session for thread {threading.current_thread().name}")
+
+    return _thread_sessions.session
 
 
 def get_secret(secret_id):
@@ -42,10 +126,9 @@ def query_agent_engine_stream(query: str, user_id: str, session_id: str = None):
     """
     Query the Vertex AI Agent Engine using REST API.
 
-    Uses direct REST API calls instead of SDK to avoid dynamic registration issues
-    in Cloud Functions environment.
+    Uses direct REST API calls with thread-local connection sessions
+    to prevent SSL connection exhaustion under concurrent load.
     """
-    import requests
     from google.auth.transport.requests import Request
 
     try:
@@ -72,10 +155,14 @@ def query_agent_engine_stream(query: str, user_id: str, session_id: str = None):
             }
         }
 
-        logger.info(f"Querying Agent Engine via REST API for user {user_id}")
+        logger.info(f"[{threading.current_thread().name}] Querying Agent Engine for user {user_id}: {query[:50]}...")
 
-        # Make streaming request
-        response = requests.post(url, json=payload, headers=headers, timeout=30, stream=True)
+        # Get thread-local session with isolated connection pool
+        session = get_requests_session()
+
+        # Make streaming request with 60-second timeout
+        # Agent Engine typically responds in 10-15 seconds
+        response = session.post(url, json=payload, headers=headers, timeout=60, stream=True)
 
         if response.status_code != 200:
             error_msg = f"Agent Engine returned {response.status_code}: {response.text[:200]}"
@@ -111,12 +198,20 @@ def query_agent_engine_stream(query: str, user_id: str, session_id: str = None):
         logger.info(f"Agent response ({len(response_text)} chars): {response_text[:200]}...")
         return response_text
 
-    except requests.Timeout:
-        logger.error("Request to Agent Engine timed out after 30 seconds")
-        return "Sorry, I'm taking too long to respond. Please try again."
     except Exception as e:
-        logger.error(f"Failed to query agent engine: {type(e).__name__}: {e}", exc_info=True)
-        return f"Sorry, I'm having trouble connecting. Please try again later."
+        # Catch all exceptions including Timeout and SSLError
+        error_type = type(e).__name__
+        error_msg = str(e)[:200]
+
+        logger.error(f"[{threading.current_thread().name}] Agent Engine error: {error_type}: {error_msg}", exc_info=True)
+
+        # Return user-friendly error messages
+        if "timeout" in error_type.lower() or "timeout" in error_msg.lower():
+            return "Sorry, I'm taking too long to respond. Please try again in a moment."
+        elif "ssl" in error_type.lower() or "ssl" in error_msg.lower():
+            return "Sorry, I'm having connection issues. Please try again."
+        else:
+            return "Sorry, I encountered an error. Please try again."
 
 
 def _process_slack_message(text, channel, user, event_id):
@@ -157,9 +252,9 @@ def _process_slack_message(text, channel, user, event_id):
 @functions_framework.http
 def slack_events(request):
     """
-    Cloud Function entry point for Slack events
+    Cloud Function entry point for Slack events.
 
-    Responds to messages in Slack by forwarding to Vertex AI Agent Engine.
+    Uses Firestore for atomic event deduplication across instances.
     Returns HTTP 200 immediately to prevent Slack retries.
     """
     payload = request.get_json(silent=True) or {}
@@ -172,13 +267,10 @@ def slack_events(request):
     event_type = event.get("type")
     event_id = payload.get("event_id", "")
 
-    # Deduplicate: Slack retries if we don't respond fast enough
-    if event_id and event_id in _slack_event_cache:
+    # Deduplicate using Firestore (atomic, persists across instances)
+    if is_duplicate_event(event_id):
         logger.info(f"Ignoring duplicate event: {event_id}")
         return ({"ok": True}, 200)
-
-    if event_id:
-        _slack_event_cache[event_id] = True
 
     # Ignore bot messages to prevent loops
     if event.get("bot_id") or event.get("user") == "USLACKBOT":

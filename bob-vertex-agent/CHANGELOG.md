@@ -5,6 +5,31 @@ All notable changes to Bob's Brain will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-11-10
+
+### Fixed
+- **ARCHITECTURE CORRECTION**: Verified Agent Engine deployment with proper ADK architecture
+- Confirmed `slack-adk-integration` was incorrect (local ADK Runner in Cloud Run)
+- Validated correct architecture: Cloud Function → Agent Engine REST API
+
+### Added
+- Redeployed agent to Vertex AI Agent Engine (`make deploy`)
+- Complete deployment verification with direct Agent Engine testing
+- Deployment verification report: `DEPLOYMENT-VERIFICATION-2025-11-10.md`
+- Agent Engine playground link for manual testing
+
+### Verified
+- ✅ Agent Engine responds correctly to REST API queries
+- ✅ Slack webhook (Cloud Function) deployed and healthy
+- ✅ Memory Bank and Session Service connected to Agent Engine
+- ✅ Full Agent Engine features available (managed runtime, auto-scaling, observability)
+
+### Technical Details
+- Agent Engine ID: `projects/205354194989/locations/us-central1/reasoningEngines/5828234061910376448`
+- Slack Webhook URL: `https://slack-webhook-eow2wytafa-uc.a.run.app`
+- Deployment timestamp: 2025-11-10 21:39:51 UTC
+- Service Account: `service-205354194989@gcp-sa-aiplatform-re.iam.gserviceaccount.com`
+
 ## [0.3.0] - 2025-11-10
 
 ### Fixed
