@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import threading
-import asyncio
 import google.auth
 from google.cloud import secretmanager
 from slack_sdk import WebClient
@@ -39,8 +38,8 @@ def get_secret(secret_id):
         return None
 
 
-async def query_agent_engine_async(query: str, user_id: str, session_id: str = None):
-    """Query the Vertex AI Agent Engine using async streaming"""
+def query_agent_engine_stream(query: str, user_id: str, session_id: str = None):
+    """Query the Vertex AI Agent Engine using streaming"""
     try:
         from vertexai.preview import reasoning_engines
 
@@ -50,21 +49,26 @@ async def query_agent_engine_async(query: str, user_id: str, session_id: str = N
         # Collect streaming response
         full_response = []
 
-        # Use async_stream_query with session management
-        async for event in remote_agent.async_stream_query(
-            message=query,
-            user_id=user_id,
-            session_id=session_id  # Maintains conversation context
+        # Use stream_query with session management
+        for event in remote_agent.stream_query(
+            input={
+                "message": query,
+                "user_id": user_id,
+                "session_id": session_id  # Maintains conversation context
+            }
         ):
             # Extract text content from events
-            if event.get("type") == "content":
-                data = event.get("data", {})
-                if "parts" in data:
-                    for part in data["parts"]:
-                        if "text" in part:
-                            full_response.append(part["text"])
+            logger.info(f"Stream event: {event}")
+            if isinstance(event, dict):
+                if "output" in event:
+                    full_response.append(str(event["output"]))
+                elif "text" in event:
+                    full_response.append(event["text"])
+                else:
+                    # Try to extract text from various possible structures
+                    full_response.append(str(event))
 
-        response_text = "".join(full_response)
+        response_text = "".join(full_response) if full_response else "No response"
         logger.info(f"Agent response: {response_text[:200]}...")
         return response_text
 
@@ -81,12 +85,12 @@ def _process_slack_message(text, channel, user, event_id):
         # Create session ID for conversation context (per-user-per-channel)
         session_id = f"slack_{channel}_{user}"
 
-        # Query the Agent Engine with async streaming
-        answer = asyncio.run(query_agent_engine_async(
+        # Query the Agent Engine with streaming
+        answer = query_agent_engine_stream(
             query=text,
             user_id=user,
             session_id=session_id
-        ))
+        )
 
         # Get Slack bot token from Secret Manager
         slack_token = get_secret("slack-bot-token")
