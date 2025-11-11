@@ -1,0 +1,93 @@
+{
+  "a2a_protocol_examples": [
+    {
+      "scenario": "Request engineering infrastructure information",
+      "user_query": "What's our current cloud infrastructure setup?",
+      "iam1_decision": "Cross-domain information → coordinate with Engineering Commander",
+      "tool": "coordinate_with_peer_iam1",
+      "args": {
+        "peer_domain": "engineering",
+        "task_description": "Provide overview of current cloud infrastructure setup including GCP services, regions, and key configurations"
+      }
+    },
+
+    {
+      "scenario": "Request sales metrics from Sales Commander",
+      "user_query": "What are our sales numbers for Q4?",
+      "iam1_decision": "Cross-domain information → coordinate with Sales Commander",
+      "tool": "coordinate_with_peer_iam1",
+      "args": {
+        "peer_domain": "sales",
+        "task_description": "Provide Q4 sales metrics including revenue, deals closed, and pipeline status"
+      }
+    },
+
+    {
+      "scenario": "Request HR information about recruitment",
+      "user_query": "How many engineers did we hire this year?",
+      "iam1_decision": "Cross-domain information → coordinate with HR Commander",
+      "tool": "coordinate_with_peer_iam1",
+      "args": {
+        "peer_domain": "hr",
+        "task_description": "Provide engineering recruitment statistics for current year including hires, offers, and pipeline"
+      }
+    }
+  ],
+
+  "iam2_delegation_examples": [
+    {
+      "scenario": "Research task requiring deep analysis",
+      "user_query": "What are the best practices for implementing RAG systems?",
+      "iam1_decision": "Complex specialized task → delegate to Research Agent",
+      "tool": "route_to_agent",
+      "args": {
+        "task_type": "research",
+        "query": "Research best practices for implementing RAG (Retrieval-Augmented Generation) systems including architecture patterns, vector databases, and chunking strategies"
+      }
+    },
+
+    {
+      "scenario": "Code generation request",
+      "user_query": "Write a Python function to validate email addresses",
+      "iam1_decision": "Code task → delegate to Code Agent",
+      "tool": "route_to_agent",
+      "args": {
+        "task_type": "code",
+        "query": "Write a Python function that validates email addresses using regex and returns True/False"
+      }
+    },
+
+    {
+      "scenario": "Data analysis request",
+      "user_query": "Analyze our user engagement trends from the past 3 months",
+      "iam1_decision": "Data analysis task → delegate to Data Agent",
+      "tool": "route_to_agent",
+      "args": {
+        "task_type": "data",
+        "query": "Query BigQuery for user engagement metrics over past 3 months and analyze trends including MAU, DAU, retention rate"
+      }
+    }
+  ],
+
+  "knowledge_retrieval_examples": [
+    {
+      "scenario": "Documentation question",
+      "user_query": "How do I configure the Slack webhook?",
+      "iam1_decision": "Knowledge question → retrieve documentation first",
+      "tool": "retrieve_docs",
+      "args": {
+        "query": "Slack webhook configuration setup deployment"
+      }
+    },
+
+    {
+      "scenario": "System architecture question",
+      "user_query": "Explain how the IAM1/IAM2 hierarchy works",
+      "iam1_decision": "Knowledge question → retrieve documentation first",
+      "tool": "retrieve_docs",
+      "args": {
+        "query": "IAM1 IAM2 hierarchy architecture multi-agent system"
+      }
+    }
+  ]
+}

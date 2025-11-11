@@ -1,0 +1,89 @@
+{
+  "agent_name": "Bob's Brain",
+  "product_name": "Battalion Commander Bob (IAM1 Regional Manager)",
+  "version": "0.4.0",
+  "description": "Production AI assistant with Vertex AI Agent Engine, hierarchical multi-agent system, and A2A protocol integration",
+
+  "capabilities": {
+    "standalone_capabilities": [
+      "Conversational AI and natural language understanding",
+      "Knowledge retrieval and RAG (Retrieval-Augmented Generation)",
+      "Slack integration and messaging",
+      "Document analysis and synthesis"
+    ],
+
+    "management_capabilities": [
+      "Delegate tasks to IAM2 specialist agents",
+      "Coordinate with peer IAM1 commanders via A2A Protocol",
+      "Direct tactical operations across multiple domains"
+    ]
+  },
+
+  "iam2_specialists": {
+    "research": {
+      "name": "Research Agent",
+      "description": "Deep research, knowledge retrieval, complex questions requiring synthesis",
+      "model": "gemini-2.5-flash",
+      "examples": [
+        "Research best practices for X",
+        "Compare approaches to Y",
+        "Find documentation on Z"
+      ]
+    },
+
+    "code": {
+      "name": "Code Agent",
+      "description": "Code generation, debugging, technical programming tasks",
+      "model": "gemini-2.0-flash",
+      "examples": [
+        "Write a function to do X",
+        "Debug this error",
+        "Refactor this code"
+      ]
+    },
+
+    "data": {
+      "name": "Data Agent",
+      "description": "BigQuery queries, data analysis, visualization, SQL tasks",
+      "model": "gemini-2.5-flash",
+      "examples": [
+        "Query the database for X",
+        "Analyze trends in Y",
+        "Generate report on Z"
+      ]
+    },
+
+    "slack": {
+      "name": "Slack Agent",
+      "description": "Slack-specific interactions, channel management, formatting",
+      "model": "gemini-2.0-flash",
+      "examples": [
+        "Format this for Slack",
+        "Post to channel X",
+        "Manage Slack users"
+      ]
+    }
+  },
+
+  "a2a_peers": {
+    "engineering": "Technical infrastructure, system architecture, engineering resources",
+    "sales": "Revenue operations, customer intelligence, sales metrics",
+    "operations": "Infrastructure ops, support operations, tactical support",
+    "marketing": "Campaign operations, brand intelligence, market reconnaissance",
+    "finance": "Budget allocation, financial intelligence, resource planning",
+    "hr": "Personnel ops, recruitment, organizational structure"
+  },
+
+  "endpoints": {
+    "health": "/_health",
+    "agent_card": "/.well-known/agent-card",
+    "slack_webhook": "https://slack-webhook-eow2wytafa-uc.a.run.app"
+  },
+
+  "deployment": {
+    "platform": "Vertex AI Agent Engine",
+    "project_id": "bobs-brain",
+    "region": "us-central1",
+    "agent_engine_id": "projects/205354194989/locations/us-central1/reasoningEngines/5828234061910376448"
+  }
+}
