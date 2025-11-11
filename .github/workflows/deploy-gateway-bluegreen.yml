@@ -1,0 +1,121 @@
+name: deploy-gateway-bluegreen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "gateway/**"
+      - "infra/**"
+      - ".github/workflows/deploy-gateway-bluegreen.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      TF_DIR: infra/terraform/envs/dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push image
+        run: |
+          IMG="gcr.io/${PROJECT_ID}/bobs-brain-gateway:${GITHUB_SHA::7}"
+          echo "Building image: $IMG"
+          gcloud builds submit --tag "$IMG" --project="${PROJECT_ID}"
+          echo "IMG=$IMG" >> $GITHUB_ENV
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Terraform init
+        run: terraform -chdir=${TF_DIR} init
+
+      - name: Terraform apply (point to new image)
+        run: |
+          terraform -chdir=${TF_DIR} apply -auto-approve \
+            -var "project_id=${PROJECT_ID}" \
+            -var "image=${IMG}" \
+            -var "engine_id=${{ secrets.ENGINE_ID || 'bobs-brain-engine' }}"
+
+      - name: Discover service URL and latest revision
+        id: svc
+        run: |
+          URL=$(gcloud run services describe bobs-brain-gateway \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --format='value(status.url)')
+          REV=$(gcloud run services describe bobs-brain-gateway \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --format='value(status.latestReadyRevisionName)')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "rev=$REV" >> "$GITHUB_OUTPUT"
+          echo "Gateway URL: $URL"
+          echo "Latest revision: $REV"
+
+      - name: Shift 10% traffic to new revision (canary)
+        run: |
+          CANARY_PERCENT=${{ secrets.CANARY_PERCENT || '10' }}
+          STABLE_PERCENT=$((100 - CANARY_PERCENT))
+          echo "Canary: ${CANARY_PERCENT}%, Stable: ${STABLE_PERCENT}%"
+
+          gcloud run services update-traffic bobs-brain-gateway \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --to-revisions="${{ steps.svc.outputs.rev }}=${CANARY_PERCENT},@latest=${STABLE_PERCENT}"
+
+      - name: Canary health check
+        timeout-minutes: 2
+        run: |
+          set -e
+          echo "Testing health endpoint..."
+          curl -sf "${{ steps.svc.outputs.url }}/_health" | jq .
+
+          echo "Testing invoke endpoint..."
+          curl -sf -X POST "${{ steps.svc.outputs.url }}/invoke" \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"ping"}' | jq .
+
+          echo "Testing card endpoint..."
+          curl -sf "${{ steps.svc.outputs.url }}/card" | jq .
+
+          echo "✅ All canary checks passed!"
+
+      - name: Promote to 100%
+        if: success()
+        run: |
+          echo "Promoting revision ${{ steps.svc.outputs.rev }} to 100%..."
+          gcloud run services update-traffic bobs-brain-gateway \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --to-revisions="${{ steps.svc.outputs.rev }}=100"
+          echo "✅ Deployment complete!"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Canary checks failed! Rolling back..."
+          gcloud run services update-traffic bobs-brain-gateway \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --to-latest
+          echo "Rollback complete. New revision NOT promoted."
+          exit 1
