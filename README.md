@@ -1,221 +1,368 @@
-# 🤖 Bob's Brain - Slack AI Agent Template
+# Bob's Brain
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Slack Compatible](https://img.shields.io/badge/slack-socket_mode-4A154B)](https://api.slack.com/)
-[![ChromaDB](https://img.shields.io/badge/vectordb-chromadb-orange)](https://www.trychroma.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Production Cloud Run gateway that proxies to Vertex AI Reasoning Engine with OpenTelemetry tracing and blue/green deployments.
 
-> A simple, clean template for building your own Slack AI assistant with knowledge base integration.
+## Architecture (Phase 4)
 
-## 🎯 What This Is
+Bob's Brain uses a clean proxy pattern where the gateway runs on Cloud Run and calls the remote Reasoning Engine:
 
-Bob's Brain is a **template/starter kit** for developers who want to:
-- Build a custom Slack bot with AI capabilities
-- Connect it to their own knowledge base
-- Have a working example to learn from
-- Start with clean, organized Python code
+```
+┌───────────────────────────────────────────────────────────────┐
+│                        Bob's Brain                             │
+├───────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Client  ────▶  Cloud Run Gateway  ────▶  Reasoning Engine   │
+│                 (FastAPI Proxy)            (Vertex AI)         │
+│                 • REST Client              • ADK Agent         │
+│                 • OpenTelemetry            • Memory Bank       │
+│                 • No Runner!               • RAG               │
+│                                                                 │
+└───────────────────────────────────────────────────────────────┘
+```
 
-**Note:** This is a template - you bring your own data and customize it for your needs.
+**CRITICAL**: Gateway does NOT run the agent - it proxies REST calls to Vertex AI Reasoning Engine.
 
-## 📦 What's Included
+### Components
 
-### Two Bot Implementations
-1. **Slack Bot** (`bob/agents/unified_v2.py`)
-   - Uses Slack Socket Mode (WebSocket connection)
-   - Handles messages and mentions
-   - Prevents duplicate responses
-   - Basic conversation memory
+1. **Cloud Run Gateway** (`gateway/`)
+   - FastAPI application deployed to Cloud Run
+   - Proxies to Reasoning Engine via REST API (`:query` and `:streamQuery`)
+   - OpenTelemetry instrumentation with Cloud Trace export
+   - Health checks, A2A protocol, streaming support
+   - **NO ADK Runner imports** - pure REST proxy
 
-2. **CLI Bot** (`bob/agents/basic.py`)
-   - Command-line interface for testing
-   - SQLite for local storage
-   - Good for development/debugging
+2. **Reasoning Engine** (Vertex AI)
+   - Managed service where agent executes
+   - Built with Google ADK
+   - Memory Bank for conversation persistence
+   - RAG capabilities
 
-### Core Features
-- ✅ Slack integration via Socket Mode
-- ✅ ChromaDB vector database hookup
-- ✅ Message deduplication
-- ✅ Conversation context tracking
-- ✅ Clean Python package structure
-- ✅ Configuration management
-- ✅ Logging system
+3. **Infrastructure** (`infra/terraform/`)
+   - Terraform IaC for Cloud Run deployment
+   - IAM: `aiplatform.user` + `cloudtrace.agent` roles
+   - Health probes and auto-scaling
 
-### What You Need to Add
-- 🔧 Your own knowledge base data
-- 🔧 Your business logic
-- 🔧 Custom responses/personality
-- 🔧 API integrations (OpenAI, etc.)
+4. **CI/CD** (`.github/workflows/`)
+   - Blue/green deployment with canary rollout
+   - 10% canary → health checks → 100% promotion
+   - Auto-rollback on failure
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- Slack workspace with app creation permissions
-- ChromaDB (or modify to use your preferred vector DB)
+- GCP project with Reasoning Engine deployed
+- Reasoning Engine ID (e.g., `bobs-brain-engine`)
+- Docker and Terraform installed
 
-### Installation
+### Local Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/jeremylongshore/bobs-brain.git
-cd bobs-brain
-
 # Install dependencies
 pip install -r requirements.txt
 
-# Copy environment template
-cp config/.env.template config/.env
+# Set environment
+export AGENT_ENGINE_NAME="projects/YOUR_PROJECT/locations/us-central1/reasoningEngines/YOUR_ENGINE_ID"
+export ENGINE_MODE=agent_engine
+
+# Start gateway
+uvicorn gateway.main:app --host 127.0.0.1 --port 8080
 ```
 
-### Configuration
+### Test Endpoints
 
-1. **Create a Slack App**
-   - Go to https://api.slack.com/apps
-   - Create new app
-   - Enable Socket Mode
-   - Add Bot Token Scopes:
-     - `app_mentions:read`
-     - `chat:write`
-     - `channels:history`
-     - `im:history`
-
-2. **Get Your Tokens**
-   - Bot Token: `xoxb-...` (OAuth & Permissions page)
-   - App Token: `xapp-...` (Basic Information page)
-
-3. **Update `.env` file**
-   ```env
-   SLACK_BOT_TOKEN=xoxb-your-bot-token
-   SLACK_APP_TOKEN=xapp-your-app-token
-   ```
-
-### Running the Bot
-
-**For Slack:**
 ```bash
-python run_slack_bot.py
+# Health check (with trace headers)
+curl http://localhost:8080/_health
+
+# A2A card
+curl http://localhost:8080/card
+
+# Non-streaming invoke
+curl -X POST http://localhost:8080/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Hello, how are you?"}'
+
+# Streaming invoke (SSE)
+curl -N -X POST http://localhost:8080/invoke/stream \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Tell me a story"}'
 ```
 
-**For CLI Testing:**
+## Deployment
+
+### Build and Push Image
+
 ```bash
-python run_bob.py
+export PROJECT_ID=your-gcp-project
+IMG="gcr.io/${PROJECT_ID}/bobs-brain-gateway:$(git rev-parse --short HEAD)"
+gcloud builds submit --tag "$IMG"
 ```
 
-## 🏗️ Project Structure
+### Deploy with Terraform
 
-```
-bobs-brain/
-├── bob/                  # Main package
-│   ├── agents/          # Bot implementations
-│   │   ├── unified_v2.py    # Slack bot
-│   │   └── basic.py         # CLI bot
-│   ├── core/            # Core functionality
-│   │   ├── config.py        # Configuration
-│   │   ├── knowledge.py     # ChromaDB integration
-│   │   └── slack.py         # Slack utilities
-│   └── utils/           # Helper functions
-├── config/              # Configuration files
-├── data/               # Sample data structure
-├── tests/              # Test files
-└── scripts/            # Utility scripts
-```
+```bash
+cd infra/terraform/envs/dev
 
-## 🔧 Customization Guide
+# Initialize
+terraform init
 
-### Adding Your Knowledge Base
+# Deploy
+terraform apply \
+  -var "project_id=$PROJECT_ID" \
+  -var "image=$IMG" \
+  -var "engine_id=bobs-brain-engine"
 
-```python
-from bob.core.knowledge import KnowledgeBase
-from bob.core.config import BobConfig
-
-# Initialize your knowledge base
-config = BobConfig()
-kb = KnowledgeBase(config)
-
-# Add your documents
-kb.add_knowledge(
-    documents=["Your content here"],
-    metadata=[{"source": "your_source"}]
-)
+# Get gateway URL
+terraform output gateway_url
 ```
 
-### Customizing Responses
+### Test Deployed Gateway
 
-Edit `bob/agents/unified_v2.py` to modify:
-- Response patterns
-- Business context
-- Greeting messages
-- Conversation logic
+```bash
+GATEWAY_URL=$(terraform -chdir=infra/terraform/envs/dev output -raw gateway_url)
 
-### Integrating AI Models
+# Health check
+curl $GATEWAY_URL/_health
 
-The template is model-agnostic. You can add:
-- OpenAI GPT
-- Anthropic Claude
-- Local models (Ollama)
-- Any LLM API
-
-Example in requirements.txt:
-```python
-openai>=1.0.0  # Uncomment and implement
+# Invoke agent
+curl -X POST $GATEWAY_URL/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"text":"ping"}'
 ```
 
-## 📚 Learning Resources
+## API Endpoints
 
-### For Beginners
-1. Start with the CLI bot (`run_bob.py`) to understand the flow
-2. Read through `bob/agents/basic.py` - it's simpler
-3. Test locally before deploying to Slack
-4. Add features incrementally
+### Health & Discovery
 
-### Key Files to Study
-- `bob/core/config.py` - How configuration works
-- `bob/agents/basic.py` - Simple bot logic
-- `bob/agents/unified_v2.py` - Slack integration
-- `run_slack_bot.py` - Entry point
+- `GET /_health` - Health check with trace headers
+  ```json
+  {"status":"ok","mode":"agent_engine","engine":"projects/.../reasoningEngines/..."}
+  ```
 
-## 🐛 Common Issues
+- `GET /card` - A2A AgentCard metadata
+- `GET /.well-known/agent-card.json` - A2A discovery endpoint
 
-### "No knowledge base found"
-- You need to create and populate your ChromaDB collection
-- Check the path in your config
+### Invocation
 
-### "Slack tokens not configured"
-- Make sure `.env` file exists with your tokens
-- Verify tokens are correct format
+- `POST /invoke` - Non-streaming agent invocation
+  ```bash
+  curl -X POST $URL/invoke \
+    -H "Content-Type: application/json" \
+    -d '{"text":"What is 2+2?"}'
+  ```
 
-### "Bot not responding"
-- Check Socket Mode is enabled in Slack app
-- Verify bot is in the channel
-- Check logs in `logs/` directory
+- `POST /invoke/stream` - Streaming agent invocation (SSE)
+  ```bash
+  curl -N -X POST $URL/invoke/stream \
+    -H "Content-Type: application/json" \
+    -d '{"text":"Tell me a joke"}'
+  ```
 
-## 🤝 Contributing
+## OpenTelemetry Tracing
 
-This is a template meant for learning and customization. Feel free to:
-- Fork and modify for your needs
-- Submit issues for bugs
-- Share your improvements
+All responses include `X-Trace-Id` headers for distributed tracing:
 
-## 📄 License
+```bash
+curl -v http://localhost:8080/_health
+# < X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
+```
 
-MIT License - Use this template however you want!
+**View traces in Cloud Trace:**
+```
+https://console.cloud.google.com/traces/list?project=YOUR_PROJECT
+```
 
-## 🙏 Acknowledgments
+Instrumentation includes:
+- FastAPI requests/responses
+- Outbound HTTP calls to Reasoning Engine
+- Automatic span creation and propagation
 
-- Built as a learning template for the community
-- Inspired by real production needs at DiagnosticPro.io
-- Designed to be simple and hackable
+## CI/CD: Blue/Green Deployment
 
----
+The CI pipeline implements safe canary rollouts:
 
-**Remember:** This is a starting point. The magic happens when you add your own data and logic! 🚀
+1. **Build** - Build and push image to GCR
+2. **Deploy** - Terraform apply with new image
+3. **Canary** - Shift 10% traffic to new revision
+4. **Health Checks** - Test `/_health`, `/invoke`, `/card`
+5. **Promote** - If checks pass, shift 100% traffic
+6. **Rollback** - If checks fail, revert to previous revision
 
-## Need Help?
+**Workflow:** `.github/workflows/deploy-gateway-bluegreen.yml`
 
-- 📧 Email: jeremy@diagnosticpro.io
-- 🐛 Issues: [GitHub Issues](https://github.com/jeremylongshore/bobs-brain/issues)
-- 📖 Docs: Check the `docs/` directory for more details
+**Triggers:** Push to `main` affecting `gateway/` or `infra/`
 
----
+**Required Secrets:**
+- `GCP_PROJECT_ID` - GCP project
+- `GCP_WIF_PROVIDER` - Workload Identity Federation provider
+- `GCP_WIF_SA` - Service account email
+- `ENGINE_ID` - Reasoning Engine ID
+- `CANARY_PERCENT` - Canary percentage (default: 10)
 
-*Bob's Brain - Your journey to building AI assistants starts here!*
+## Environment Variables
+
+### Gateway Configuration
+
+- `AGENT_ENGINE_NAME` - Full resource name (projects/.../reasoningEngines/...)
+- `AGENT_ENGINE_ID` - Alternative to AGENT_ENGINE_NAME
+- `ENGINE_MODE` - Always `agent_engine` (prod proxy mode)
+- `PROJECT_ID` - GCP project ID
+- `LOCATION` - GCP region (default: us-central1)
+
+### A2A Card (Optional)
+
+- `A2A_NAME` - Agent name (default: "Bob's Brain")
+- `A2A_DESC` - Agent description
+- `A2A_VERSION` - Agent version (default: "4.0.0")
+
+## Project Structure
+
+```
+.
+├── 000-docs/                     # Documentation and AARs
+├── gateway/                      # Cloud Run gateway (NO ADK)
+│   ├── main.py                   # FastAPI app with OpenTelemetry
+│   ├── engine_client.py          # REST client for Reasoning Engine
+│   └── Dockerfile                # Container build
+├── infra/terraform/              # Infrastructure as Code
+│   ├── modules/
+│   │   ├── cloud_run_gateway/    # Cloud Run deployment + IAM
+│   │   └── agent_engine/         # Engine resource name construction
+│   └── envs/
+│       └── dev/                  # Development environment
+├── tests/integration/            # Integration tests
+│   └── test_gateway_invoke_local.py
+├── .github/workflows/            # CI/CD
+│   └── deploy-gateway-bluegreen.yml
+└── requirements.txt              # Python dependencies
+```
+
+## IAM Roles
+
+The Cloud Run service account requires:
+
+- `roles/aiplatform.user` - Call Reasoning Engine API
+- `roles/cloudtrace.agent` - Export traces to Cloud Trace
+
+Granted automatically by Terraform module.
+
+## Testing
+
+```bash
+# Run integration tests
+pytest tests/integration/ -v
+
+# Run specific test
+pytest tests/integration/test_gateway_invoke_local.py::test_invoke_non_stream -v
+```
+
+Tests verify:
+- Gateway starts successfully
+- Health endpoint returns 200 OK
+- Trace headers present on responses
+- Card endpoints return valid structure
+
+## Monitoring
+
+### Health Checks
+
+Cloud Run performs automatic health checks:
+- **Startup probe** - `/_health` endpoint, 10s initial delay
+- **Liveness probe** - `/_health` endpoint, 30s initial delay, 10s period
+
+### Traces
+
+View distributed traces in Cloud Trace:
+1. Go to Cloud Console → Trace
+2. Search for `service.name: bobs-brain-gateway`
+3. Click trace to see spans and latencies
+
+### Logs
+
+View logs in Cloud Logging:
+```bash
+gcloud logging read "resource.type=cloud_run_revision \
+  AND resource.labels.service_name=bobs-brain-gateway" \
+  --limit 50 \
+  --format json
+```
+
+## Development Commands
+
+```bash
+# Local development
+uvicorn gateway.main:app --reload --host 127.0.0.1 --port 8080
+
+# Build image
+docker build -f gateway/Dockerfile -t bobs-brain-gateway .
+
+# Run container
+docker run -p 8080:8080 \
+  -e AGENT_ENGINE_NAME="projects/.../reasoningEngines/..." \
+  -e ENGINE_MODE=agent_engine \
+  bobs-brain-gateway
+
+# Run tests
+pytest tests/integration/ -v
+
+# Terraform validate
+terraform -chdir=infra/terraform/envs/dev validate
+```
+
+## Troubleshooting
+
+### Gateway Returns 500 on /invoke
+
+**Cause:** AGENT_ENGINE_NAME not set or invalid
+
+**Fix:**
+```bash
+# Check environment
+curl $GATEWAY_URL/_health | jq .engine
+
+# Update Terraform
+terraform apply \
+  -var "engine_id=correct-engine-id"
+```
+
+### Traces Not Appearing in Cloud Trace
+
+**Cause:** Service account missing `cloudtrace.agent` role
+
+**Fix:** Terraform module grants this automatically. If missing:
+```bash
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="serviceAccount:SA_EMAIL" \
+  --role="roles/cloudtrace.agent"
+```
+
+### Canary Deployment Fails
+
+**Cause:** Health checks failing
+
+**Fix:** Check logs:
+```bash
+gcloud run revisions describe REVISION_NAME \
+  --region us-central1 \
+  --format="value(status.conditions)"
+```
+
+## Documentation
+
+See `000-docs/` for detailed documentation:
+- Architecture diagrams
+- After-Action Reports (AARs)
+- Deployment runbooks
+- Troubleshooting guides
+
+## Contributing
+
+1. Create feature branch from `main`
+2. Make changes
+3. Run tests: `pytest tests/`
+4. Create pull request
+5. CI will run blue/green deployment on merge
+
+## License
+
+See LICENSE file for details.
