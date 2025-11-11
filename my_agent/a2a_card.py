@@ -7,7 +7,7 @@ Enforces:
 - R7: SPIFFE ID included in description
 """
 
-from a2a.types import AgentCard
+from a2a.types import AgentCard, AgentCapabilities
 import os
 import logging
 
@@ -70,6 +70,9 @@ Agent-to-Agent protocol for multi-agent orchestration.
         description=description.strip(),
         url=PUBLIC_URL,  # A2A gateway URL (service/a2a_gateway/)
         version=APP_VERSION,
+        capabilities=AgentCapabilities(),  # Default capabilities
+        defaultInputModes=["text"],  # Accept text input
+        defaultOutputModes=["text"],  # Return text output
         skills=[]  # Define available skills/capabilities here
     )
 
