@@ -1,18 +1,13 @@
-# Bob Unified Agent Requirements
-
-# Core dependencies
-slack_sdk>=3.20.0
-chromadb>=0.4.0
-python-dotenv>=1.0.0
-
-# Data processing
-pandas>=2.0.0
-numpy>=1.24.0
-
-# Optional: Enhanced features
-openai>=1.0.0  # Optional for enhanced responses
-
-# Development dependencies (optional)
-pytest>=7.0.0
-black>=23.0.0
-flake8>=6.0.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+httpx>=0.27.2
+google-auth>=2.35.0
+google-auth-httplib2>=0.2.0
+google-cloud-aiplatform>=1.112.0
+requests>=2.32.3
+sseclient-py>=1.8.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-instrumentation-fastapi>=0.48b0
+opentelemetry-instrumentation-requests>=0.48b0
+opentelemetry-exporter-gcp-trace>=1.6.0
+slack-bolt>=1.21.2
