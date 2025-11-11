@@ -99,6 +99,38 @@ jobs:
 
           echo "✅ All canary checks passed!"
 
+      - name: Canary SLO check
+        timeout-minutes: 1
+        run: |
+          set -e
+          echo "Validating SLO compliance..."
+
+          # Check health endpoint latency (should be < 5s)
+          START=$(date +%s%3N)
+          curl -sf "${{ steps.svc.outputs.url }}/_health" >/dev/null
+          END=$(date +%s%3N)
+          HEALTH_DUR=$((END-START))
+          echo "Health latency: ${HEALTH_DUR}ms"
+          if [ $HEALTH_DUR -gt 5000 ]; then
+            echo "❌ Health endpoint too slow: ${HEALTH_DUR}ms > 5000ms"
+            exit 1
+          fi
+
+          # Check invoke endpoint latency (should be < 10s for P95)
+          START=$(date +%s%3N)
+          curl -sf -X POST "${{ steps.svc.outputs.url }}/invoke" \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"ping"}' >/dev/null
+          END=$(date +%s%3N)
+          INVOKE_DUR=$((END-START))
+          echo "Invoke latency: ${INVOKE_DUR}ms"
+          if [ $INVOKE_DUR -gt 10000 ]; then
+            echo "❌ Invoke endpoint too slow: ${INVOKE_DUR}ms > 10000ms"
+            exit 1
+          fi
+
+          echo "✅ SLO checks passed (health: ${HEALTH_DUR}ms, invoke: ${INVOKE_DUR}ms)"
+
       - name: Promote to 100%
         if: success()
         run: |
