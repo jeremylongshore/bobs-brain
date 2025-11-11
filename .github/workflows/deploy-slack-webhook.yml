@@ -1,0 +1,103 @@
+name: Deploy Slack Webhook
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bob-vertex-agent/**'
+      - 'service/**'
+      - '.env.example'
+      - '.github/workflows/deploy-slack-webhook.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
+  SERVICE_NAME: slack-webhook
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify required secrets
+        run: |
+          if [ -z "${{ secrets.SLACK_SIGNING_SECRET }}" ]; then
+            echo "ERROR: SLACK_SIGNING_SECRET not set in GitHub Secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SLACK_BOT_TOKEN }}" ]; then
+            echo "ERROR: SLACK_BOT_TOKEN not set in GitHub Secrets"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run services update ${{ env.SERVICE_NAME }} \
+            --project=${{ env.PROJECT_ID }} \
+            --region=${{ env.REGION }} \
+            --update-env-vars="SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }},SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }},LOCATION=${{ env.REGION }},PROJECT_ID=${{ env.PROJECT_ID }},DEPLOY_VERSION=$(git rev-parse --short HEAD)" \
+            --quiet
+
+      - name: Verify deployment
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --project=${{ env.PROJECT_ID }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+
+          echo "🔍 Testing endpoint: $SERVICE_URL/slack/events"
+
+          # Test URL verification endpoint
+          RESPONSE=$(curl -sS -X POST "$SERVICE_URL/slack/events" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"url_verification","challenge":"test"}')
+
+          if [ "$RESPONSE" != '{"challenge":"test"}' ]; then
+            echo "❌ Endpoint verification failed"
+            echo "Expected: {\"challenge\":\"test\"}"
+            echo "Got: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✅ Deployment verified successfully"
+          echo "Service URL: $SERVICE_URL"
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service:** ${{ env.SERVICE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** ${{ env.PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region:** ${{ env.REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
