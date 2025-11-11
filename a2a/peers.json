@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Engineering Agent",
+    "version": "1.0.0",
+    "description": "Handles code review, testing, and deployment tasks",
+    "skills": [
+      "code_review",
+      "testing",
+      "ci_cd"
+    ],
+    "endpoint": "https://eng-agent.example.com",
+    "card_url": "https://eng-agent.example.com/card",
+    "capabilities": {
+      "streaming": true,
+      "async": false
+    }
+  },
+  {
+    "name": "Data Agent",
+    "version": "1.0.0",
+    "description": "Handles data analysis and BigQuery operations",
+    "skills": [
+      "bigquery",
+      "data_analysis",
+      "reporting"
+    ],
+    "endpoint": "https://data-agent.example.com",
+    "card_url": "https://data-agent.example.com/card",
+    "capabilities": {
+      "streaming": false,
+      "async": true
+    }
+  }
+]

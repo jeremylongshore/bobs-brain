@@ -34,6 +34,7 @@ from opentelemetry.exporter.gcp_trace import CloudTraceSpanExporter
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from gateway.engine_client import query_engine, stream_query_engine
+from gateway.a2a_registry import load_peers
 
 # Configuration
 ENGINE_NAME = os.getenv("AGENT_ENGINE_NAME") or os.getenv("AGENT_ENGINE_ID")
@@ -124,6 +125,25 @@ def card():
 def well_known_card():
     """A2A AgentCard discovery endpoint (well-known URI)."""
     return CARD
+
+
+@app.get("/a2a/peers")
+async def peers():
+    """
+    A2A peer registry endpoint.
+
+    Returns list of known A2A-compatible agents that this gateway can
+    communicate with. Currently file-backed (a2a/peers.json), designed
+    to migrate to Firestore for dynamic peer discovery.
+
+    Returns:
+        JSONResponse: {"peers": [AgentCard...]}
+    """
+    peer_list = load_peers()
+    return JSONResponse(
+        {"peers": peer_list, "count": len(peer_list)},
+        headers=trace_headers()
+    )
 
 
 @app.post("/invoke")
