@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob's Brain - AI Agent Template</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .badges {
+            margin: 1rem 0;
+        }
+
+        .badges img {
+            margin: 0 0.25rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .diagram-container {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 1rem 0.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            margin-top: 2rem;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            color: #abb2bf;
+        }
+
+        .architecture-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .architecture-table th,
+        .architecture-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .architecture-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .architecture-table tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Bob's Brain</h1>
+        <p>Production-Ready AI Agent Template</p>
+        <div class="badges">
+            <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+">
+            <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+            <img src="https://img.shields.io/badge/version-0.4.0-green.svg" alt="Version 0.4.0">
+            <img src="https://img.shields.io/badge/template-ready-brightgreen.svg" alt="Template Ready">
+        </div>
+        <div>
+            <a href="https://github.com/jeremylongshore/bobs-brain" class="cta-button">View on GitHub</a>
+            <a href="https://github.com/jeremylongshore/bobs-brain/generate" class="cta-button">Use This Template</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- What is Bob's Brain -->
+        <div class="section">
+            <h2>🎯 What is Bob's Brain?</h2>
+            <p>
+                Bob's Brain is a <strong>battle-tested, production-grade template</strong> for building AI agents that work in Slack.
+                Born from real-world deployments, it gives you everything you need to create intelligent assistants that your team will actually use.
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🏭 Production Ready</h4>
+                    <p>Not just a demo - handles real Slack conversations</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔀 Multiple Paths</h4>
+                    <p>ADK, Vertex AI, or custom implementations</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧠 Knowledge Base</h4>
+                    <p>RAG, semantic search, conversation memory</p>
+                </div>
+                <div class="feature-card">
+                    <h4>☁️ Cloud Native</h4>
+                    <p>Terraform IaC, Cloud Run, GitHub Actions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Overview -->
+        <div class="section">
+            <h2>🏗️ Architecture Overview</h2>
+            <p>Bob's Brain uses a <strong>clean, flat scaffold</strong> designed for clarity and extensibility:</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TB
+    subgraph "Repository Structure"
+        A[bobs-brain/] --> B[adk/]
+        A --> C[my_agent/]
+        A --> D[service/]
+        A --> E[infra/]
+        A --> F[scripts/]
+        A --> G[tests/]
+        A --> H[000-docs/]
+        A --> I[99-Archive/]
+    end
+
+    B --> B1[Agent Definitions]
+    B --> B2[Tool Configurations]
+
+    C --> C1[Business Logic]
+    C --> C2[Conversation Handlers]
+
+    D --> D1[API Services]
+    D --> D2[Slack Webhooks]
+
+    E --> E1[Terraform Modules]
+    E --> E2[GCP Resources]
+
+    style A fill:#667eea,color:#fff
+    style B fill:#764ba2,color:#fff
+    style C fill:#764ba2,color:#fff
+    style D fill:#764ba2,color:#fff
+    style E fill:#764ba2,color:#fff
+    style F fill:#764ba2,color:#fff
+    style G fill:#764ba2,color:#fff
+    style H fill:#667eea,color:#fff
+    style I fill:#999,color:#fff
+                </div>
+            </div>
+
+            <h3>Directory Guide</h3>
+            <table class="architecture-table">
+                <thead>
+                    <tr>
+                        <th>Directory</th>
+                        <th>Purpose</th>
+                        <th>Examples</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>adk/</code></td>
+                        <td>Google ADK agent definitions & tools</td>
+                        <td>agent.yaml, custom tools</td>
+                    </tr>
+                    <tr>
+                        <td><code>my_agent/</code></td>
+                        <td>Core agent logic and conversation handlers</td>
+                        <td>Message handlers, decision logic</td>
+                    </tr>
+                    <tr>
+                        <td><code>service/</code></td>
+                        <td>API services, webhooks, runtime</td>
+                        <td>FastAPI/Flask services, event handlers</td>
+                    </tr>
+                    <tr>
+                        <td><code>infra/</code></td>
+                        <td>Infrastructure as Code (Terraform)</td>
+                        <td>main.tf, GCP resources, environments</td>
+                    </tr>
+                    <tr>
+                        <td><code>scripts/</code></td>
+                        <td>Deployment automation and helpers</td>
+                        <td>deploy.sh, setup-env.sh</td>
+                    </tr>
+                    <tr>
+                        <td><code>tests/</code></td>
+                        <td>Comprehensive test suite</td>
+                        <td>Unit, integration, e2e tests</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- System Flow -->
+        <div class="section">
+            <h2>🔄 System Flow</h2>
+            <p>See how components work together to handle Slack messages:</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+sequenceDiagram
+    participant U as User (Slack)
+    participant S as Service Layer
+    participant A as Agent (my_agent/)
+    participant K as Knowledge Base
+    participant L as LLM (Vertex AI)
+
+    U->>S: @mention message
+    S->>S: Validate webhook
+    S->>A: Process message
+    A->>K: Search relevant context
+    K-->>A: Return documents
+    A->>L: Generate response (with context)
+    L-->>A: AI response
+    A->>S: Format Slack message
+    S->>U: Reply in thread
+
+    Note over S,A: All requests logged & traced
+    Note over K,L: RAG pattern for context
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment Flow -->
+        <div class="section">
+            <h2>🚀 Deployment Flow</h2>
+            <p>From code to production with CI/CD:</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+graph LR
+    A[Git Push] --> B[GitHub Actions]
+    B --> C{Tests Pass?}
+    C -->|Yes| D[Build Container]
+    C -->|No| E[Notify Developer]
+    D --> F[Push to GCR]
+    F --> G[Terraform Apply]
+    G --> H[Deploy Cloud Run]
+    H --> I[Health Check]
+    I -->|Success| J[Production Live]
+    I -->|Fail| K[Rollback]
+
+    style A fill:#667eea,color:#fff
+    style J fill:#28a745,color:#fff
+    style K fill:#dc3545,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Paths -->
+        <div class="section">
+            <h2>🛤️ Choose Your Implementation Path</h2>
+            <p>Bob's Brain offers multiple proven approaches:</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TD
+    A[Bob's Brain Template] --> B[Google ADK]
+    A --> C[Vertex AI Agent Engine]
+    A --> D[Custom Service]
+    A --> E[Learn from Archives]
+
+    B --> B1[Recommended for<br/>new projects]
+    B --> B2[Official Google<br/>framework]
+
+    C --> C1[Fully managed<br/>by Google Cloud]
+    C --> C2[Zero infrastructure<br/>management]
+
+    D --> D1[Full control<br/>over stack]
+    D --> D2[Flask/FastAPI<br/>flexibility]
+
+    E --> E1[4 complete<br/>implementations]
+    E --> E2[Study & learn<br/>patterns]
+
+    style A fill:#667eea,color:#fff
+    style B fill:#764ba2,color:#fff
+    style C fill:#764ba2,color:#fff
+    style D fill:#764ba2,color:#fff
+    style E fill:#764ba2,color:#fff
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="section">
+            <h2>⚡ Quick Start</h2>
+            <h3>1. Clone the Template</h3>
+            <pre><code># Use this template on GitHub or clone directly
+git clone https://github.com/jeremylongshore/bobs-brain.git
+cd bobs-brain
+
+# Set up virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt</code></pre>
+
+            <h3>2. Configure Environment</h3>
+            <pre><code># Copy example environment
+cp .env.example .env
+
+# Edit with your credentials
+# - SLACK_BOT_TOKEN
+# - SLACK_SIGNING_SECRET
+# - GOOGLE_PROJECT_ID</code></pre>
+
+            <h3>3. Deploy to Production</h3>
+            <pre><code># Deploy with Terraform
+cd infra/
+terraform init
+terraform apply
+
+# Or use deployment scripts
+./scripts/deploy.sh production</code></pre>
+        </div>
+
+        <!-- Features -->
+        <div class="section">
+            <h2>✨ Key Features</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🧠 Knowledge Base</h4>
+                    <ul>
+                        <li>Vector search</li>
+                        <li>RAG patterns</li>
+                        <li>Conversation memory</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>💬 Slack Native</h4>
+                    <ul>
+                        <li>Event handling</li>
+                        <li>Rich messages</li>
+                        <li>Thread support</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>☁️ Cloud Ready</h4>
+                    <ul>
+                        <li>Cloud Run</li>
+                        <li>Vertex AI</li>
+                        <li>Terraform IaC</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔧 Developer UX</h4>
+                    <ul>
+                        <li>Multi LLM support</li>
+                        <li>Local dev mode</li>
+                        <li>Full test coverage</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Archive -->
+        <div class="section">
+            <h2>🗂️ Learning from Archives</h2>
+            <p>The <code>99-Archive/</code> contains 4 production-tested implementations:</p>
+
+            <table class="architecture-table">
+                <thead>
+                    <tr>
+                        <th>Implementation</th>
+                        <th>Framework</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Flask v5</strong></td>
+                        <td>Flask + LlamaIndex</td>
+                        <td>Traditional web apps, full control</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vertex AI</strong></td>
+                        <td>Google Cloud managed</td>
+                        <td>Zero infrastructure, fully managed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ADK</strong></td>
+                        <td>Google Agent Development Kit</td>
+                        <td>Official framework, modern patterns</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Genkit</strong></td>
+                        <td>Firebase Genkit</td>
+                        <td>Full-stack TypeScript, Firebase integration</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Get Started -->
+        <div class="section" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2 style="color: white; border-bottom: 3px solid white;">🚀 Ready to Build?</h2>
+            <p style="font-size: 1.2rem; margin: 2rem 0;">
+                Fork the template, customize it, and deploy your AI agent today.
+            </p>
+            <div>
+                <a href="https://github.com/jeremylongshore/bobs-brain" class="cta-button" style="background: white; color: #667eea;">
+                    ⭐ Star on GitHub
+                </a>
+                <a href="https://github.com/jeremylongshore/bobs-brain/generate" class="cta-button" style="background: white; color: #764ba2;">
+                    🍴 Use This Template
+                </a>
+                <a href="https://github.com/jeremylongshore/bobs-brain/tree/main/000-docs" class="cta-button" style="background: rgba(255,255,255,0.2); color: white;">
+                    📖 Read the Docs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>Bob's Brain v0.4.0</strong></p>
+        <p>Built with ❤️ for the AI agent community</p>
+        <p style="margin-top: 1rem;">
+            <a href="https://github.com/jeremylongshore/bobs-brain" style="color: white; margin: 0 1rem;">GitHub</a>
+            <a href="https://github.com/jeremylongshore/bobs-brain/issues" style="color: white; margin: 0 1rem;">Issues</a>
+            <a href="https://github.com/jeremylongshore/bobs-brain/blob/main/LICENSE" style="color: white; margin: 0 1rem;">MIT License</a>
+        </p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">
+            Last Updated: 2025-11-11
+        </p>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#667eea',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#764ba2',
+                lineColor: '#764ba2',
+                secondaryColor: '#764ba2',
+                tertiaryColor: '#f8f9fa'
+            }
+        });
+    </script>
+</body>
+</html>
