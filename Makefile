@@ -1,7 +1,7 @@
-.PHONY: run fmt test
-run:
-    BB_API_KEY=test python -m flask --app src.app run --host 0.0.0.0 --port 8080
-fmt:
-    isort src && black src
+.PHONY: dev test smoke
+dev:
+	adk api_server
 test:
-    BB_API_KEY=test pytest -q
+	pytest -q
+smoke:
+	bash scripts/smoke_test.sh

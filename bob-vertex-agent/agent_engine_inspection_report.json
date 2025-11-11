@@ -1,0 +1,67 @@
+{
+  "project_id": "bobs-brain",
+  "location": "us-central1",
+  "reasoning_engine_id": "5828234061910376448",
+  "deployment_type": "Unknown (no standard query methods found)",
+  "runtime_checks": {
+    "memory_bank_enabled": false
+  },
+  "method_checks": {
+    "available_methods": [
+      "api_client",
+      "client_class",
+      "create",
+      "create_session",
+      "create_time",
+      "credentials",
+      "delete",
+      "delete_session",
+      "display_name",
+      "encryption_spec",
+      "execution_api_client",
+      "gca_resource",
+      "get_session",
+      "labels",
+      "list",
+      "list_sessions",
+      "location",
+      "name",
+      "operation_schemas",
+      "project",
+      "register_feedback",
+      "resource_name",
+      "to_dict",
+      "update",
+      "update_time",
+      "wait"
+    ],
+    "critical_methods": {
+      "query": false,
+      "send_message": false,
+      "search_memory": false,
+      "get_session": true,
+      "list_sessions": true,
+      "delete_session": true,
+      "register_feedback": true
+    },
+    "has_query_method": false,
+    "has_send_message_method": false,
+    "has_memory_methods": false,
+    "has_session_methods": true
+  },
+  "a2a_compliance": {
+    "get_agent_card": false,
+    "send_task": false,
+    "get_task_status": false,
+    "list_capabilities": false
+  },
+  "security_checks": {},
+  "issues": [
+    "No query() or send_message() method available"
+  ],
+  "recommendations": [
+    "\u26a0\ufe0f  WARNING: No standard query methods found. Agent may need re-deployment.",
+    "\u2139\ufe0f  Consider enabling Memory Bank for conversation history tracking",
+    "\u2139\ufe0f  A2A Protocol methods not exposed. Verify app/a2a_tools.py implementation."
+  ]
+}

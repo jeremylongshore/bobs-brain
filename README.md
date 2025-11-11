@@ -1,214 +1,101 @@
-# Bob's Brain v5 — Sovereign Modular Agent
+# bobs-brain
 
-![CI](https://github.com/jeremylongshore/bobs-brain/actions/workflows/ci.yml/badge.svg?branch=main)
-![Security](https://github.com/jeremylongshore/bobs-brain/actions/workflows/security.yml/badge.svg?branch=main)
+ADK agent with A2A identity and Vertex AI Memory Bank.
 
-**What it is:** A clone-and-run personal agent with pluggable LLMs (Claude, Google, OpenRouter, Ollama), modular storage, and a Circle-of-Life learning loop. Runs local or cloud. Slack optional.
-
-## Architecture
+## Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Bob's Brain Agent                         │
-├─────────────────────────────────────────────────────────────────┤
-│  Flask API (/api/query, /learn, /slack/events, /metrics)        │
-└────────────┬────────────────────────────────────┬───────────────┘
-             │                                    │
-    ┌────────▼─────────┐                 ┌───────▼────────┐
-    │  LLM Providers   │                 │    Storage      │
-    ├──────────────────┤                 ├────────────────┤
-    │ • Anthropic      │                 │ State: SQLite  │
-    │ • Google         │                 │        Postgres │
-    │ • OpenRouter     │                 │ Vector: Chroma │
-    │ • Ollama         │                 │         Pgvector│
-    │                  │                 │         Pinecone│
-    │ Model: Claude,   │                 │ Graph: Neo4j   │
-    │        Gemini,   │                 │ Cache: Redis   │
-    │        etc.      │                 │ Artifact: S3   │
-    └──────────────────┘                 └────────────────┘
-             │                                    │
-             └────────────┬───────────────────────┘
-                          │
-                 ┌────────▼─────────┐
-                 │ Circle of Life   │
-                 │   Learning Loop  │
-                 ├──────────────────┤
-                 │ 1. Ingest events │
-                 │ 2. Analyze       │
-                 │ 3. LLM insights  │
-                 │ 4. Persist       │
-                 │ 5. Apply         │
-                 └──────────────────┘
+.
+├─ 000-docs/               # Documentation
+├─ README.md               # This file
+├─ requirements.txt        # Python dependencies
+├─ main.py                 # FastAPI entry point
+├─ Makefile                # dev, test, smoke
+├─ .env.sample             # Environment template
+├─ my_agent/               # Agent implementation
+│  ├─ agent.py             # Runner + Memory Bank
+│  ├─ a2a_manager.py       # AgentCard definition
+│  ├─ tools.py             # Tool implementations
+│  └─ prompts/system.md    # System prompt
+├─ scripts/                # Automation scripts
+│  ├─ run_local.sh         # Local development server
+│  ├─ smoke_test.sh        # Health check validation
+│  ├─ deploy_agent_engine.sh
+│  └─ deploy_cloud_run.sh
+├─ tests/                  # pytest suite
+│  ├─ test_tools.py
+│  └─ test_agent.py
+├─ infra/terraform/        # Infrastructure as Code
+│  ├─ envs/dev/            # Development environment
+│  └─ modules/             # Reusable modules
+│     ├─ project/          # API enablement
+│     ├─ iam/              # Service accounts
+│     ├─ artifact_registry/ # Docker registry
+│     ├─ cloud_run/        # Cloud Run service
+│     └─ agent_engine_bootstrap/ # Agent Engine deploy
+└─ .github/workflows/      # CI/CD
+   ├─ ci.yml               # pytest on push/PR
+   └─ deploy.yml           # Deploy on tags
 ```
 
-**Key Design Principles:**
-- **Provider-agnostic**: Swap LLM/storage without code changes
-- **Environment-driven**: Configure via env vars (`.env` or runtime)
-- **Stateless API**: Flask + Gunicorn for horizontal scaling
-- **Evidence-driven learning**: Circle of Life analyzes interactions
-- **Security-first**: API key auth, secret scanning, vulnerability checks
+## Quickstart
 
-## Features
-- **Pluggable LLMs:** `PROVIDER=anthropic|google|openrouter|ollama`, `MODEL=claude-3-5-sonnet-20240620`
-- **Storage choices:** State=sqlite|postgres, Vector=chroma|pgvector|pinecone, Graph=none|neo4j, Cache=none|redis, Artifacts=local|s3
-- **APIs:** `/api/query`, `/learn`, `/config`, `/health`, `/health/backends`, `/metrics`, `/slack/events`
-- **Security:** `X-API-Key` required for `/api/*`
-- **Observability:** Prometheus at `/metrics`, CI with coverage floor 65%
-
-## Quickstart (Local)
 ```bash
-python -m venv .venv && source .venv/bin/activate
+# 1. Install dependencies
 pip install -r requirements.txt
-cp .env.example .env
-export BB_API_KEY=test
-python -m flask --app src.app run --host 0.0.0.0 --port 8080
+
+# 2. Configure environment
+cp .env.sample .env
+# Edit .env with your PROJECT_ID, LOCATION, AGENT_ENGINE_ID
+
+# 3. Run locally (ADK API Server on :8000)
+make dev
+# This runs: adk api_server
+
+# 4. Test endpoints
+curl http://localhost:8000/list-apps | jq .
+curl -X POST http://localhost:8000/run \
+  -H 'content-type: application/json' \
+  -d '{
+    "app_name": "bobs-brain",
+    "user_id": "test_user",
+    "session_id": "test_session",
+    "new_message": {
+      "role": "user",
+      "parts": [{"text": "what time is it?"}]
+    }
+  }' | jq .
+
+# 5. Run tests
+make test
+
+# 6. Smoke test
+make smoke
 ```
 
-## Public Access (Slack/External)
+## Terraform
 
-**Option 1: Cloudflare Tunnel (Recommended for testing)**
 ```bash
-# Install cloudflared
-curl -sLO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-sudo dpkg -i cloudflared-linux-amd64.deb
-
-# Start tunnel (gets random public URL)
-cloudflared tunnel --url http://localhost:8080
-
-# For background: nohup cloudflared tunnel --url http://localhost:8080 > cloudflared.log 2>&1 &
+cd infra/terraform/envs/dev
+terraform init
+terraform plan -var 'project_id=YOUR_PROJECT'
+terraform apply -var 'project_id=YOUR_PROJECT'
 ```
 
-**Option 2: Deploy to Cloud Run**
-```bash
-gcloud run deploy bobs-brain --source . --region us-central1
-```
+## ADK API Server Endpoints
 
-**See full setup guide:** `~/security/bobs-brain-cloudflare-tunnel-setup.md`
+The app uses the ADK built-in API server (`adk api_server`) which provides:
 
-## Choose your model
-```bash
-PROVIDER=anthropic|google|openrouter|ollama
-MODEL=claude-3-5-sonnet-20240620   # e.g., claude-3-5-sonnet-20240620 or gemini-2.0-flash
-# ANTHROPIC_API_KEY or GOOGLE_API_KEY or OPENROUTER_API_KEY or OLLAMA_BASE_URL
-```
+- `GET /list-apps` - List available apps
+- `POST /run` - Execute agent with message (single response)
+- `POST /run_sse` - Execute agent with streaming (SSE)
+- Session management endpoints (create, get, list)
 
-## Storage backends
-```bash
-STATE_BACKEND=sqlite|postgres      # DATABASE_URL=sqlite:///./bb.db
-VECTOR_BACKEND=chroma|pgvector|pinecone   # CHROMA_DIR=.chroma
-GRAPH_BACKEND=none|neo4j           # NEO4J_URI/USER/PASSWORD
-CACHE_BACKEND=none|redis           # REDIS_URL=redis://localhost:6379/0
-ARTIFACT_BACKEND=local|s3          # ARTIFACT_DIR or S3_* vars
-```
+**Memory Bank & Sessions:**
+- VertexAiSessionService and VertexAiMemoryBankService are wired in `my_agent/agent.py`
+- Sessions are automatically saved to Memory Bank after each turn via callback
+- See [ADK Memory Docs](https://google.github.io/adk-docs/sessions/memory/) for details
 
-## Endpoints
-- `GET /` – basic info
-- `GET /health` – service health
-- `GET /health/backends` – backend probes
-- `GET /config` – current provider/storage (no secrets)
-- `GET /metrics` – Prometheus metrics
-- `POST /api/query` (requires X-API-Key)
-- `POST /learn` (requires X-API-Key)
-- `POST /slack/events` – optional Slack webhook
+## Documentation
 
-## Example calls
-```bash
-curl -s http://localhost:8080/health
-curl -s -X POST http://localhost:8080/api/query \
-  -H "Content-Type: application/json" -H "X-API-Key:$BB_API_KEY" \
-  -d '{"query":"hello"}'
-curl -s -X POST http://localhost:8080/learn \
-  -H "Content-Type: application/json" -H "X-API-Key:$BB_API_KEY" \
-  -d '{"correction":"prefer short answers"}'
-```
-
-## Circle of Life
-
-Evidence-driven loop: ingest → analyze → LLM insights → persist → apply.
-Scheduler (optional): `COL_SCHEDULE="*/5 * * * *"` runs a heartbeat batch.
-
-## Slack (optional)
-
-Create a Slack app and point Events API to `/slack/events`. Add signature verification in production.
-
-## Directory Structure
-
-This project follows professional directory standards (see `.directory-standards.md`).
-
-```
-bobs-brain/
-├── 01-Docs/                    # Project documentation
-│   ├── 001-sec-security-policy.md
-│   └── 002-ref-contributing-guide.md
-├── 02-Src/                     # Python source code (production)
-│   ├── core/                   # Core application
-│   │   ├── app.py              # Flask application entry point
-│   │   └── providers.py        # Pluggable LLM/storage backends
-│   ├── features/               # Feature modules
-│   │   ├── circle_of_life.py   # ML learning pipeline
-│   │   ├── knowledge_orchestrator.py  # Multi-source knowledge
-│   │   └── skills/             # Modular skill system
-│   └── shared/                 # Shared utilities
-│       ├── policy.py           # Request validation
-│       └── util.py             # Common utilities
-├── 03-Tests/                   # Test suites (pytest)
-│   ├── unit/                   # Unit tests
-│   ├── integration/            # Integration tests
-│   └── e2e/                    # End-to-end tests
-├── 04-Assets/                  # Static assets and configurations
-│   └── configs/                # Config files (.env.example, pytest.ini, etc.)
-├── 05-Scripts/                 # Automation scripts
-│   ├── build/                  # Build scripts (start-bob.sh)
-│   ├── deploy/                 # Deployment automation (Cloud Run, etc.)
-│   ├── research/               # Research scripts (ingest docs)
-│   └── testing/                # Test utilities
-├── 06-Infrastructure/          # Infrastructure as code
-│   ├── ci-cd/                  # CI/CD configuration
-│   │   └── github-actions/     # GitHub Actions workflows
-│   └── docker/                 # Docker configurations
-│       └── Dockerfile          # Main service container
-├── 99-Archive/                 # Historical code
-│   ├── deprecated/             # Deprecated features
-│   └── legacy/                 # Legacy code
-├── claudes-docs/               # AI-generated documentation
-│   ├── audits/                 # System audits
-│   ├── reports/                # After-action reports, test results
-│   ├── analysis/               # Technical analysis
-│   └── tasks/                  # Task tracking
-├── .directory-standards.md     # Directory standards reference
-├── requirements.txt            # Python dependencies
-├── Makefile                    # Development commands
-├── README.md                   # This file
-├── CLAUDE.md                   # AI assistant guidance
-└── CHANGELOG.md                # Version history
-```
-
-## CI/CD
-
-- **GitHub Actions**: lint, type-check, tests, coverage ≥ 65%
-- **Security scanning**: Bandit (Python), Safety (dependencies), Gitleaks (secrets)
-- **Artifacts**: JUnit + coverage.xml + security reports
-- **Badge**: Shows main branch status
-
-**Common Commands:**
-```bash
-make safe-commit    # Run all checks before committing
-make test          # Run test suite
-make lint-check    # Code style compliance
-make security-check # Security scanning
-make deploy        # Deploy to Cloud Run
-```
-
-## Config keys
-
-See .env.example or CONFIG.md. Core:
-
-`BB_API_KEY`, `PROVIDER`, `MODEL`, `STATE_BACKEND`, `VECTOR_BACKEND`, `GRAPH_BACKEND`,
-`CACHE_BACKEND`, `ARTIFACT_BACKEND`, `COL_SCHEDULE`
-
-## License
-
-MIT.
-
----
-Generated from commit 384275c. Repo: https://github.com/jeremylongshore/bobs-brain
+See `000-docs/` for detailed documentation and after-action reports.

@@ -1,0 +1,115 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'data_ingestion/**'
+      - 'tests/**'
+      - 'deployment/**'
+      - 'uv.lock'
+
+jobs:
+  deploy_and_test_staging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          create_credentials_file: true
+          project_id: ${{ vars.CICD_PROJECT_ID }}
+
+      - name: Deploy data ingestion pipeline (Staging)
+        run: |
+          cd data_ingestion && pip install uv==0.8.13 && cd data_ingestion_pipeline && \
+          uv sync --locked && uv run python submit_pipeline.py
+        env:
+          PIPELINE_ROOT: ${{ vars.PIPELINE_GCS_ROOT_STAGING }}
+          REGION: ${{ vars.REGION }}
+          DATA_STORE_REGION: ${{ vars.DATA_STORE_REGION }}
+          DATA_STORE_ID: ${{ vars.DATA_STORE_ID_STAGING }}
+          PROJECT_ID: ${{ vars.STAGING_PROJECT_ID }}
+          SERVICE_ACCOUNT: ${{ vars.PIPELINE_SA_EMAIL_STAGING }}
+          PIPELINE_NAME: ${{ vars.PIPELINE_NAME }}
+
+      - name: Install uv and dependencies
+        run: |
+          pip install uv==0.8.13
+          uv sync --locked
+
+      - name: Deploy to Staging (Agent Engine)
+        run: |
+          uv export --no-hashes --no-sources --no-header --no-dev --no-emit-project --no-annotate --locked > app/app_utils/.requirements.txt
+          uv run python -m app.app_utils.deploy \
+            --project ${{ vars.STAGING_PROJECT_ID }} \
+            --location ${{ vars.REGION }} \
+            --source-packages=./app \
+            --entrypoint-module=app.agent_engine_app \
+            --entrypoint-object=agent_engine \
+            --requirements-file=app/app_utils/.requirements.txt \
+            --set-env-vars="COMMIT_SHA=${{ github.sha }},ARTIFACTS_BUCKET_NAME=${{ vars.LOGS_BUCKET_NAME_STAGING }},DATA_STORE_ID=${{ vars.DATA_STORE_ID_STAGING }},DATA_STORE_REGION=${{ vars.DATA_STORE_REGION }}"
+
+      - name: Fetch Auth Token
+        id: fetch-token
+        run: |
+          _AUTH_TOKEN=$(gcloud auth print-access-token -q)
+          echo "::add-mask::${_AUTH_TOKEN}"
+          echo "_auth_token=${_AUTH_TOKEN}" >> $GITHUB_OUTPUT
+
+      - name: Run load test
+        run: |
+          export _AUTH_TOKEN="${{ steps.fetch-token.outputs._auth_token }}"
+          pip install locust==2.31.1
+          locust -f tests/load_test/load_test.py \
+          --headless \
+          -t 30s -u 2 -r 0.5 \
+          --csv=tests/load_test/.results/results \
+          --html=tests/load_test/.results/report.html
+
+      - name: Export Load Test Results to GCS
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          gcloud storage cp --recursive tests/load_test/.results gs://${{ vars.LOGS_BUCKET_NAME_STAGING }}/load-test-results/results-${TIMESTAMP} --quiet
+          echo "_________________________________________________________________________"
+          echo "Load test results copied to gs://${{ vars.LOGS_BUCKET_NAME_STAGING }}/load-test-results/results-${TIMESTAMP}"
+          echo "HTTP link: https://console.cloud.google.com/storage/browser/${{ vars.LOGS_BUCKET_NAME_STAGING }}/load-test-results/results-${TIMESTAMP}"
+          echo "_________________________________________________________________________"
+
+  call_production_workflow:
+    needs: deploy_and_test_staging
+    uses: ./.github/workflows/deploy-to-prod.yaml
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    secrets: inherit

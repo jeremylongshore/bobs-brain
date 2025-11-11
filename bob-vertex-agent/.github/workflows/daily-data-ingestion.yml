@@ -1,0 +1,92 @@
+name: Daily Knowledge Base Ingestion
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Manual trigger
+  push:
+    paths:
+      - 'knowledge-base/**'
+      - 'docs/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+
+env:
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
+  DATA_STORE_ID: bob-vertex-agent-datastore
+  DATA_STORE_REGION: us
+
+jobs:
+  ingest-knowledge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ env.PROJECT_ID }}/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'bob-vertex-agent-rag@${{ env.PROJECT_ID }}.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Collect all project documentation
+        run: |
+          mkdir -p knowledge-base
+
+          # Copy all markdown files from project
+          find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.venv/*" -not -path "*/.git/*" -exec cp {} knowledge-base/ \;
+
+          # Copy CLAUDE.md and README.md from parent projects
+          cp ../CLAUDE.md knowledge-base/bobs-brain-claude.md 2>/dev/null || true
+          cp ../README.md knowledge-base/bobs-brain-readme.md 2>/dev/null || true
+
+          # Copy docs from numbered directories
+          find ../ -maxdepth 2 -type d -name "*-Docs" -o -name "000-docs" -exec cp -r {}/* knowledge-base/ \; 2>/dev/null || true
+
+          echo "Collected $(find knowledge-base -type f | wc -l) knowledge files"
+
+      - name: Upload to Cloud Storage
+        run: |
+          gsutil -m rsync -r -d knowledge-base/ gs://${{ env.PROJECT_ID }}-bob-vertex-agent-rag/knowledge-base/
+
+      - name: Run data ingestion pipeline
+        working-directory: ./data_ingestion
+        run: |
+          ~/.cargo/bin/uv sync
+          ~/.cargo/bin/uv run python data_ingestion_pipeline/submit_pipeline.py \
+            --project-id ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
+            --data-store-id ${{ env.DATA_STORE_ID }} \
+            --data-store-region ${{ env.DATA_STORE_REGION }} \
+            --service-account bob-vertex-agent-rag@${{ env.PROJECT_ID }}.iam.gserviceaccount.com \
+            --pipeline-root gs://${{ env.PROJECT_ID }}-bob-vertex-agent-rag/pipeline-root \
+            --pipeline-name bob-knowledge-ingestion-$(date +%Y%m%d-%H%M%S)
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Knowledge base updated successfully at $(date)"
+          echo "Total files ingested: $(gsutil ls gs://${{ env.PROJECT_ID }}-bob-vertex-agent-rag/knowledge-base/ | wc -l)"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Knowledge base ingestion failed at $(date)"
+          exit 1

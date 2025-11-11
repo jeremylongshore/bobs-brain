@@ -1,0 +1,13 @@
+# Core ADK and Vertex AI
+google-adk>=1.18.0
+google-cloud-aiplatform>=1.112.0
+
+# Web server and Slack
+fastapi>=0.115.0  # Compatible with anyio 4.x (required by ADK 1.18.0)
+uvicorn[standard]>=0.32.0  # Compatible with anyio 4.x
+slack-bolt==1.18.0
+aiohttp>=3.9.0  # Required by slack-bolt async handlers
+
+# Utilities
+python-dotenv==1.0.0
+jinja2==3.1.2

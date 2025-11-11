@@ -1,0 +1,258 @@
+name: Deploy Slack ADK Integration
+
+on:
+  push:
+    branches:
+      - main
+      - feat/correct-adk-architecture
+    paths:
+      - 'bob-vertex-agent/slack-adk-integration/**'
+      - '.github/workflows/deploy-slack-adk.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
+  SERVICE_NAME: bob-slack-adk
+  AGENT_ENGINE_ID: '5828234061910376448'
+
+jobs:
+  verify-agent-engine:
+    name: Verify Agent Engine
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't block deployment if verification fails
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/205354194989/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-actions@bobs-brain.iam.gserviceaccount.com'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install google-auth google-cloud-aiplatform requests
+
+      - name: Verify Agent Engine
+        run: |
+          python3 verify_agent_engine.py
+        working-directory: ./bob-vertex-agent
+
+      - name: Save verification results
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-engine-verification
+          path: |
+            verification-results.txt
+          retention-days: 30
+        if: always()
+
+  build-and-deploy:
+    name: Build and Deploy to Cloud Run
+    needs: verify-agent-engine
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/205354194989/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-actions@bobs-brain.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest \
+            -f bob-vertex-agent/slack-adk-integration/Dockerfile \
+            bob-vertex-agent/slack-adk-integration/
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          flags: |
+            --allow-unauthenticated
+            --memory=512Mi
+            --timeout=60
+            --max-instances=10
+            --set-env-vars=PROJECT_ID=${{ env.PROJECT_ID }}
+            --set-env-vars=LOCATION=${{ env.REGION }}
+            --set-env-vars=AGENT_ENGINE_ID=${{ env.AGENT_ENGINE_ID }}
+            --set-env-vars=AGENT_ENGINE_NAME=projects/205354194989/locations/us-central1/reasoningEngines/${{ env.AGENT_ENGINE_ID }}
+            --set-env-vars=APP_NAME=bob-battalion-commander
+            --set-secrets=SLACK_BOT_TOKEN=slack-bot-token:latest
+            --set-secrets=SLACK_SIGNING_SECRET=slack-signing-secret:latest
+
+      - name: Show service URL
+        run: |
+          echo "Service URL: ${{ steps.deploy.outputs.url }}"
+          echo "Slack webhook URL: ${{ steps.deploy.outputs.url }}/slack/events"
+
+      - name: Update deployment metadata
+        run: |
+          cat > deployment_metadata.json <<EOF
+          {
+            "service_name": "${{ env.SERVICE_NAME }}",
+            "service_url": "${{ steps.deploy.outputs.url }}",
+            "slack_webhook_url": "${{ steps.deploy.outputs.url }}/slack/events",
+            "image": "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}",
+            "deployment_timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%6NZ)",
+            "git_commit": "${{ github.sha }}",
+            "git_branch": "${{ github.ref_name }}",
+            "deployed_by": "${{ github.actor }}",
+            "agent_engine_id": "${{ env.AGENT_ENGINE_ID }}"
+          }
+          EOF
+          cat deployment_metadata.json
+
+      - name: Commit deployment metadata
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update deployment metadata [skip ci]"
+          file_pattern: deployment_metadata.json
+          branch: ${{ github.ref_name }}
+
+  test-deployment:
+    name: Test Deployed Service
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/205354194989/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-actions@bobs-brain.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get service URL
+        id: get-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "Service URL: $SERVICE_URL"
+
+      - name: Test health endpoint
+        run: |
+          curl -f -s "${{ steps.get-url.outputs.url }}/_health" || exit 1
+          echo "✅ Health check passed"
+
+      - name: Test service responds
+        run: |
+          RESPONSE=$(curl -s "${{ steps.get-url.outputs.url }}/_health")
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep -q "healthy" || exit 1
+          echo "✅ Service is responding correctly"
+
+      - name: Save test results
+        run: |
+          echo "Service URL: ${{ steps.get-url.outputs.url }}" > test-results.txt
+          echo "Health check: PASSED" >> test-results.txt
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> test-results.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-test-results
+          path: test-results.txt
+          retention-days: 30
+
+  notify:
+    name: Notify Deployment Status
+    needs: [verify-agent-engine, build-and-deploy, test-deployment]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.test-deployment.result }}" == "success" ]; then
+            echo "✅ Deployment successful"
+            echo "STATUS=success" >> $GITHUB_ENV
+          else
+            echo "❌ Deployment failed"
+            echo "STATUS=failure" >> $GITHUB_ENV
+          fi
+
+      - name: Create deployment summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # 🚀 Deployment Summary
+
+          ## Service Information
+          - **Service Name:** ${{ env.SERVICE_NAME }}
+          - **Region:** ${{ env.REGION }}
+          - **Agent Engine ID:** ${{ env.AGENT_ENGINE_ID }}
+
+          ## Deployment Status
+          - **Verify Agent Engine:** ${{ needs.verify-agent-engine.result }}
+          - **Build and Deploy:** ${{ needs.build-and-deploy.result }}
+          - **Test Deployment:** ${{ needs.test-deployment.result }}
+
+          ## Git Information
+          - **Commit:** ${{ github.sha }}
+          - **Branch:** ${{ github.ref_name }}
+          - **Author:** ${{ github.actor }}
+
+          ## Timestamp
+          - **Deployed:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          EOF
+
+          if [ "${{ env.STATUS }}" == "success" ]; then
+            echo "✅ **Overall Status:** SUCCESS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Overall Status:** FAILURE" >> $GITHUB_STEP_SUMMARY
+          fi

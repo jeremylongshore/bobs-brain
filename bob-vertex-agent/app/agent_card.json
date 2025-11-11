@@ -1,0 +1,103 @@
+{
+  "agent": {
+    "id": "iam1-regional-manager",
+    "name": "IntentSolutions IAM1 - Regional Manager Agent",
+    "description": "Sovereign Regional Manager AI agent with multi-domain coordination capabilities via A2A Protocol. Commands IAM2 specialist subordinates and coordinates with peer IAM1s across domains.",
+    "version": "2.0.1",
+    "tier": "IAM1",
+    "provider": {
+      "name": "IntentSolutions",
+      "url": "https://intentsolutions.io",
+      "contact": "support@intentsolutions.io"
+    }
+  },
+  "skills": [
+    {
+      "id": "knowledge_retrieval",
+      "name": "Domain Knowledge Retrieval",
+      "description": "Retrieve information from client-specific knowledge base using RAG (Retrieval-Augmented Generation) powered by Vertex AI Search",
+      "tags": ["knowledge", "search", "rag", "vertex-ai"],
+      "examples": [
+        "What is our company policy on remote work?",
+        "Retrieve documentation for the authentication feature",
+        "Search for best practices on API design in our knowledge base"
+      ]
+    },
+    {
+      "id": "specialist_delegation",
+      "name": "Specialist Task Delegation",
+      "description": "Delegate specialized tasks to IAM2 subordinate agents (Research, Code, Data, Slack specialists)",
+      "tags": ["delegation", "orchestration", "specialists", "iam2"],
+      "examples": [
+        "Research best practices for multi-agent systems",
+        "Write Python code to validate email addresses",
+        "Query the database for Q4 sales metrics",
+        "Format this message for Slack and post to #engineering"
+      ]
+    },
+    {
+      "id": "peer_coordination",
+      "name": "IAM1 Peer Coordination",
+      "description": "Coordinate with peer IAM1 agents in other domains using A2A Protocol for cross-domain collaboration",
+      "tags": ["coordination", "multi-agent", "a2a", "peer"],
+      "examples": [
+        "Request Q2 product roadmap from Engineering IAM1",
+        "Coordinate Q4 summary with all domain IAM1s",
+        "Ask Sales IAM1 for top customer accounts",
+        "Request budget allocation from Finance IAM1"
+      ]
+    },
+    {
+      "id": "conversational_ai",
+      "name": "Conversational AI",
+      "description": "Natural language conversation and task understanding with context management",
+      "tags": ["conversation", "nlp", "understanding"],
+      "examples": [
+        "Hello, how can you help me?",
+        "What can you do?",
+        "Explain the difference between IAM1 and IAM2 agents"
+      ]
+    }
+  ],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": false,
+    "state_history": true,
+    "parallel_execution": false,
+    "multi_agent_coordination": true,
+    "hierarchical_delegation": true
+  },
+  "security_schemes": {
+    "apiKey": {
+      "type": "apiKey",
+      "name": "X-API-Key",
+      "in": "header",
+      "description": "API key for authenticated access to IAM1 agent"
+    }
+  },
+  "protocol_version": "0.3.0",
+  "interfaces": {
+    "primary": "json-rpc",
+    "endpoints": {
+      "json-rpc": "DEPLOYMENT_URL/a2a/rpc"
+    }
+  },
+  "defaultInputMimeType": "text/plain",
+  "defaultOutputMimeType": "text/plain",
+  "metadata": {
+    "business_model": "deployable_regional_manager",
+    "hierarchy": {
+      "tier": "IAM1",
+      "role": "regional_manager",
+      "can_command": ["IAM2"],
+      "can_coordinate_with": ["IAM1"],
+      "reports_to": null
+    },
+    "deployment_model": "client_isolated",
+    "pricing": {
+      "base": "$500/month",
+      "iam2_addon": "$200/specialist",
+      "a2a_premium": "+15% for multi-IAM1 coordination"
+    }
+  }
+}

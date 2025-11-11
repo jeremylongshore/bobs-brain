@@ -240,3 +240,14 @@ deploy_*.sh.local
 setup_*.sh.local
 *-credentials.sh
 *-secrets.sh
+
+# Experimental agent implementations (keep in local dev only)
+adk-agent/
+adk-venv/
+genkit-agent/
+artifacts/
+bb.db
+bob.log
+.chroma/
+venv/
+docs/
