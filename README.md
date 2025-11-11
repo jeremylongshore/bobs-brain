@@ -1,59 +1,38 @@
-# 🤖 Bob's Brain - Slack AI Agent Template
+# Bob's Brain - Slack AI Agent Template
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Slack Compatible](https://img.shields.io/badge/slack-socket_mode-4A154B)](https://api.slack.com/)
-[![ChromaDB](https://img.shields.io/badge/vectordb-chromadb-orange)](https://www.trychroma.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> A simple, clean template for building your own Slack AI assistant with knowledge base integration.
+> Clean, simple template for building Slack AI assistants with knowledge base integration.
 
-## 🎯 What This Is
+## Repo Structure
 
-Bob's Brain is a **template/starter kit** for developers who want to:
-- Build a custom Slack bot with AI capabilities
-- Connect it to their own knowledge base
-- Have a working example to learn from
-- Start with clean, organized Python code
+```
+bobs-brain/
+├── 000-docs/          # Documentation and AARs
+├── docs/              # GitHub Pages site
+├── gateway/           # API gateway (placeholder for future)
+├── scripts/           # Utility scripts
+├── tests/             # Test suite
+├── 99-Archive/        # Historical implementations
+├── requirements.txt   # Python dependencies
+├── Makefile           # Development commands
+└── README.md          # This file
+```
 
-**Note:** This is a template - you bring your own data and customize it for your needs.
+## What This Is
 
-## 📦 What's Included
+Bob's Brain is a **template repository** for building custom Slack AI assistants. It provides:
 
-### Two Bot Implementations
-1. **Slack Bot** (`bob/agents/unified_v2.py`)
-   - Uses Slack Socket Mode (WebSocket connection)
-   - Handles messages and mentions
-   - Prevents duplicate responses
-   - Basic conversation memory
+- Clean starter code for Slack integration
+- Knowledge base patterns (ChromaDB, vector search)
+- Example conversation memory
+- LLM provider flexibility (Claude, GPT, Gemini, etc.)
+- Testable architecture
 
-2. **CLI Bot** (`bob/agents/basic.py`)
-   - Command-line interface for testing
-   - SQLite for local storage
-   - Good for development/debugging
+**This is a learning template** - fork it, customize it, and build your own agent.
 
-### Core Features
-- ✅ Slack integration via Socket Mode
-- ✅ ChromaDB vector database hookup
-- ✅ Message deduplication
-- ✅ Conversation context tracking
-- ✅ Clean Python package structure
-- ✅ Configuration management
-- ✅ Logging system
-
-### What You Need to Add
-- 🔧 Your own knowledge base data
-- 🔧 Your business logic
-- 🔧 Custom responses/personality
-- 🔧 API integrations (OpenAI, etc.)
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.10+
-- Slack workspace with app creation permissions
-- ChromaDB (or modify to use your preferred vector DB)
-
-### Installation
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -63,159 +42,54 @@ cd bobs-brain
 # Install dependencies
 pip install -r requirements.txt
 
-# Copy environment template
-cp config/.env.template config/.env
+# Run tests
+make test
+
+# Check available commands
+make help
 ```
 
-### Configuration
+## Documentation
 
-1. **Create a Slack App**
-   - Go to https://api.slack.com/apps
-   - Create new app
-   - Enable Socket Mode
-   - Add Bot Token Scopes:
-     - `app_mentions:read`
-     - `chat:write`
-     - `channels:history`
-     - `im:history`
+See `000-docs/` for:
+- Architecture documentation
+- Implementation guides
+- After-action reports (AARs)
+- Operational runbooks
 
-2. **Get Your Tokens**
-   - Bot Token: `xoxb-...` (OAuth & Permissions page)
-   - App Token: `xapp-...` (Basic Information page)
+## Archived Implementations
 
-3. **Update `.env` file**
-   ```env
-   SLACK_BOT_TOKEN=xoxb-your-bot-token
-   SLACK_APP_TOKEN=xapp-your-app-token
-   ```
+The `99-Archive/` directory contains previous implementations:
+- Flask-based modular agent (v5)
+- Vertex AI Agent Engine implementation
+- ADK (Agent Development Kit) version
+- Genkit framework version
 
-### Running the Bot
+These are preserved for reference and learning.
 
-**For Slack:**
+## Development
+
 ```bash
-python run_slack_bot.py
+# Run tests
+make test
+
+# Format code
+make fmt
+
+# Run full checks
+make check-all
 ```
 
-**For CLI Testing:**
-```bash
-python run_bob.py
-```
+## License
 
-## 🏗️ Project Structure
+MIT License - see [LICENSE](LICENSE) for details.
 
-```
-bobs-brain/
-├── bob/                  # Main package
-│   ├── agents/          # Bot implementations
-│   │   ├── unified_v2.py    # Slack bot
-│   │   └── basic.py         # CLI bot
-│   ├── core/            # Core functionality
-│   │   ├── config.py        # Configuration
-│   │   ├── knowledge.py     # ChromaDB integration
-│   │   └── slack.py         # Slack utilities
-│   └── utils/           # Helper functions
-├── config/              # Configuration files
-├── data/               # Sample data structure
-├── tests/              # Test files
-└── scripts/            # Utility scripts
-```
+## Contributing
 
-## 🔧 Customization Guide
-
-### Adding Your Knowledge Base
-
-```python
-from bob.core.knowledge import KnowledgeBase
-from bob.core.config import BobConfig
-
-# Initialize your knowledge base
-config = BobConfig()
-kb = KnowledgeBase(config)
-
-# Add your documents
-kb.add_knowledge(
-    documents=["Your content here"],
-    metadata=[{"source": "your_source"}]
-)
-```
-
-### Customizing Responses
-
-Edit `bob/agents/unified_v2.py` to modify:
-- Response patterns
-- Business context
-- Greeting messages
-- Conversation logic
-
-### Integrating AI Models
-
-The template is model-agnostic. You can add:
-- OpenAI GPT
-- Anthropic Claude
-- Local models (Ollama)
-- Any LLM API
-
-Example in requirements.txt:
-```python
-openai>=1.0.0  # Uncomment and implement
-```
-
-## 📚 Learning Resources
-
-### For Beginners
-1. Start with the CLI bot (`run_bob.py`) to understand the flow
-2. Read through `bob/agents/basic.py` - it's simpler
-3. Test locally before deploying to Slack
-4. Add features incrementally
-
-### Key Files to Study
-- `bob/core/config.py` - How configuration works
-- `bob/agents/basic.py` - Simple bot logic
-- `bob/agents/unified_v2.py` - Slack integration
-- `run_slack_bot.py` - Entry point
-
-## 🐛 Common Issues
-
-### "No knowledge base found"
-- You need to create and populate your ChromaDB collection
-- Check the path in your config
-
-### "Slack tokens not configured"
-- Make sure `.env` file exists with your tokens
-- Verify tokens are correct format
-
-### "Bot not responding"
-- Check Socket Mode is enabled in Slack app
-- Verify bot is in the channel
-- Check logs in `logs/` directory
-
-## 🤝 Contributing
-
-This is a template meant for learning and customization. Feel free to:
-- Fork and modify for your needs
-- Submit issues for bugs
-- Share your improvements
-
-## 📄 License
-
-MIT License - Use this template however you want!
-
-## 🙏 Acknowledgments
-
-- Built as a learning template for the community
-- Inspired by real production needs at DiagnosticPro.io
-- Designed to be simple and hackable
+This is a personal template repository. Feel free to fork and customize for your own use.
 
 ---
 
-**Remember:** This is a starting point. The magic happens when you add your own data and logic! 🚀
-
-## Need Help?
-
-- 📧 Email: jeremy@diagnosticpro.io
-- 🐛 Issues: [GitHub Issues](https://github.com/jeremylongshore/bobs-brain/issues)
-- 📖 Docs: Check the `docs/` directory for more details
-
----
-
-*Bob's Brain - Your journey to building AI assistants starts here!*
+**Version:** 0.5.1
+**Last Updated:** 2025-11-11
+**Status:** Template / Learning Resource

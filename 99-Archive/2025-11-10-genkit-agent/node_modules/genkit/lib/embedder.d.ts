@@ -1,0 +1,1 @@
+export { EmbedderAction, EmbedderArgument, EmbedderInfo, EmbedderInfoSchema, EmbedderParams, EmbedderReference, Embedding, EmbeddingBatch, embedderRef } from '@genkit-ai/ai/embedder';
