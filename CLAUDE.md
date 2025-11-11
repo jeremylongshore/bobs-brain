@@ -2,133 +2,145 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Repository Overview
 
-Bob is a unified AI business partner for DiagnosticPro.io, specializing in vehicle diagnostics, repair industry expertise, and strategic business support. Built with professional Python architecture, Slack integration, and ChromaDB knowledge management with 970+ curated industry knowledge items.
+**Bob's Brain** - Template repository for building Slack AI assistants with knowledge base integration.
 
-## Commands
+**Location:** `/home/jeremy/000-projects/iams/bobs-brain/`
+**Status:** Template / Learning Resource
+**Version:** 0.5.1
 
-### Development
-```bash
-# Install dependencies
-pip install -r requirements.txt
+---
 
-# Run tests
-make test
-# or directly:
-python -m pytest tests/ -v
+## Important Context
 
-# Lint and code quality checks
-make lint-check
-# Full safety check before commit
-make safe-commit
+This repository is a **template/starter kit** for building custom Slack AI agents. It is NOT a production system.
 
-# Test Bob's core functionality (non-interactive)
-python3 test_bob.py
+### Multiple Archived Implementations
 
-# Run Bob interactively
-python3 run_bob.py
+The `99-Archive/` directory contains **multiple previous implementations**:
 
-# Run Bob Slack Bot (production)
-python3 run_slack_bot.py
-```
+1. **99-Archive/2025-11-11/** - Flask app, experimental agents, development artifacts (archived in Night Wrap)
+2. **99-Archive/2025-11-10/** - bob-vertex-agent, adk-agent, genkit-agent, Flask modules
+3. **99-Archive/02-Src/** - Flask implementation v5 (modular LLM providers)
+4. **99-Archive/03-Tests/** - Flask test suite
+5. **Historical implementations** - See archive README files for details
 
-### Production Deployment
-```bash
-# Start Bob Unified v2 (production)
-./scripts/start_unified_bob_v2.sh
+**When working on Bob's Brain, focus on the ROOT directory structure unless specifically asked about archived implementations.**
 
-# Check Bob's status
-ps aux | grep bob_unified
-tail -f logs/bob_unified_v2.log
-```
+---
 
-## Professional Architecture
-
-Bob follows a clean, modular Python package structure:
+## Current Structure
 
 ```
 bobs-brain/
-├── bob/                    # Main application package
-│   ├── agents/            # Agent implementations
-│   │   ├── unified_v2.py  # Production Slack bot
-│   │   └── basic.py       # Development CLI version
-│   ├── core/              # Shared functionality
-│   │   ├── config.py      # Configuration management
-│   │   ├── knowledge.py   # ChromaDB integration
-│   │   └── slack.py       # Slack utilities
-│   └── utils/             # Utility functions
-├── ai-dev-tasks/          # Development task management system
-│   ├── analysis/          # Research and analysis documents
-│   ├── templates/         # ADR, llms.txt, and other templates
-│   └── PRDs/              # Product requirement documents
-├── config/                # Configuration files (.env, templates)
-├── data/knowledge_base/   # Knowledge base data
-├── tests/                 # Test suite
-├── scripts/               # Deployment scripts
-├── docker/                # Docker configurations
-├── logs/                  # Application logs
-└── archive/               # Legacy code (versions/, agent/, src/)
+├── 000-docs/          # Documentation, AARs, runbooks
+├── docs/              # GitHub Pages site
+├── gateway/           # API gateway (placeholder)
+├── scripts/           # Utility scripts
+├── tests/             # Test suite
+├── 99-Archive/        # All archived implementations
+├── requirements.txt   # Python dependencies
+├── Makefile           # Development commands
+├── CHANGELOG.md       # Version history
+├── CLAUDE.md          # This file
+├── LICENSE            # MIT License
+└── README.md          # Project overview
 ```
 
-### Core Components
+---
 
-- **bob.agents.unified_v2.BobUnifiedV2**: Production Slack bot with enterprise features
-  - Duplicate response prevention via message ID tracking
-  - Smart conversation memory system
-  - Professional business communication patterns
-  - ChromaDB integration for knowledge base queries
-  - Socket mode for real-time Slack communication
+## Ground Rules
 
-- **bob.agents.basic.BobBasic**: Development CLI version
-  - Direct ChromaDB access
-  - Command system (status, memory, project)
-  - Lightweight for testing and development
+1. **This is a template** - Not a production system
+2. **Archived code** - Do NOT modify files in `99-Archive/`
+3. **Documentation** - All new docs go in `000-docs/`
+4. **Version tracking** - Update `VERSION` file and `CHANGELOG.md`
+5. **Keep it simple** - This is a learning resource
 
-- **bob.core.config.BobConfig**: Centralized configuration management
-- **bob.core.knowledge.KnowledgeBase**: ChromaDB knowledge base interface
-- **bob.core.slack.SlackClient**: Enhanced Slack communication utilities
+---
 
-### Key Design Patterns
-- **Clean Architecture**: Separation of concerns with core, agents, and utilities
-- **Configuration Management**: Centralized config with environment variables
-- **Knowledge Base**: ChromaDB persistent storage at `~/.bob_brain/chroma`
-- **Message Deduplication**: Tracks processed message IDs to prevent duplicate responses
-- **Context Awareness**: Maintains user context and conversation history
-- **Professional Communication**: Different response patterns for Jeremy vs team members
+## Common Commands
 
-## Configuration
+```bash
+# Development
+make test              # Run test suite
+make fmt               # Format code
+make check-all         # Run all quality checks
 
-### Environment Variables
-Configure in `config/.env` (copy from `config/.env.template`):
-- `SLACK_BOT_TOKEN`: xoxb- prefixed bot token
-- `SLACK_APP_TOKEN`: xapp- prefixed app token for socket mode
-- `CHROMA_PERSIST_DIR`: ChromaDB storage location (defaults to ~/.bob_brain/chroma)
-- `LOG_LEVEL`: Logging level (INFO, DEBUG, etc.)
-- `BOB_MODE`: development or production
+# Documentation
+ls 000-docs/           # View available documentation
+cat CHANGELOG.md       # View version history
+```
 
-### Slack Integration
-Bob uses Socket Mode for real-time messaging, requiring:
-- Bot permissions: `app_mentions:read`, `chat:write`, `channels:history`, `im:history`
-- Socket Mode enabled with app-level token
+---
 
-## Testing Strategy
+## Documentation Standards
 
-- Unit tests go in `agent/tests/`
-- Use `test_bob.py` for quick functionality verification
-- The Makefile provides safety checks via `make safe-commit`
+All documentation follows **Document Filing System v2.0**:
 
-## Migration Notes
+**Format:** `NNN-CC-ABCD-description.md`
+- **NNN** = Sequential number (001-999)
+- **CC** = Category code (PP, AT, AA, etc.)
+- **ABCD** = Document type (4-letter abbreviation)
+- **description** = 1-4 words, kebab-case
 
-The codebase has been restructured for professional architecture:
-- **Archive**: Old code moved to `archive/` (versions/, agent/, src/)
-- **New Structure**: Clean Python package in `bob/`
-- **Entry Points**: `run_bob.py` (CLI), `run_slack_bot.py` (Slack)
-- **Backward Compatibility**: Legacy scripts still work during transition
+**Example:** `001-AA-REPT-night-wrap-2025-11-11.md`
 
-## Important Notes
+---
 
-- The production script expects specific paths: `/home/jeremylongshore/bob-consolidation`
-- ChromaDB knowledge base must exist at `/home/jeremylongshore/.bob_brain/chroma`
-- Bob tracks recent messages to prevent duplicates (30-minute cleanup cycle)
-- Different greeting patterns for Jeremy (owner) vs other users
+## Key Files
+
+- `README.md` - Project overview (above-the-fold)
+- `CHANGELOG.md` - Version history (Keep a Changelog format)
+- `VERSION` - Current version number (semver)
+- `requirements.txt` - Python dependencies
+- `Makefile` - Development automation
+- `000-docs/` - All documentation and AARs
+
+---
+
+## Archived Implementations
+
+If asked about specific archived implementations:
+
+1. **Flask Modular Agent (v5)** - See `99-Archive/2025-11-11/src/` or `99-Archive/02-Src/`
+2. **Vertex AI Agent Engine** - See `99-Archive/2025-11-10/2025-11-10-bob-vertex-agent/`
+3. **ADK Implementation** - See `99-Archive/2025-11-10/2025-11-10-adk-agent/`
+4. **Genkit Implementation** - See `99-Archive/2025-11-10/2025-11-10-genkit-agent/`
+
+Each has its own README with implementation details.
+
+---
+
+## Development Workflow
+
+1. **Make changes** - Edit code or documentation
+2. **Test** - Run `make test` to validate
+3. **Format** - Run `make fmt` for consistent style
+4. **Document** - Create AAR in `000-docs/` if significant
+5. **Version** - Update `VERSION` and `CHANGELOG.md`
+6. **Commit** - Use conventional commit messages
+
+---
+
+## Version History
+
+- **v0.5.1** (2025-11-11) - Night Wrap: Repository cleanup and archival
+- **v0.5.0** (2025-11-10) - Template repositioning, documentation structure
+- **Earlier** - See `99-Archive/` for historical implementations
+
+---
+
+## Support
+
+This is a personal template repository. For questions or issues:
+1. Check `000-docs/` for existing documentation
+2. Review `CHANGELOG.md` for version history
+3. Explore `99-Archive/` for implementation examples
+
+---
+
+**Last Updated:** 2025-11-11
+**Version:** 0.5.1
+**Status:** Template / Learning Resource

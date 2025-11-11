@@ -73,3 +73,5 @@ dist/
 *.egg-info/
 .installed.cfg
 *.egg
+.venv/
+.env.sample
