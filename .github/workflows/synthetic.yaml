@@ -1,0 +1,42 @@
+name: synthetic-probe
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"  # Every 15 minutes
+  workflow_dispatch: {}      # Allow manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run synthetic probe
+        env:
+          GATEWAY_URL: ${{ secrets.GATEWAY_URL }}
+          HEALTH_TIMEOUT_S: 5
+          INVOKE_TIMEOUT_S: 15
+        run: python synthetics/probe_gateway.py
+
+      - name: Upload probe result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-result-${{ github.run_number }}
+          path: |
+            synthetics/probe_gateway.py
+          retention-days: 7
