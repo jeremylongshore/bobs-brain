@@ -5,6 +5,9 @@
 # Core ADK (R1: Agent implementation framework)
 google-adk>=0.1.0
 
+# A2A Protocol (R7: Agent-to-Agent communication)
+a2a-sdk>=0.3.0
+
 # Google Cloud Platform
 google-cloud-aiplatform>=1.112.0  # Vertex AI Agent Engine API
 google-auth>=2.23.0  # Authentication for GCP services

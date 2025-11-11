@@ -7,7 +7,7 @@ Enforces:
 - R7: SPIFFE ID included in description
 """
 
-from google.adk.a2a import AgentCard
+from a2a.types import AgentCard
 import os
 import logging
 

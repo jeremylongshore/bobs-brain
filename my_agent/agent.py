@@ -13,8 +13,9 @@ Enforces:
 """
 
 from google.adk.agents import LlmAgent
-from google.adk.runner import Runner
-from google.adk.memory import VertexAiSessionService, VertexAiMemoryBankService
+from google.adk import Runner
+from google.adk.sessions import VertexAiSessionService
+from google.adk.memory import VertexAiMemoryBankService
 import os
 import logging
 from typing import Optional
