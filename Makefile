@@ -241,7 +241,22 @@ dev: setup run-selector ## Setup and run version selector
 prod: docker-v2 ## Production deployment (Docker v2)
 	@echo "$(GREEN)✅ Production deployment started!$(NC)"
 
-.PHONY: help setup test lint format clean docker version benchmark ci all
+#################################
+# Cloud Run Operations
+#################################
+
+rollback: ## Rollback Cloud Run gateway to previous revision
+	@echo "$(YELLOW)🔄 Rolling back gateway to previous revision...$(NC)"
+	@if [ -z "$$PROJECT_ID" ]; then \
+		PROJECT_ID=$$(gcloud config get-value project 2>/dev/null); \
+		if [ -z "$$PROJECT_ID" ]; then \
+			echo "$(RED)ERROR: PROJECT_ID not set and no gcloud project configured$(NC)"; \
+			exit 1; \
+		fi; \
+	fi; \
+	PROJECT_ID=$$PROJECT_ID REGION=$${REGION:-us-central1} bash scripts/rollback_gateway.sh
+
+.PHONY: help setup test lint format clean docker version benchmark ci all rollback
 .PHONY: install-hooks deps format-check type-check
 .PHONY: test-v1 test-v2 test-coverage
 .PHONY: run-v1 run-v2 run-selector
