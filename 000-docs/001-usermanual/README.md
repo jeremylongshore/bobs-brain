@@ -49,6 +49,24 @@ These tutorials serve as implementation references for Bob's Brain hard mode arc
 - R3: Cloud Run as gateway (with proper separation)
 - Agent state management
 
+### 3. Getting Started with Agent Engine - Terraform Deployment
+**File:** `tutorial_get_started_with_agent_engine_terraform_deployment.ipynb`
+**Size:** 49KB
+**Source:** [GoogleCloudPlatform/generative-ai](https://github.com/GoogleCloudPlatform/generative-ai/blob/main/agents/agent_engine/tutorial_get_started_with_agent_engine_terraform_deployment.ipynb)
+
+**Topics Covered:**
+- Terraform infrastructure for Vertex AI Agent Engine
+- Agent Engine resource provisioning
+- Docker container deployment to Agent Engine
+- Infrastructure as Code (IaC) best practices
+- CI/CD integration patterns
+
+**Relevant to:**
+- R2: Vertex AI Agent Engine runtime deployment
+- R4: CI-only deployments (Terraform + GitHub Actions)
+- Phase 4: Infrastructure setup (infra/)
+- Docker container deployment workflow
+
 ---
 
 ## How to Use These Notebooks
@@ -82,6 +100,7 @@ These notebooks demonstrate patterns used in Bob's Brain:
 | **Memory Services** | Dual memory in `create_runner()` (R5) |
 | **Cloud Run Deployment** | Gateways in `service/` (R3 compliant) |
 | **Session Management** | `auto_save_session_to_memory()` callback |
+| **Terraform Deployment** | Infrastructure in `infra/` (Phase 4) |
 
 ---
 
