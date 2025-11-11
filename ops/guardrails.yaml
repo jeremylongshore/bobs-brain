@@ -1,0 +1,29 @@
+# Bob's Brain — Operational Guardrails
+# These thresholds guide SLO enforcement and CI/CD checks
+
+# Latency targets (milliseconds)
+latency_p95_s: 10          # P95 latency must stay under 10 seconds
+latency_p99_s: 15          # P99 latency must stay under 15 seconds
+
+# Error rate targets (percentage)
+error_rate_pct: 5          # Max 5% error rate over 7-day window
+
+# Health check timeouts (seconds)
+health_timeout_s: 5        # Health endpoint must respond in 5s
+invoke_timeout_s: 15       # Invoke endpoint must respond in 15s
+
+# Canary deployment
+canary_window_s: 120       # Canary health checks run for 2 minutes
+canary_percent: 10         # Start with 10% traffic on new revision
+
+# Uptime targets
+uptime_target_pct: 99.5    # 99.5% monthly uptime (3.6h downtime allowed)
+
+# Budget alerts
+budget_alert_thresholds:
+  - 0.80  # Alert at 80% of monthly budget
+  - 1.00  # Alert at 100% of monthly budget
+
+# Synthetic probe
+synthetic_interval_min: 15  # Run synthetic checks every 15 minutes
+synthetic_timeout_s: 5      # Synthetic checks must complete in 5s
