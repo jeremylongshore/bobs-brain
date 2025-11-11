@@ -7,29 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- **Slack Integration** - Added missing Cloud Run environment variables (`SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `LOCATION`)
-  - Bot was not responding due to missing credentials on deployed service
-  - Deployed new revision: `slack-webhook-00016-wx6`
-  - All events were being marked as duplicates (cache cleared with new revision)
+## [0.6.0] - 2025-11-11
 
-### Added
-- **CI/CD Automation** - GitHub Actions workflow for automatic Cloud Run deployments
-  - Triggers on push to main (relevant file changes) or manual dispatch
-  - Deploys with environment variables from GitHub Secrets
-  - Includes endpoint verification testing
-  - Posts deployment summary to workflow run
-- **Documentation**
-  - AAR: Slack Integration Fix (`000-docs/051-AA-REPT-slack-integration-fix.md`)
-  - Guide: GitHub Actions Setup (`000-docs/052-OD-GUID-github-actions-setup.md`)
+### Added - Phase 2: Agent Core + Drift Detection
+
+- **ADK Agent Implementation** (`my_agent/agent.py`)
+  - LlmAgent with Gemini 2.0 Flash model
+  - Dual memory wiring (VertexAiSessionService + VertexAiMemoryBankService)
+  - After-agent callback for automatic session persistence
+  - SPIFFE ID propagation in all logs
+  - Environment variable validation
+  - Comprehensive error handling
+
+- **A2A Protocol Support** (`my_agent/a2a_card.py`)
+  - AgentCard for agent-to-agent discovery
+  - SPIFFE ID included in description (R7 compliance)
+  - JSON serialization for HTTP responses
+
+- **Drift Detection** (`scripts/ci/check_nodrift.sh`)
+  - Scans for alternative frameworks (LangChain, CrewAI, etc.)
+  - Blocks Runner imports in service/ (R3 enforcement)
+  - Detects local GCP credential files (R4 enforcement)
+  - Verifies single docs folder (R6 enforcement)
+  - CI-first pipeline (drift check blocks all other jobs)
+
+- **Configuration**
+  - `.env.example` - Complete environment variable template
+  - All required variables documented with Hard Mode rules
+  - Environment-specific examples (dev, staging, prod)
+
+- **User Manual** (`000-docs/001-usermanual/`)
+  - Google Cloud ADK reference notebooks (2 notebooks, 132KB total)
+  - Multi-agent systems with Claude (102KB)
+  - Memory for ADK in Cloud Run (30KB)
+  - README with implementation guidance
+
+- **Documentation** (6 new documents)
+  - `053-AA-REPT-hardmode-baseline.md` - Phase 1-2 implementation AAR
+  - `054-AT-ALIG-notebook-alignment-checklist.md` - Alignment analysis (70% aligned)
+  - `055-AA-CRIT-import-path-corrections.md` - Critical import fixes
+  - `056-AA-CONF-usermanual-import-verification.md` - Google Cloud notebook compliance
+
+### Fixed
+
+- **Import Paths** - Corrected ADK imports to match google-adk 1.18.0 API
+  - `from google.adk import Runner` (not `google.adk.runner`)
+  - `from google.adk.sessions import VertexAiSessionService` (not from `.memory`)
+  - `from a2a.types import AgentCard` (requires separate `a2a-sdk` package)
+  - All imports verified against official Google Cloud notebooks
+
+- **Dependencies**
+  - Added `a2a-sdk>=0.3.0` for A2A protocol support
+  - Updated requirements.txt with Hard Mode comments
 
 ### Changed
-- **GitHub Secrets** - Updated all required secrets for automated deployments
-  - `SLACK_SIGNING_SECRET` - For webhook signature verification
-  - `SLACK_BOT_TOKEN` - For sending bot responses
-  - `GCP_WORKLOAD_IDENTITY_PROVIDER` - For Google Cloud authentication
-  - `GCP_SERVICE_ACCOUNT` - Service account for deployments
-- **README** - Fixed display issue (removed conflicting `.github/README.md`)
+
+- **CI/CD Pipeline** (`.github/workflows/ci.yml`)
+  - Complete rewrite for Hard Mode enforcement
+  - Drift detection runs FIRST (blocks all other jobs if violations found)
+  - Added structure validation, documentation checks
+  - Terraform validation integrated
+  - 7 parallel jobs after drift check passes
+
+- **CLAUDE.md** - Updated with correct import paths (R5 section)
+- **README.md** - Complete rewrite for Hard Mode architecture
+  - ADK + Agent Engine focus (removed multi-implementation confusion)
+  - Hard Rules (R1-R8) documentation
+  - Phase 2 status and roadmap
+  - Quick start with import verification
+
+### Status: Phase 2 Complete (50% Total Progress)
+
+**Completed:**
+- ✅ Repository structure flattened (8 canonical directories)
+- ✅ Hard Mode rules enforced in CI (R1-R8)
+- ✅ ADK agent implementation with dual memory
+- ✅ A2A protocol AgentCard
+- ✅ Drift detection script
+- ✅ Import paths verified against user manuals
+- ✅ Configuration template created
+
+**Next: Phase 3** - Service gateways (A2A + Slack), Dockerfile, unit tests
 
 ## [0.5.1] - 2025-11-11
 

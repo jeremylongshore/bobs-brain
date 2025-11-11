@@ -79,7 +79,9 @@ These rules are ENFORCED in CI. Any violation will fail the build.
 **Required in `my_agent/agent.py`:**
 ```python
 from google.adk.agents import LlmAgent
-from google.adk.memory import VertexAiSessionService, VertexAiMemoryBankService
+from google.adk import Runner
+from google.adk.sessions import VertexAiSessionService
+from google.adk.memory import VertexAiMemoryBankService
 
 def create_runner():
     session_service = VertexAiSessionService(

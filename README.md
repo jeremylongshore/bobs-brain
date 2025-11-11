@@ -1,15 +1,17 @@
-# 🤖 Bob's Brain
+# 🤖 Bob's Brain - Hard Mode
 
 <div align="center">
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![ADK](https://img.shields.io/badge/Google-ADK-4285F4.svg)](https://cloud.google.com/vertex-ai/docs/agent-development-kit)
+[![Agent Engine](https://img.shields.io/badge/Vertex%20AI-Agent%20Engine-4285F4.svg)](https://cloud.google.com/vertex-ai/docs/agent-engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](https://github.com/jeremylongshore/bobs-brain/releases)
-[![Template](https://img.shields.io/badge/template-ready-brightgreen.svg)](https://github.com/jeremylongshore/bobs-brain/generate)
 
-**Production-ready template for building intelligent Slack AI agents with Google ADK, Vertex AI, and modern LLM frameworks.**
+**Production Slack AI assistant powered by Google ADK and Vertex AI Agent Engine**
 
-[Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](000-docs/) • [Examples](#-features) • [Contributing](#-contributing)
+**Hard Mode:** ADK-only, CI-enforced, drift-protected architecture
+
+[Quick Start](#-quick-start) • [Architecture](#-architecture) • [Hard Rules](#-hard-rules) • [Documentation](000-docs/)
 
 </div>
 
@@ -17,51 +19,94 @@
 
 ## 🎯 What is Bob's Brain?
 
-Bob's Brain is a **battle-tested, production-grade template** for building AI agents that work in Slack. Born from real-world deployments, it gives you everything you need to create intelligent assistants that your team will actually use.
+Bob's Brain is a **production Slack AI assistant** built with Google's Agent Development Kit (ADK) and deployed on Vertex AI Agent Engine. It enforces strict architectural rules ("Hard Mode") to ensure maintainability, scalability, and compliance.
 
-### Why This Template?
+### Hard Mode Principles
 
-✅ **Actually Works in Production** - Not just a demo, this has handled real Slack conversations
-✅ **Multiple Implementation Paths** - ADK, Vertex AI Agent Engine, or custom Flask
-✅ **Knowledge Base Ready** - Semantic search, RAG, and conversation memory built-in
-✅ **Cloud Native** - Terraform IaC, Cloud Run deployment, GitHub Actions CI/CD
-✅ **Learn by Example** - 4 complete implementations archived for reference
-
-### Perfect For
-
-- 🏢 **Teams** building internal Slack assistants
-- 🎓 **Learners** studying AI agent architectures
-- 🚀 **Builders** who want production-ready starting points
-- 🔬 **Researchers** exploring multi-agent patterns
+✅ **ADK-Only** - No alternative frameworks (LangChain, CrewAI, etc.)
+✅ **Agent Engine Runtime** - Managed runtime, not self-hosted
+✅ **CI-Only Deployments** - All deploys via GitHub Actions with WIF
+✅ **Dual Memory** - Session + Memory Bank for conversation continuity
+✅ **Drift Detection** - Automated CI scans block architectural violations
+✅ **SPIFFE Identity** - Immutable agent identity propagated everywhere
+✅ **Gateway Separation** - Cloud Run proxies only (no embedded runners)
+✅ **Single Docs Folder** - All documentation in `000-docs/`
 
 ---
 
 ## 🏗️ Architecture
 
-Bob's Brain uses a **clean, flat scaffold** designed for clarity and extensibility:
+### Canonical Directory Structure
 
 ```
 bobs-brain/
-├── adk/               # Google ADK agent definitions & tools
-├── my_agent/          # Core agent logic and conversation handlers
-├── service/           # API services, webhooks, runtime
-├── infra/             # Terraform IaC for GCP deployment
-├── scripts/           # Deployment automation and helpers
-├── tests/             # Comprehensive test suite
-├── 000-docs/          # Architecture docs, AARs, runbooks
-└── 99-Archive/        # Reference implementations (Flask, Genkit, etc.)
+├── .github/           # CI/CD workflows (drift check, tests, deploy)
+├── 000-docs/          # All documentation (AARs, architecture, runbooks)
+├── my_agent/          # Agent implementation (ADK LlmAgent + tools)
+│   ├── agent.py       # Core agent with dual memory
+│   ├── a2a_card.py    # A2A protocol AgentCard
+│   └── tools/         # Custom tool implementations
+├── service/           # Protocol gateways (proxy to Agent Engine)
+│   ├── a2a_gateway/   # A2A protocol HTTP endpoint
+│   └── slack_webhook/ # Slack event handler
+├── infra/             # Terraform IaC (Agent Engine, Cloud Run, IAM)
+├── scripts/           # CI scripts (drift detection, deployment)
+├── tests/             # Unit and integration tests
+├── .env.example       # Configuration template
+├── requirements.txt   # Python dependencies (google-adk, a2a-sdk)
+├── Dockerfile         # Agent container for Agent Engine
+└── VERSION            # Semantic version (MAJOR.MINOR.PATCH)
 ```
 
-### What Goes Where?
+### Data Flow
 
-| Directory | Purpose | Examples |
-|-----------|---------|----------|
-| **adk/** | ADK agent configs, tool definitions | `agent.yaml`, custom tools |
-| **my_agent/** | Business logic, conversation flow | Message handlers, decision logic |
-| **service/** | HTTP endpoints, Slack webhooks | FastAPI/Flask services, event handlers |
-| **infra/** | Infrastructure as Code | `main.tf`, GCP resources, environments |
-| **scripts/** | Automation, deployment | `deploy.sh`, `setup-env.sh` |
-| **tests/** | All test code | Unit, integration, e2e tests |
+```
+Slack → service/slack_webhook/ (Cloud Run)
+          ↓ (REST API)
+       Vertex AI Agent Engine ← my_agent/ (ADK LlmAgent)
+          ↓
+       Dual Memory (Session + Memory Bank)
+```
+
+---
+
+## ⚡ Hard Rules (R1-R8)
+
+These rules are **enforced in CI**. Violations will fail the build.
+
+### R1: Agent Implementation
+- ✅ **Required:** `google-adk` LlmAgent
+- ❌ **Prohibited:** LangChain, CrewAI, AutoGen, custom frameworks
+
+### R2: Deployed Runtime
+- ✅ **Required:** Vertex AI Agent Engine
+- ❌ **Prohibited:** Self-hosted runners, Cloud Run with embedded Runner
+
+### R3: Cloud Run Gateway Rules
+- ✅ **Allowed:** HTTP gateways that proxy to Agent Engine via REST
+- ❌ **Prohibited:** Importing `Runner`, direct LLM calls, agent logic in gateways
+
+### R4: CI-Only Deployments
+- ✅ **Required:** GitHub Actions with Workload Identity Federation (WIF)
+- ❌ **Prohibited:** Manual `gcloud` commands, service account keys
+
+### R5: Dual Memory Wiring
+- ✅ **Required:** VertexAiSessionService + VertexAiMemoryBankService
+- ✅ **Required:** `after_agent_callback` to persist sessions
+
+### R6: Single Docs Folder
+- ✅ **Required:** All docs in `000-docs/` with NNN-CC-ABCD naming
+- ❌ **Prohibited:** Multiple doc folders, scattered documentation
+
+### R7: SPIFFE ID
+- ✅ **Required:** `spiffe://intent.solutions/agent/bobs-brain/<env>/<region>/<version>`
+- ✅ **Required:** Propagated in AgentCard, logs, HTTP headers
+
+### R8: Drift Detection
+- ✅ **Required:** CI scans for forbidden imports/patterns
+- ❌ **Blocks:** Alternative frameworks, Runner in gateways, local credentials
+
+**Enforcement:** `scripts/ci/check_nodrift.sh` runs first in CI pipeline.
 
 ---
 
@@ -69,327 +114,280 @@ bobs-brain/
 
 ### Prerequisites
 
-- Python 3.10+
-- Google Cloud account (for deployment)
+- Python 3.12+
+- Google Cloud account with Vertex AI enabled
 - Slack workspace with admin access
+- GitHub account (for CI/CD)
 
-### 1. Clone & Setup
+### 1. Environment Setup
 
 ```bash
-# Use this template
+# Clone repository
 git clone https://github.com/jeremylongshore/bobs-brain.git
 cd bobs-brain
 
 # Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Configure Environment
-
-```bash
-# Copy example environment
+# Configure environment
 cp .env.example .env
-
-# Edit .env with your credentials
-# - SLACK_BOT_TOKEN
-# - SLACK_SIGNING_SECRET
-# - GOOGLE_PROJECT_ID
-# - GOOGLE_APPLICATION_CREDENTIALS
+# Edit .env with your values:
+#   - PROJECT_ID (GCP project)
+#   - LOCATION (e.g., us-central1)
+#   - AGENT_ENGINE_ID (created by Terraform)
+#   - AGENT_SPIFFE_ID (immutable identity)
 ```
 
-### 3. Choose Your Path
-
-#### **Option A: Google ADK (Recommended)**
-
-Build agents using Google's official Agent Development Kit:
+### 2. Verify Imports
 
 ```bash
-# Set up ADK agent
-cd adk/
-# Add your agent configuration
-# Deploy to Vertex AI Agent Engine
+# Test that all ADK imports work
+python3 -c "
+from google.adk.agents import LlmAgent
+from google.adk import Runner
+from google.adk.sessions import VertexAiSessionService
+from google.adk.memory import VertexAiMemoryBankService
+from a2a.types import AgentCard
+print('✅ All imports successful')
+"
 ```
 
-#### **Option B: Custom Service**
-
-Build your own service layer:
+### 3. Run Drift Detection
 
 ```bash
-# Develop your service
-cd service/
-# Run locally
-python app.py
+# Verify no hard rule violations
+bash scripts/ci/check_nodrift.sh
 ```
 
-#### **Option C: Learn from Archives**
-
-Study complete implementations:
+### 4. Deploy (CI Only)
 
 ```bash
-# Explore archived implementations
-cd 99-Archive/2025-11-11-final-cleanup/
-# - 2025-11-10-adk-agent/        (ADK implementation)
-# - 2025-11-10-bob-vertex-agent/ (Vertex AI)
-# - 2025-11-10-genkit-agent/     (Genkit framework)
-# - 2025-11-11/                  (Flask modular v5)
+# Push to main branch (triggers CI/CD)
+git add .
+git commit -m "feat: your feature description"
+git push origin main
+
+# GitHub Actions will:
+# 1. Run drift detection
+# 2. Run tests
+# 3. Build Docker container
+# 4. Deploy to Vertex AI Agent Engine
+# 5. Deploy Cloud Run gateways
 ```
-
-### 4. Deploy to Production
-
-```bash
-# Deploy with Terraform
-cd infra/
-terraform init
-terraform plan
-terraform apply
-
-# Or use deployment scripts
-./scripts/deploy.sh production
-```
-
----
-
-## ✨ Features
-
-### 🧠 **Knowledge Base Integration**
-
-- **Vector Search** - Semantic search over documentation
-- **RAG (Retrieval-Augmented Generation)** - Context-aware responses
-- **Conversation Memory** - Multi-turn dialogue with context
-
-### 💬 **Slack Integration**
-
-- **Event Handling** - Respond to mentions, DMs, reactions
-- **Rich Messages** - Blocks, attachments, interactive components
-- **Thread Support** - Maintain conversation context in threads
-
-### ☁️ **Cloud Native**
-
-- **Google Cloud** - Cloud Run, Vertex AI, Secret Manager
-- **Infrastructure as Code** - Terraform modules included
-- **CI/CD** - GitHub Actions workflows for testing & deployment
-
-### 🔧 **Developer Experience**
-
-- **Multiple LLM Providers** - Claude, Gemini, GPT-4, Groq
-- **Local Development** - Test without deploying
-- **Comprehensive Tests** - Unit, integration, e2e coverage
-- **Observability** - Structured logging, error tracking
 
 ---
 
 ## 📚 Documentation
 
-### Essential Reading
-
-- **[000-docs/](000-docs/)** - Primary documentation directory
-  - Architecture decision records
-  - After-action reports (AARs)
-  - Operational runbooks
-  - Deployment guides
-
 ### Key Documents
 
-| Document | Description |
-|----------|-------------|
-| [001-AA-REPT-night-wrap-2025-11-11.md](000-docs/001-AA-REPT-night-wrap-2025-11-11.md) | Repository restructuring AAR |
-| [050-AA-REPT-final-cleanup.md](000-docs/050-AA-REPT-final-cleanup.md) | Canonical structure enforcement |
+- **[CLAUDE.md](CLAUDE.md)** - Hard Mode rules and enforcement (800+ lines)
+- **[000-docs/053-AA-REPT-hardmode-baseline.md](000-docs/053-AA-REPT-hardmode-baseline.md)** - Phase 1-2 implementation AAR
+- **[000-docs/054-AT-ALIG-notebook-alignment-checklist.md](000-docs/054-AT-ALIG-notebook-alignment-checklist.md)** - Alignment with Google Cloud patterns
+- **[000-docs/055-AA-CRIT-import-path-corrections.md](000-docs/055-AA-CRIT-import-path-corrections.md)** - Import path verification
+- **[000-docs/056-AA-CONF-usermanual-import-verification.md](000-docs/056-AA-CONF-usermanual-import-verification.md)** - User manual compliance
+- **[.env.example](.env.example)** - Configuration template with all required variables
 
-### Learning Path
+### User Manual (Google Cloud Notebooks)
 
-1. **Start Here** - Read this README
-2. **Understand Structure** - Review [000-docs/](000-docs/)
-3. **Pick Implementation** - Choose ADK, Vertex, or Custom
-4. **Study Archives** - Learn from complete implementations in [99-Archive/](99-Archive/)
-5. **Build Your Agent** - Customize and deploy
+- **[000-docs/001-usermanual/](000-docs/001-usermanual/)** - Official ADK reference notebooks
+  - Multi-agent systems with Claude (102KB)
+  - Memory for ADK in Cloud Run (30KB)
+
+### Document Filing System
+
+All docs follow `NNN-CC-ABCD-description.md` format:
+- **NNN**: Sequential number (001-999)
+- **CC**: Category (PP, AT, TQ, OD, LS, RA, MC, PM, DR, UC, BL, RL, AA, WA, DD, MS)
+- **ABCD**: Document type (ARCH, REPT, ALIG, CRIT, CONF, etc.)
+- **description**: 1-4 words in kebab-case
 
 ---
 
-## 🛠️ Development
-
-### Available Commands
+## 🧪 Testing
 
 ```bash
-# Run tests
-make test
+# Run unit tests
+pytest tests/unit/
 
-# Format code
-make fmt
+# Run integration tests
+pytest tests/integration/
 
-# Type checking
-make type-check
-
-# Security scan
-make security-check
-
-# Run all checks before commit
-make check-all
-
-# Deploy to Cloud Run
-make deploy
-```
-
-### Testing
-
-```bash
 # Run all tests
 pytest
 
-# Run specific test file
-pytest tests/test_agent.py
-
-# Run with coverage
+# Check coverage
 pytest --cov=my_agent --cov-report=html
-
-# Run integration tests
-pytest tests/integration/ -v
-```
-
-### Local Development
-
-```bash
-# Start development server
-python service/app.py
-
-# With hot reload
-uvicorn service.app:app --reload
-
-# Test Slack webhook locally (requires ngrok)
-ngrok http 8000
-# Update Slack webhook URL to ngrok URL
 ```
 
 ---
 
-## 🗂️ Archive: Reference Implementations
+## 🛠️ Development Workflow
 
-The `99-Archive/` directory contains **4 complete, production-tested implementations** preserved for learning:
+### 1. Create Feature Branch
 
-### 1. **Flask Modular Agent (v5)** - `2025-11-11/`
-- Modular Flask architecture
-- Multi-provider LLM support (Claude, Gemini, GPT-4, Groq, Ollama)
-- Circle-of-Life learning system
-- LlamaIndex knowledge integration
+```bash
+git checkout -b feature/your-feature
+```
 
-### 2. **Vertex AI Agent Engine** - `2025-11-10-bob-vertex-agent/`
-- Google Cloud managed agent
-- Vertex AI Gemini integration
-- Cloud Functions webhooks
-- Production deployment ready
+### 2. Implement Changes
 
-### 3. **ADK Implementation** - `2025-11-10-adk-agent/`
-- Google Agent Development Kit
-- Agent Starter Pack patterns
-- Tool definitions and schemas
-- A2A (Agent-to-Agent) protocol
+- Edit code in `my_agent/` (agent logic)
+- Edit code in `service/` (gateways only - no Runner imports)
+- Add tests in `tests/`
+- Update docs in `000-docs/`
 
-### 4. **Genkit Framework** - `2025-11-10-genkit-agent/`
-- Full-stack AI framework
-- TypeScript/JavaScript implementation
-- Firebase integration
-- Prompt engineering patterns
+### 3. Run Local Checks
 
-**Why Keep Archives?**
+```bash
+# Drift detection
+bash scripts/ci/check_nodrift.sh
 
-Each implementation teaches different patterns:
-- **Flask**: Traditional web framework approach
-- **Vertex AI**: Fully managed Google Cloud solution
-- **ADK**: Official Google agent framework
-- **Genkit**: Modern full-stack AI development
+# Tests
+pytest
 
-Study them, learn from them, and choose your path.
+# Linting
+flake8 my_agent/ service/
+black --check my_agent/ service/
+mypy my_agent/ service/
+```
+
+### 4. Commit & Push
+
+```bash
+git add .
+git commit -m "feat(scope): description
+
+Details about the change
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+"
+git push origin feature/your-feature
+```
+
+### 5. Create Pull Request
+
+- CI will run drift detection, tests, and validation
+- Merge only if all checks pass
+
+---
+
+## 🔧 Configuration
+
+### Required Environment Variables
+
+```bash
+# Google Cloud
+PROJECT_ID=your-gcp-project-id
+LOCATION=us-central1
+AGENT_ENGINE_ID=your-agent-engine-id
+
+# Agent Identity (R7)
+AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.6.0
+
+# Application
+APP_NAME=bobs-brain
+APP_VERSION=0.6.0
+
+# Slack (optional)
+SLACK_BOT_TOKEN=xoxb-your-token
+SLACK_SIGNING_SECRET=your-secret
+
+# Gateway URLs (R3)
+PUBLIC_URL=https://your-a2a-gateway.run.app
+```
+
+See [.env.example](.env.example) for complete configuration template.
+
+---
+
+## 🚨 Troubleshooting
+
+### ImportError: cannot import Runner
+
+**Cause:** Violates R3 (Cloud Run as proxy only)
+
+**Fix:** Remove `Runner` imports from `service/`. Use REST API calls to Agent Engine.
+
+### CI failed: Drift violations detected
+
+**Cause:** Forbidden imports found (LangChain, Runner in gateway, etc.)
+
+**Fix:** Check `scripts/ci/check_nodrift.sh` output and remove violations.
+
+### Deploy failed: Agent Engine not found
+
+**Cause:** Agent Engine hasn't been bootstrapped
+
+**Fix:**
+1. Set `TF_VAR_allow_agent_engine_bootstrap=true` in Terraform (ONCE, CI only)
+2. Verify Agent Engine exists in Vertex AI console
+
+---
+
+## 📊 Project Status
+
+### Completed (Phase 1-2)
+
+- ✅ Flattened repository structure (canonical 8-directory tree)
+- ✅ Hard Mode rules documented (R1-R8) in CLAUDE.md
+- ✅ ADK LlmAgent implementation with dual memory
+- ✅ A2A protocol AgentCard
+- ✅ Drift detection script (`check_nodrift.sh`)
+- ✅ CI/CD workflows with drift-first pipeline
+- ✅ Import path verification (aligned with Google Cloud notebooks)
+- ✅ Configuration template (.env.example)
+- ✅ User manual reference notebooks
+
+### In Progress (Phase 3)
+
+- 🟡 Service gateways (A2A + Slack) - proxy only
+- 🟡 Dockerfile for Agent Engine container
+- 🟡 Unit tests for my_agent/
+
+### Planned (Phase 4)
+
+- ⏳ Terraform infrastructure (Agent Engine, Cloud Run, IAM)
+- ⏳ GitHub Actions deployment workflows
+- ⏳ Production deployment validation
 
 ---
 
 ## 🤝 Contributing
 
-### This is a Template Repository
+This repository follows strict architectural rules (Hard Mode). Before contributing:
 
-Bob's Brain is designed to be **forked and customized**. Here's how to make it yours:
+1. Read [CLAUDE.md](CLAUDE.md) completely
+2. Understand all 8 hard rules (R1-R8)
+3. Run `bash scripts/ci/check_nodrift.sh` locally
+4. Ensure all tests pass
+5. Update documentation in `000-docs/`
 
-1. **Fork or Use Template** - Click "Use this template" on GitHub
-2. **Customize** - Adapt to your use case
-3. **Deploy** - Ship your agent to production
-4. **Share Back** - Submit PRs if you add reusable features
-
-### Contribution Guidelines
-
-- Follow the canonical structure
-- Document in `000-docs/` using the [Document Filing System v2.0](000-docs/README.md)
-- Add tests for new features
-- Update README if you change architecture
+**All pull requests must pass drift detection and CI checks.**
 
 ---
 
-## 🏷️ Versioning & Releases
+## 📄 License
 
-We follow [Semantic Versioning](https://semver.org/):
-
-- **v0.4.0** (Current) - Canonical scaffold structure
-- **v0.5.1** - Night Wrap repository cleanup
-- **v1.0.0** - Flask v5 modular agent
-- **v5.0.0** - Sovereign modular agent
-- **v6.1.0** - Latest archived implementation
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-## 📜 License
+## 🔗 Resources
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-**TL;DR**: Fork it, customize it, deploy it, sell it. Just keep the license notice.
-
----
-
-## 🌟 Related Projects
-
-- [Google ADK](https://github.com/google/adk-python) - Official Google Agent Development Kit
-- [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/docs/agent-engine) - Managed agent platform
-- [Genkit](https://firebase.google.com/docs/genkit) - Full-stack AI framework
-- [LangChain](https://www.langchain.com/) - LLM application framework
+- **Google ADK Docs:** https://cloud.google.com/vertex-ai/docs/agent-development-kit
+- **Vertex AI Agent Engine:** https://cloud.google.com/vertex-ai/docs/agent-engine
+- **A2A Protocol:** https://github.com/google/adk-python/blob/main/docs/a2a.md
+- **SPIFFE Spec:** https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE.md
 
 ---
 
-## 📞 Support & Community
-
-- **Issues**: [GitHub Issues](https://github.com/jeremylongshore/bobs-brain/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jeremylongshore/bobs-brain/discussions)
-- **Documentation**: [000-docs/](000-docs/)
-
----
-
-## 🎓 Learning Resources
-
-### Architecture Patterns
-
-- **Multi-Agent Systems** - See ADK implementation
-- **RAG (Retrieval-Augmented Generation)** - Study knowledge base integration
-- **Event-Driven Design** - Review Slack webhook handlers
-- **Infrastructure as Code** - Explore Terraform modules
-
-### Best Practices
-
-- **Document Everything** - See our [000-docs/](000-docs/) structure
-- **Test Comprehensively** - Review [tests/](tests/) directory
-- **Archive Thoughtfully** - Learn from [99-Archive/](99-Archive/)
-- **Version Rigorously** - Check [CHANGELOG.md](CHANGELOG.md)
-
----
-
-<div align="center">
-
-**Built with ❤️ for the AI agent community**
-
-[⭐ Star this repo](https://github.com/jeremylongshore/bobs-brain) • [🍴 Fork it](https://github.com/jeremylongshore/bobs-brain/fork) • [📖 Read the docs](000-docs/)
-
----
-
-**Version 0.4.0** • Last Updated: 2025-11-11 • [Release Notes](https://github.com/jeremylongshore/bobs-brain/releases/tag/v0.4.0)
-
-</div>
+**Last Updated:** 2025-11-11
+**Version:** 0.6.0
+**Status:** Phase 2 Complete (Agent Core + Drift Detection)
