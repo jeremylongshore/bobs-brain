@@ -1,18 +1,39 @@
-# Bob Unified Agent Requirements
+# Bob's Brain - Python Dependencies
+# Hard Mode: ADK + Agent Engine only (R1, R2)
+# Last Updated: 2025-11-11
 
-# Core dependencies
-slack_sdk>=3.20.0
-chromadb>=0.4.0
-python-dotenv>=1.0.0
+# Core ADK (R1: Agent implementation framework)
+google-adk>=0.1.0
 
-# Data processing
-pandas>=2.0.0
-numpy>=1.24.0
+# Google Cloud Platform
+google-cloud-aiplatform>=1.112.0  # Vertex AI Agent Engine API
+google-auth>=2.23.0  # Authentication for GCP services
+google-cloud-logging>=3.8.0  # Structured logging
 
-# Optional: Enhanced features
-openai>=1.0.0  # Optional for enhanced responses
+# Gateway dependencies (service/)
+fastapi>=0.104.0  # A2A gateway HTTP endpoints (R3: proxy only)
+httpx>=0.25.0  # Async HTTP client for Agent Engine REST API
+pydantic>=2.4.0  # Request/response models
+uvicorn[standard]>=0.24.0  # ASGI server
 
-# Development dependencies (optional)
-pytest>=7.0.0
-black>=23.0.0
-flake8>=6.0.0
+# Slack integration (optional - for service/slack_webhook/)
+slack-sdk>=3.23.0  # Slack Bot API
+slack-bolt>=1.18.0  # Slack event handling
+python-dotenv>=1.0.0  # Environment variable management
+
+# Observability (R7: SPIFFE propagation)
+opentelemetry-api>=1.21.0  # OpenTelemetry SDK
+opentelemetry-sdk>=1.21.0
+opentelemetry-exporter-gcp-trace>=1.5.0  # Google Cloud Trace
+
+# Development & Testing
+pytest>=7.4.0  # Testing framework
+pytest-asyncio>=0.21.0  # Async test support
+pytest-cov>=4.1.0  # Coverage reporting
+
+# Code Quality
+black>=23.10.0  # Code formatting
+flake8>=6.1.0  # Linting
+mypy>=1.6.0  # Type checking
+bandit>=1.7.5  # Security scanning
+safety>=2.3.0  # Dependency vulnerability scanning
