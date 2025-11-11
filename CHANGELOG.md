@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Slack Integration** - Added missing Cloud Run environment variables (`SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, `LOCATION`)
+  - Bot was not responding due to missing credentials on deployed service
+  - Deployed new revision: `slack-webhook-00016-wx6`
+  - All events were being marked as duplicates (cache cleared with new revision)
+
+### Added
+- **CI/CD Automation** - GitHub Actions workflow for automatic Cloud Run deployments
+  - Triggers on push to main (relevant file changes) or manual dispatch
+  - Deploys with environment variables from GitHub Secrets
+  - Includes endpoint verification testing
+  - Posts deployment summary to workflow run
+- **Documentation**
+  - AAR: Slack Integration Fix (`000-docs/051-AA-REPT-slack-integration-fix.md`)
+  - Guide: GitHub Actions Setup (`000-docs/052-OD-GUID-github-actions-setup.md`)
+
+### Changed
+- **GitHub Secrets** - Updated all required secrets for automated deployments
+  - `SLACK_SIGNING_SECRET` - For webhook signature verification
+  - `SLACK_BOT_TOKEN` - For sending bot responses
+  - `GCP_WORKLOAD_IDENTITY_PROVIDER` - For Google Cloud authentication
+  - `GCP_SERVICE_ACCOUNT` - Service account for deployments
+- **README** - Fixed display issue (removed conflicting `.github/README.md`)
+
 ## [0.5.1] - 2025-11-11
 
 ### Changed
