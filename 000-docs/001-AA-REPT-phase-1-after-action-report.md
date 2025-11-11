@@ -232,12 +232,38 @@ variable "region" {
 
 ---
 
+## Phase 1.1 Hotfix Applied (2025-11-10)
+
+**Issue:** Verification gate revealed `google.adk.serving.fastapi` module does not exist in ADK 1.18.0, causing server startup failure.
+
+**Resolution:** Switched to ADK's built-in API server (`adk api_server`) instead of custom FastAPI implementation.
+
+**Changes:**
+- **Makefile:** Changed `dev` target from `uvicorn main:app` to `adk api_server`
+- **scripts/smoke_test.sh:** Updated to test ADK API Server endpoints (`/list-apps`, `/run`)
+- **tests/integration/test_api_server.py:** Added integration test for server startup
+- **requirements.txt:** Added `requests>=2.32.3` and `pytest>=8.0.0`
+- **README.md:** Updated quickstart to use ADK API Server endpoints
+- **my_agent/agent.py:** No changes - VertexAiSessionService and VertexAiMemoryBankService remain intact
+
+**New Endpoints (ADK API Server on :8000):**
+- `GET /list-apps` - List available apps
+- `POST /run` - Execute agent (single response)
+- `POST /run_sse` - Execute agent (streaming SSE)
+- Session management routes
+
+**Why This Works:**
+- ADK API Server is the officially supported serving layer
+- Memory Bank + Session services remain wired in the Runner (no changes)
+- Same callbacks, same auto-save behavior
+- Custom A2A routes and Agent Engine bootstrap deferred to Phase 2
+
 ## Next Steps
 
-### Immediate (Phase 1 Completion)
-1. ✅ Commit all changes to `feat/phase-1-scaffold`
+### Immediate (Phase 1.1 Completion)
+1. ✅ Commit hotfix changes to `fix/phase-1.1-adk-api-server`
 2. ✅ Push branch to GitHub
-3. ✅ Open PR: "Phase 1: Scaffold + ADK + A2A + Memory + Terraform"
+3. ✅ Open PR: "Phase 1.1: Fix startup with ADK API Server"
 4. ✅ Request review
 
 ### Phase 2 Planning
