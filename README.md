@@ -347,11 +347,113 @@ gcloud run revisions describe REVISION_NAME \
   --format="value(status.conditions)"
 ```
 
+## Operations
+
+### Observability
+
+**Dashboard:** Cloud Monitoring dashboard "Bob Gateway — Prod"
+```bash
+# View dashboard in Cloud Console
+https://console.cloud.google.com/monitoring/dashboards/custom/[DASHBOARD_ID]?project=PROJECT_ID
+```
+
+**Metrics tracked:**
+- P95 latency (target: ≤ 10s)
+- Error rate (target: ≤ 5%)
+- Request count
+- Container instance count
+
+**Alert Policies:**
+- **Latency Alert:** Fires when P95 > 10s for 5 minutes
+- **Error Rate Alert:** Fires when error rate > 5% for 5 minutes
+
+### SLOs (Service Level Objectives)
+
+See `000-docs/ops/SLOs.md` for complete SLO documentation.
+
+**Key SLOs:**
+- Gateway P95 latency ≤ 10s (7-day window)
+- Gateway error rate ≤ 5% (7-day window)
+- Service uptime ≥ 99.5% monthly
+- Canary fail-stop within 2 minutes
+
+### Budget Monitoring
+
+**Monthly Budget:** Configured via Terraform (`budget_amount_usd` variable)
+
+**Alerts:**
+- 80% of budget → Warning notification
+- 100% of budget → Critical notification
+
+### Synthetic Checks
+
+**Schedule:** Every 15 minutes via GitHub Actions
+
+**Workflow:** `.github/workflows/synthetic.yaml`
+
+**Checks performed:**
+- Health endpoint (/_health)
+- Invoke endpoint (/invoke)
+- Card endpoint (/card)
+
+**Timeout:** 5 seconds per check
+
+### Rollback
+
+**Quick rollback to previous revision:**
+```bash
+make rollback
+```
+
+**Manual rollback:**
+```bash
+# List revisions
+gcloud run revisions list \
+  --service=bobs-brain-gateway \
+  --region=us-central1 \
+  --limit=5
+
+# Rollback to specific revision
+gcloud run services update-traffic bobs-brain-gateway \
+  --region=us-central1 \
+  --to-revisions REVISION_NAME=100
+```
+
+### Feature Flags
+
+Gateway supports environment variable-based feature flags:
+
+```bash
+# Enable/disable features via Terraform env variable
+FF_SLACK=true        # Enable Slack integration
+FF_STREAMING=true    # Enable streaming endpoints
+FF_DEBUG=false       # Disable debug mode
+```
+
+**Available flags:**
+- `FF_SLACK` - Slack webhook integration (default: false)
+- `FF_STREAMING` - Streaming invoke endpoint (default: true)
+
+### A2A Peer Registry
+
+**Endpoint:** `GET /a2a/peers`
+
+**Registry file:** `a2a/peers.json`
+
+**Documentation:** `000-docs/a2a/REGISTRY.md`
+
+**Example query:**
+```bash
+curl $GATEWAY_URL/a2a/peers | jq
+```
+
 ## Documentation
 
 See `000-docs/` for detailed documentation:
 - Architecture diagrams
 - After-Action Reports (AARs)
+- SLOs and operational guardrails (`000-docs/ops/`)
+- A2A protocol and peer registry (`000-docs/a2a/`)
 - Deployment runbooks
 - Troubleshooting guides
 
