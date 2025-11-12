@@ -1,0 +1,10 @@
+# Slack Webhook Requirements
+
+# FastAPI framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# HTTP client for Agent Engine and Slack API calls
+httpx>=0.27.0
+
+# Python standard libraries (no additional deps needed)

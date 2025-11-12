@@ -130,6 +130,36 @@ While these notebooks are excellent references, Bob's Brain enforces stricter ru
 
 ---
 
+## Deployment Status
+
+### Production System (Already Deployed) ✅
+
+**Location:** `bob-vertex-agent/`
+
+Bob's Brain is **already deployed and running** in production:
+- **Project:** `bobs-brain`
+- **Slack webhook:** `https://slack-webhook-eow2wytafa-uc.a.run.app`
+- **Runtime:** Vertex AI Agent Engine + Cloud Functions
+- **Status:** Operational ✅
+
+**No redeployment needed.** The production system is working.
+
+### Hard Mode Implementation (Reference/Code Complete)
+
+**Location:** `my_agent/`, `service/`, `infra/terraform/`
+
+The Hard Mode version is **code complete** but **not deployed**:
+- All phases complete (1-4)
+- Terraform infrastructure ready
+- Docker configurations prepared
+- Documentation comprehensive
+
+**Purpose:** Reference implementation demonstrating Hard Mode architecture (R1-R8 compliance).
+
+**Decision:** No deployment planned. Existing production system is sufficient.
+
+---
+
 ## Notes
 
 - These notebooks are maintained by Google Cloud
@@ -143,3 +173,4 @@ While these notebooks are excellent references, Bob's Brain enforces stricter ru
 **Category:** User Manual
 **Audience:** Developers implementing agents with ADK
 **Maintenance:** Download latest versions periodically from source repos
+**Deployment Status:** Production system deployed in `bob-vertex-agent/`, Hard Mode reference in `my_agent/`

@@ -32,6 +32,21 @@ Bob's Brain is a **production Slack AI assistant** built with Google's Agent Dev
 ✅ **Gateway Separation** - Cloud Run proxies only (no embedded runners)
 ✅ **Single Docs Folder** - All documentation in `000-docs/`
 
+### Built from Template
+
+Bob's Brain is built from the **Intent Agent Model (IAM1)** template:
+
+**Template Repository:** [iam1-intent-agent-model-vertex-ai](https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai)
+
+The template provides:
+- Hard Mode architecture (R1-R8 rules)
+- ADK + Agent Engine foundation
+- Terraform infrastructure boilerplate
+- CI/CD workflows with drift detection
+- Complete documentation structure
+
+Bob's Brain is a **specific implementation** of this template for Slack integration.
+
 ---
 
 ## 🏗️ Architecture

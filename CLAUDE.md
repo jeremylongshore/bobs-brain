@@ -13,6 +13,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Location:** `/home/jeremy/000-projects/iams/bobs-brain/`
 **Status:** Production (Hard Mode - CI-only, ADK+Agent Engine enforced)
 **Version:** See VERSION file
+**Repository:** https://github.com/jeremylongshore/bobs-brain (public)
+
+**Built from Template:** [iam1-intent-agent-model-vertex-ai](https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai)
+- The template repository provides the Hard Mode architecture (R1-R8)
+- Bob's Brain is a specific implementation for Slack integration
+- Template is the source for new agent projects
 
 ---
 
