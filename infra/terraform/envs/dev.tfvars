@@ -39,3 +39,8 @@ labels = {
   cost_center = "development"
   team        = "platform"
 }
+
+# ADK Deployment Configuration
+# Staging bucket created by storage.tf (output: staging_bucket_url)
+# Used by: adk deploy agent_engine --staging_bucket
+# Format: gs://<project-id>-adk-staging

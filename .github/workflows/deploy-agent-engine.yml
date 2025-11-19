@@ -1,0 +1,111 @@
+name: Deploy to Vertex AI Agent Engine
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation (R4)
+
+jobs:
+  deploy-agent-engine:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ADK CLI
+        run: |
+          pip install --upgrade pip
+          pip install 'google-adk>=1.15.1'
+          adk --version
+
+      - name: Authenticate to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify authentication
+        run: |
+          gcloud auth list
+          gcloud config list project
+
+      - name: Deploy to Agent Engine
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          REGION: ${{ secrets.REGION }}
+          STAGING_BUCKET: ${{ secrets.STAGING_BUCKET }}
+          ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+        run: |
+          echo "🚀 Deploying Bob's Brain to Vertex AI Agent Engine..."
+          echo "Environment: $ENVIRONMENT"
+          echo "Project: $PROJECT_ID"
+          echo "Region: $REGION"
+
+          adk deploy agent_engine my_agent \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --staging_bucket "$STAGING_BUCKET" \
+            --display_name "bobs-brain-$ENVIRONMENT" \
+            --description "Bob's Brain AI Assistant - Deployed from GitHub Actions" \
+            --trace_to_cloud \
+            --env_file .env.example
+
+      - name: Verify deployment
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          REGION: ${{ secrets.REGION }}
+        run: |
+          echo "✅ Agent Engine deployment complete!"
+          echo ""
+          echo "📊 View in GCP Console:"
+          echo "https://console.cloud.google.com/vertex-ai/agent-engine?project=$PROJECT_ID"
+          echo ""
+          echo "🔍 View Cloud Trace:"
+          echo "https://console.cloud.google.com/traces/list?project=$PROJECT_ID"
+          echo ""
+          echo "📈 View Monitoring:"
+          echo "https://console.cloud.google.com/monitoring?project=$PROJECT_ID"
+
+      - name: Get Agent Engine ID
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          REGION: ${{ secrets.REGION }}
+        run: |
+          echo "Fetching Agent Engine ID..."
+          gcloud ai reasoning-engines list \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --filter="displayName:bobs-brain" \
+            --format="table(name,displayName,createTime,updateTime)"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check logs above for error details"
+          echo "Contact: claude.buildcaptain@intentsolutions.io"
+          exit 1
