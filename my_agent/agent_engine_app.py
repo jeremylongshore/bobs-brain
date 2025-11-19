@@ -23,7 +23,7 @@ Enforces:
 - R7: SPIFFE ID propagation
 """
 
-from my_agent.agent import create_runner
+from .agent import create_runner
 import logging
 import os
 
