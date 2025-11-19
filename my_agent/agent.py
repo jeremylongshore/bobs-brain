@@ -215,7 +215,7 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
 
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
-        name="bobs-brain",  # Required: Agent name for identification
+        name="bobs_brain",  # Required: Valid Python identifier (no hyphens)
         tools=[
             # ADK Documentation Tools (Phase 2: Local file search)
             search_adk_docs,  # Keyword search across all ADK documentation
