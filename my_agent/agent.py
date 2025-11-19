@@ -16,12 +16,12 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from my_agent.tools.adk_tools import (
+from .tools.adk_tools import (
     search_adk_docs,
     get_adk_api_reference,
     list_adk_documentation,
 )
-from my_agent.tools.vertex_search_tool import search_vertex_ai, get_vertex_search_status
+from .tools.vertex_search_tool import search_vertex_ai, get_vertex_search_status
 import os
 import logging
 from typing import Optional
