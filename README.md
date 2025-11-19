@@ -196,15 +196,188 @@ git push origin main
 
 ---
 
+## 🚀 Deployment to Vertex AI Agent Engine
+
+Bob's Brain deploys to **Vertex AI Agent Engine** using ADK CLI with full CI/CD automation.
+
+### Deployment Architecture
+
+```
+GitHub Actions (WIF)
+    ↓
+ADK CLI (adk deploy agent_engine)
+    ↓
+Vertex AI Agent Engine (Managed Runtime)
+    ↑
+Cloud Run Gateways (A2A + Slack) - REST API Proxy
+```
+
+### Prerequisites
+
+Before deploying, ensure:
+
+- ✅ **GCP Project** - With Vertex AI and Cloud Run APIs enabled
+- ✅ **GitHub Secrets** - WIF provider, service account, project ID, region, staging bucket
+- ✅ **Terraform State** - Infrastructure applied (`infra/terraform/`)
+- ✅ **Staging Bucket** - Created by Terraform (`gs://<project-id>-adk-staging`)
+
+### Deployment Workflow
+
+**Automatic (Recommended):**
+```bash
+# Push to main branch
+git push origin main
+
+# GitHub Actions automatically:
+# 1. Runs drift detection (blocks if violations found)
+# 2. Runs tests
+# 3. Authenticates via Workload Identity Federation (no keys!)
+# 4. Deploys agent to Agent Engine with --trace_to_cloud
+# 5. Deploys Cloud Run gateways
+```
+
+**Manual Trigger:**
+1. Go to: https://github.com/jeremylongshore/bobs-brain/actions/workflows/deploy-agent-engine.yml
+2. Click "Run workflow"
+3. Select environment: `dev`, `staging`, or `prod`
+4. Click "Run workflow"
+
+### ADK CLI Deployment Command
+
+The workflow executes:
+
+```bash
+adk deploy agent_engine my_agent \
+  --project "bobs-brain-dev" \
+  --region "us-central1" \
+  --staging_bucket "gs://bobs-brain-dev-adk-staging" \
+  --display_name "bobs-brain-dev" \
+  --description "Bob's Brain AI Assistant - Deployed from GitHub Actions" \
+  --trace_to_cloud \
+  --env_file .env.example
+```
+
+**What this does:**
+1. Packages agent code from `my_agent/`
+2. Uses `my_agent/agent_engine_app.py` as entrypoint (exports `app` variable)
+3. Builds Docker container
+4. Uploads to staging bucket
+5. Deploys to Agent Engine
+6. **Enables Cloud Trace automatically** (`--trace_to_cloud` flag)
+
+### Required GitHub Secrets
+
+Configure in repository settings (Settings → Secrets → Actions):
+
+| Secret | Description | Example |
+|--------|-------------|---------|
+| `WIF_PROVIDER` | Workload Identity Federation provider | `projects/123.../providers/github-oidc` |
+| `WIF_SERVICE_ACCOUNT` | Service account email for deployments | `github-actions@bobs-brain-dev.iam.gserviceaccount.com` |
+| `PROJECT_ID` | GCP project ID | `bobs-brain-dev` |
+| `REGION` | Deployment region | `us-central1` |
+| `STAGING_BUCKET` | GCS staging bucket URL | `gs://bobs-brain-dev-adk-staging` |
+
+**Setup Guide:** See [000-docs/068-OD-CONF-github-secrets-configuration.md](000-docs/068-OD-CONF-github-secrets-configuration.md)
+
+### Deployment Verification
+
+After deployment completes:
+
+**1. Check Agent Engine:**
+```bash
+gcloud ai reasoning-engines list \
+  --project=bobs-brain-dev \
+  --region=us-central1 \
+  --filter="displayName:bobs-brain"
+```
+
+**2. Check Cloud Trace (automatic telemetry):**
+```
+https://console.cloud.google.com/traces/list?project=bobs-brain-dev
+```
+
+**3. Check Cloud Logging:**
+```
+https://console.cloud.google.com/logs/query?project=bobs-brain-dev&query=resource.type="aiplatform.googleapis.com/AgentEngine"
+```
+
+**4. Test A2A Gateway:**
+```bash
+curl https://bobs-brain-a2a-gateway-HASH.run.app/card | jq
+```
+
+**5. Test Agent Invocation:**
+```bash
+curl -X POST https://bobs-brain-a2a-gateway-HASH.run.app/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is ADK?", "session_id": "test"}'
+```
+
+### Observability (Automatic with --trace_to_cloud)
+
+**Cloud Trace** - Distributed tracing of every agent invocation:
+- Agent execution timing
+- Memory operations (Session + Memory Bank)
+- Model inference latency
+- Tool execution spans
+
+**Cloud Logging** - Structured logs with SPIFFE ID:
+- Agent invocations
+- Memory auto-save operations
+- Error stack traces
+
+**Cloud Monitoring** - Performance metrics:
+- Request count
+- Response time (P50, P95, P99)
+- Error rate
+- Token usage
+
+**Error Reporting** - Exception tracking and grouping
+
+**See:** [000-docs/069-OD-TELE-observability-telemetry-guide.md](000-docs/069-OD-TELE-observability-telemetry-guide.md)
+
+### Deployment Runbook
+
+For complete step-by-step deployment instructions:
+
+**📖 [000-docs/070-OD-RBOK-deployment-runbook.md](000-docs/070-OD-RBOK-deployment-runbook.md)**
+
+Includes:
+- Prerequisites checklist
+- 7-phase deployment process (~2 hours)
+- Verification steps
+- Rollback procedures
+- Troubleshooting guide
+
+### Key Features
+
+✅ **Automatic Telemetry** - Cloud Trace enabled with single flag
+✅ **Dual Memory Persistence** - Session Service + Memory Bank auto-save
+✅ **SPIFFE ID Propagation** - Immutable identity in all logs/traces
+✅ **WIF Authentication** - No service account keys (R4 compliance)
+✅ **Drift Protection** - CI blocks architectural violations
+✅ **Gateway Separation** - Cloud Run as thin proxy (R3 compliance)
+
+---
+
 ## 📚 Documentation
 
 ### Key Documents
 
+**Architecture & Rules:**
 - **[CLAUDE.md](CLAUDE.md)** - Hard Mode rules and enforcement (800+ lines)
 - **[000-docs/053-AA-REPT-hardmode-baseline.md](000-docs/053-AA-REPT-hardmode-baseline.md)** - Phase 1-2 implementation AAR
 - **[000-docs/054-AT-ALIG-notebook-alignment-checklist.md](000-docs/054-AT-ALIG-notebook-alignment-checklist.md)** - Alignment with Google Cloud patterns
 - **[000-docs/055-AA-CRIT-import-path-corrections.md](000-docs/055-AA-CRIT-import-path-corrections.md)** - Import path verification
 - **[000-docs/056-AA-CONF-usermanual-import-verification.md](000-docs/056-AA-CONF-usermanual-import-verification.md)** - User manual compliance
+
+**Deployment & Operations:**
+- **[000-docs/067-PM-PLAN-vertex-ai-deployment-plan.md](000-docs/067-PM-PLAN-vertex-ai-deployment-plan.md)** - Complete deployment plan with research
+- **[000-docs/068-OD-CONF-github-secrets-configuration.md](000-docs/068-OD-CONF-github-secrets-configuration.md)** - GitHub secrets setup guide (WIF)
+- **[000-docs/069-OD-TELE-observability-telemetry-guide.md](000-docs/069-OD-TELE-observability-telemetry-guide.md)** - Cloud Trace, Logging, Monitoring
+- **[000-docs/070-OD-RBOK-deployment-runbook.md](000-docs/070-OD-RBOK-deployment-runbook.md)** - Step-by-step deployment runbook
+
+**Configuration:**
 - **[.env.example](.env.example)** - Configuration template with all required variables
 
 ### User Manual (Google Cloud Notebooks)
@@ -348,8 +521,9 @@ See [.env.example](.env.example) for complete configuration template.
 
 ## 📊 Project Status
 
-### Completed (Phase 1-2)
+### Completed (Phase 1-4)
 
+**Phase 1-2: Hard Mode Baseline**
 - ✅ Flattened repository structure (canonical 8-directory tree)
 - ✅ Hard Mode rules documented (R1-R8) in CLAUDE.md
 - ✅ ADK LlmAgent implementation with dual memory
@@ -360,17 +534,28 @@ See [.env.example](.env.example) for complete configuration template.
 - ✅ Configuration template (.env.example)
 - ✅ User manual reference notebooks
 
-### In Progress (Phase 3)
+**Phase 3-4: Agent Engine Deployment**
+- ✅ Agent Engine entrypoint (`my_agent/agent_engine_app.py`)
+- ✅ Terraform infrastructure (Agent Engine, Cloud Run, IAM, staging bucket)
+- ✅ GitHub Actions deployment workflow with WIF authentication
+- ✅ GitHub secrets configuration guide (WIF setup)
+- ✅ Cloud Trace automatic telemetry (`--trace_to_cloud` flag)
+- ✅ Observability documentation (Trace, Logging, Monitoring, Error Reporting)
+- ✅ Complete deployment runbook (7-phase, ~2 hours)
+- ✅ README updated with deployment instructions
 
-- 🟡 Service gateways (A2A + Slack) - proxy only
-- 🟡 Dockerfile for Agent Engine container
-- 🟡 Unit tests for my_agent/
+### In Progress (Phase 5)
 
-### Planned (Phase 4)
+- 🟡 Initial deployment to dev environment
+- 🟡 Telemetry verification (Cloud Trace, logs, metrics)
+- 🟡 Smoke testing (end-to-end agent invocations)
 
-- ⏳ Terraform infrastructure (Agent Engine, Cloud Run, IAM)
-- ⏳ GitHub Actions deployment workflows
+### Planned (Phase 6)
+
 - ⏳ Production deployment validation
+- ⏳ Slack integration testing
+- ⏳ Performance baseline establishment
+- ⏳ Custom monitoring dashboards
 
 ---
 
@@ -403,6 +588,8 @@ MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-**Last Updated:** 2025-11-11
+**Last Updated:** 2025-11-19
 **Version:** 0.6.0
-**Status:** Phase 2 Complete (Agent Core + Drift Detection)
+**Status:** Phase 4 Complete (Agent Engine Deployment Ready)
+
+**Next Milestone:** Initial deployment to dev environment with telemetry verification
