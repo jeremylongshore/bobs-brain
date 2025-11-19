@@ -96,10 +96,7 @@ resource "google_storage_bucket_iam_member" "adk_docs_admin" {
   member = "serviceAccount:${google_service_account.agent_engine.email}"
 }
 
-# Data source to get project number (required for service agent)
-data "google_project" "project" {
-  project_id = var.project_id
-}
+# Note: data "google_project" "project" is defined in cloud_run.tf
 
 # Output for deployment workflows
 output "staging_bucket_url" {
