@@ -89,18 +89,8 @@ jobs:
           echo ""
           echo "📈 View Monitoring:"
           echo "https://console.cloud.google.com/monitoring?project=$PROJECT_ID"
-
-      - name: Get Agent Engine ID
-        env:
-          PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          REGION: ${{ secrets.REGION }}
-        run: |
-          echo "Fetching Agent Engine ID..."
-          gcloud ai reasoning-engines list \
-            --project="$PROJECT_ID" \
-            --region="$REGION" \
-            --filter="displayName:bobs-brain" \
-            --format="table(name,displayName,createTime,updateTime)"
+          echo ""
+          echo "Note: Resource ID is displayed in deployment output above"
 
       - name: Notify on failure
         if: failure()
