@@ -300,6 +300,16 @@ def create_runner() -> Runner:
     return runner
 
 
+# Create the root agent for ADK CLI deployment
+# ADK CLI expects a variable named 'root_agent' at module level
+root_agent = get_agent()
+
+logger.info(
+    "✅ root_agent created for ADK deployment",
+    extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"},
+)
+
+
 # Entry point for Agent Engine container
 if __name__ == "__main__":
     """
