@@ -41,3 +41,10 @@ flake8>=6.1.0  # Linting
 mypy>=1.6.0  # Type checking
 bandit>=1.7.5  # Security scanning
 safety>=2.3.0  # Dependency vulnerability scanning
+
+# Crawler dependencies (tools/)
+requests>=2.31.0  # HTTP client for web crawling
+beautifulsoup4>=4.12.0  # HTML parsing
+lxml>=4.9.0  # Fast XML/HTML parser for BeautifulSoup
+google-cloud-storage>=2.10.0  # GCS upload for RAG documents
+urllib3>=2.0.0  # Low-level HTTP utilities

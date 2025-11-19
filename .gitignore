@@ -4,6 +4,9 @@
 .env
 *.env
 !.env.template
+!.env.example
+!.env.crawler.example
+.env.crawler
 versions/*/.env
 versions/*/venv/
 
@@ -39,6 +42,8 @@ coverage.xml
 .tmp/
 *.tmp
 *.cache
+tmp/
+tools/__pycache__/
 
 # OS files
 .DS_Store
@@ -75,3 +80,11 @@ dist/
 *.egg
 .venv/
 .env.sample
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!terraform.tfvars.example
+.terraform.lock.hcl

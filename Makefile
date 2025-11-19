@@ -241,9 +241,26 @@ dev: setup run-selector ## Setup and run version selector
 prod: docker-v2 ## Production deployment (Docker v2)
 	@echo "$(GREEN)✅ Production deployment started!$(NC)"
 
+#################################
+# ADK Documentation Crawler
+#################################
+
+crawl-adk-docs: ## Crawl ADK docs and upload to GCS for RAG
+	@echo "$(BLUE)🕷️  Crawling ADK documentation...$(NC)"
+	@echo "$(YELLOW)Loading configuration from .env.crawler$(NC)"
+	@export $$(cat .env.crawler 2>/dev/null | grep -v '^#' | xargs) && \
+		$(PYTHON) -m tools
+	@echo "$(GREEN)✅ Crawl complete! Check GCS bucket for results.$(NC)"
+
+crawl-test: ## Test crawler configuration without uploading
+	@echo "$(BLUE)🔍 Testing crawler configuration...$(NC)"
+	@export $$(cat .env.crawler 2>/dev/null | grep -v '^#' | xargs) && \
+		$(PYTHON) -c "from tools.config import load_config, validate_gcp_credentials; config = load_config(); validate_gcp_credentials(); print('✅ Configuration valid')"
+
 .PHONY: help setup test lint format clean docker version benchmark ci all
 .PHONY: install-hooks deps format-check type-check
 .PHONY: test-v1 test-v2 test-coverage
 .PHONY: run-v1 run-v2 run-selector
 .PHONY: docker-build docker-v1 docker-v2 docker-all docker-stop docker-clean
 .PHONY: safe-commit pre-release clean-all version logs dev prod
+.PHONY: crawl-adk-docs crawl-test
