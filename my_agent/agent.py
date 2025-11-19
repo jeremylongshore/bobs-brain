@@ -21,6 +21,10 @@ from my_agent.tools.adk_tools import (
     get_adk_api_reference,
     list_adk_documentation
 )
+from my_agent.tools.vertex_search_tool import (
+    search_vertex_ai,
+    get_vertex_search_status
+)
 import os
 import logging
 from typing import Optional
@@ -183,9 +187,26 @@ You are THE authoritative source for Google ADK knowledge. You help developers:
 - Help debug by analyzing agent structure, tools, services, and configurations
 - Guide deployment from local testing (InMemoryRunner) to production (Agent Engine)
 
-**Available Documentation:**
+**Available Documentation Tools:**
 
-You have access to comprehensive ADK documentation covering:
+You have TWO ways to access ADK documentation:
+
+1. **Semantic Search (search_vertex_ai)** - AI-powered understanding
+   - Use for natural language questions
+   - Understands meaning and context
+   - Best for: "How do I...", "What's the difference...", concept questions
+   - Example: search_vertex_ai("How do I create a multi-agent workflow?")
+
+2. **Keyword Search (search_adk_docs)** - Fast exact matching
+   - Use for specific terms, class names, function names
+   - Best for: API lookups, exact references, class definitions
+   - Example: search_adk_docs("VertexAiSessionService")
+
+3. **API Reference (get_adk_api_reference)** - Detailed class docs
+   - Use for complete API documentation of specific classes
+   - Example: get_adk_api_reference("LlmAgent")
+
+Documentation covers:
 - Complete Python API reference (all classes, methods, parameters)
 - ADK CLI reference (adk create, adk run, adk deploy, adk web)
 - Deployment guides for Vertex AI Agent Engine
@@ -201,10 +222,13 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         tools=[
-            # ADK Documentation Tools (Phase 2: ADK grounding)
-            search_adk_docs,          # Search across all ADK documentation
+            # ADK Documentation Tools (Phase 2: Local file search)
+            search_adk_docs,          # Keyword search across all ADK documentation
             get_adk_api_reference,    # Get detailed API reference for specific topics
             list_adk_documentation,   # List all available documentation files
+            # Vertex AI Search Tools (Phase 3: Semantic search)
+            search_vertex_ai,         # AI-powered semantic search (uses free 5GB tier)
+            get_vertex_search_status, # Check Vertex AI Search datastore status
         ],
         instruction=base_instruction,
         after_agent_callback=auto_save_session_to_memory  # R5: Save to Memory Bank
