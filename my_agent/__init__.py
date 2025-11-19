@@ -8,11 +8,14 @@ Enforces R1 (ADK only), R2 (Agent Engine runtime), R5 (dual memory).
 """
 
 from .agent import get_agent, create_runner, auto_save_session_to_memory
-from .a2a_card import get_agent_card
+
+# NOTE: a2a_card import removed for Agent Engine deployment compatibility
+# AgentCard is only needed by service/a2a_gateway/, not by the agent itself
+# from .a2a_card import get_agent_card
 
 __all__ = [
     "get_agent",
     "create_runner",
     "auto_save_session_to_memory",
-    "get_agent_card",
+    # "get_agent_card",  # Only needed for gateway service
 ]
