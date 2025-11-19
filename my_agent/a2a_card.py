@@ -19,7 +19,7 @@ APP_VERSION = os.getenv("APP_VERSION", "0.6.0")
 PUBLIC_URL = os.getenv("PUBLIC_URL", "https://example.com")
 AGENT_SPIFFE_ID = os.getenv(
     "AGENT_SPIFFE_ID",
-    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown"
+    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown",
 )
 
 
@@ -44,7 +44,7 @@ def get_agent_card() -> AgentCard:
     """
     logger.info(
         f"Creating AgentCard for {APP_NAME} v{APP_VERSION}",
-        extra={"spiffe_id": AGENT_SPIFFE_ID}
+        extra={"spiffe_id": AGENT_SPIFFE_ID},
     )
 
     # R7: Include SPIFFE ID in description
@@ -73,7 +73,7 @@ Agent-to-Agent protocol for multi-agent orchestration.
         capabilities=AgentCapabilities(),  # Default capabilities
         defaultInputModes=["text"],  # Accept text input
         defaultOutputModes=["text"],  # Return text output
-        skills=[]  # Define available skills/capabilities here
+        skills=[],  # Define available skills/capabilities here
     )
 
     logger.info(
@@ -81,8 +81,8 @@ Agent-to-Agent protocol for multi-agent orchestration.
         extra={
             "spiffe_id": AGENT_SPIFFE_ID,
             "url": PUBLIC_URL,
-            "skills_count": len(card.skills)
-        }
+            "skills_count": len(card.skills),
+        },
     )
 
     return card
@@ -108,7 +108,7 @@ def get_agent_card_dict() -> dict:
         "url": card.url,
         "version": card.version,
         "skills": card.skills,
-        "spiffe_id": AGENT_SPIFFE_ID  # R7: Explicit SPIFFE field
+        "spiffe_id": AGENT_SPIFFE_ID,  # R7: Explicit SPIFFE field
     }
 
 

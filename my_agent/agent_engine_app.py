@@ -29,8 +29,7 @@ import os
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 APP_NAME = os.getenv("APP_NAME", "bobs-brain")
 AGENT_SPIFFE_ID = os.getenv(
     "AGENT_SPIFFE_ID",
-    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown"
+    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown",
 )
 
 # CRITICAL: ADK CLI expects a Runner instance named 'app'
@@ -48,8 +47,8 @@ logger.info(
     extra={
         "app_name": APP_NAME,
         "spiffe_id": AGENT_SPIFFE_ID,
-        "deployment_method": "adk-cli"
-    }
+        "deployment_method": "adk-cli",
+    },
 )
 
 # Create the Runner with dual memory services (R5)
@@ -61,8 +60,8 @@ logger.info(
         "app_name": APP_NAME,
         "spiffe_id": AGENT_SPIFFE_ID,
         "has_session_service": True,
-        "has_memory_service": True
-    }
+        "has_memory_service": True,
+    },
 )
 
 # Note: The Agent Engine will call app.run_async() or app.run_live()

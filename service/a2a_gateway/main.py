@@ -26,8 +26,7 @@ import httpx
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -41,18 +40,20 @@ PORT = int(os.getenv("PORT", "8080"))
 # Format: https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query
 AGENT_ENGINE_URL = os.getenv(
     "AGENT_ENGINE_URL",
-    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query"
+    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
 )
 
 # Validate required environment variables
 if not all([PROJECT_ID, LOCATION, AGENT_ENGINE_ID]):
-    raise ValueError("Missing required environment variables: PROJECT_ID, LOCATION, AGENT_ENGINE_ID")
+    raise ValueError(
+        "Missing required environment variables: PROJECT_ID, LOCATION, AGENT_ENGINE_ID"
+    )
 
 # Create FastAPI app
 app = FastAPI(
     title="Bob's Brain A2A Gateway",
     description="A2A Protocol gateway proxying to Vertex AI Agent Engine",
-    version="0.6.0"
+    version="0.6.0",
 )
 
 # R3 Compliance: No agent code imports
@@ -64,7 +65,7 @@ APP_VERSION = os.getenv("APP_VERSION", "0.6.0")
 PUBLIC_URL = os.getenv("PUBLIC_URL", "https://example.com")
 AGENT_SPIFFE_ID = os.getenv(
     "AGENT_SPIFFE_ID",
-    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown"
+    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown",
 )
 
 
@@ -104,7 +105,7 @@ Agent-to-Agent protocol for multi-agent orchestration.
         "url": PUBLIC_URL,
         "version": APP_VERSION,
         "skills": [],
-        "spiffe_id": AGENT_SPIFFE_ID  # R7: Explicit SPIFFE field
+        "spiffe_id": AGENT_SPIFFE_ID,  # R7: Explicit SPIFFE field
     }
 
 
@@ -161,14 +162,12 @@ async def query(request: Request) -> Dict[str, Any]:
             extra={
                 "query_length": len(query_text),
                 "session_id": session_id,
-                "agent_engine_url": AGENT_ENGINE_URL
-            }
+                "agent_engine_url": AGENT_ENGINE_URL,
+            },
         )
 
         # Prepare request to Agent Engine
-        payload = {
-            "query": query_text
-        }
+        payload = {"query": query_text}
 
         if session_id:
             payload["session_id"] = session_id
@@ -178,9 +177,7 @@ async def query(request: Request) -> Dict[str, Any]:
             response = await client.post(
                 AGENT_ENGINE_URL,
                 json=payload,
-                headers={
-                    "Content-Type": "application/json"
-                }
+                headers={"Content-Type": "application/json"},
             )
 
             response.raise_for_status()
@@ -188,10 +185,7 @@ async def query(request: Request) -> Dict[str, Any]:
 
         logger.info(
             "Agent Engine response received",
-            extra={
-                "status_code": response.status_code,
-                "session_id": session_id
-            }
+            extra={"status_code": response.status_code, "session_id": session_id},
         )
 
         return result
@@ -200,18 +194,15 @@ async def query(request: Request) -> Dict[str, Any]:
         logger.error(
             f"Agent Engine returned error: {e.response.status_code}",
             extra={"detail": e.response.text},
-            exc_info=True
+            exc_info=True,
         )
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Agent Engine error: {e.response.text}"
+            detail=f"Agent Engine error: {e.response.text}",
         )
     except httpx.RequestError as e:
         logger.error(f"Failed to connect to Agent Engine: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=503,
-            detail="Agent Engine unavailable"
-        )
+        raise HTTPException(status_code=503, detail="Agent Engine unavailable")
     except Exception as e:
         logger.error(f"Query processing failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -229,7 +220,7 @@ async def health() -> Dict[str, str]:
         "status": "healthy",
         "service": "a2a-gateway",
         "version": "0.6.0",
-        "agent_engine_url": AGENT_ENGINE_URL
+        "agent_engine_url": AGENT_ENGINE_URL,
     }
 
 
@@ -248,8 +239,8 @@ async def root() -> Dict[str, str]:
         "endpoints": {
             "agent_card": "/.well-known/agent.json",
             "query": "/query",
-            "health": "/health"
-        }
+            "health": "/health",
+        },
     }
 
 
@@ -261,13 +252,8 @@ if __name__ == "__main__":
         extra={
             "project_id": PROJECT_ID,
             "location": LOCATION,
-            "agent_engine_id": AGENT_ENGINE_ID
-        }
+            "agent_engine_id": AGENT_ENGINE_ID,
+        },
     )
 
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=PORT,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")

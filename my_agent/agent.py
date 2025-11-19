@@ -19,20 +19,16 @@ from google.adk.memory import VertexAiMemoryBankService
 from my_agent.tools.adk_tools import (
     search_adk_docs,
     get_adk_api_reference,
-    list_adk_documentation
+    list_adk_documentation,
 )
-from my_agent.tools.vertex_search_tool import (
-    search_vertex_ai,
-    get_vertex_search_status
-)
+from my_agent.tools.vertex_search_tool import search_vertex_ai, get_vertex_search_status
 import os
 import logging
 from typing import Optional
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -71,7 +67,7 @@ def auto_save_session_to_memory(ctx):
         - Includes SPIFFE ID in logs (R7)
     """
     try:
-        if hasattr(ctx, '_invocation_context'):
+        if hasattr(ctx, "_invocation_context"):
             invocation_ctx = ctx._invocation_context
             memory_svc = invocation_ctx.memory_service
             session = invocation_ctx.session
@@ -80,23 +76,22 @@ def auto_save_session_to_memory(ctx):
                 memory_svc.add_session_to_memory(session)
                 logger.info(
                     f"✅ Saved session {session.id} to Memory Bank",
-                    extra={"spiffe_id": AGENT_SPIFFE_ID, "session_id": session.id}
+                    extra={"spiffe_id": AGENT_SPIFFE_ID, "session_id": session.id},
                 )
             else:
                 logger.warning(
                     "Memory service or session not available in context",
-                    extra={"spiffe_id": AGENT_SPIFFE_ID}
+                    extra={"spiffe_id": AGENT_SPIFFE_ID},
                 )
         else:
             logger.warning(
-                "Invocation context not available",
-                extra={"spiffe_id": AGENT_SPIFFE_ID}
+                "Invocation context not available", extra={"spiffe_id": AGENT_SPIFFE_ID}
             )
     except Exception as e:
         logger.error(
             f"Failed to save session to Memory Bank: {e}",
             extra={"spiffe_id": AGENT_SPIFFE_ID},
-            exc_info=True
+            exc_info=True,
         )
         # Never block agent execution
 
@@ -118,8 +113,7 @@ def get_agent() -> LlmAgent:
         Do NOT instantiate a Runner here - that happens in create_runner().
     """
     logger.info(
-        f"Creating LlmAgent for {APP_NAME}",
-        extra={"spiffe_id": AGENT_SPIFFE_ID}
+        f"Creating LlmAgent for {APP_NAME}", extra={"spiffe_id": AGENT_SPIFFE_ID}
     )
 
     # Enhanced ADK Expert Instruction (Phase 1: ADK grounding)
@@ -223,20 +217,20 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         tools=[
             # ADK Documentation Tools (Phase 2: Local file search)
-            search_adk_docs,          # Keyword search across all ADK documentation
-            get_adk_api_reference,    # Get detailed API reference for specific topics
-            list_adk_documentation,   # List all available documentation files
+            search_adk_docs,  # Keyword search across all ADK documentation
+            get_adk_api_reference,  # Get detailed API reference for specific topics
+            list_adk_documentation,  # List all available documentation files
             # Vertex AI Search Tools (Phase 3: Semantic search)
-            search_vertex_ai,         # AI-powered semantic search (uses free 5GB tier)
-            get_vertex_search_status, # Check Vertex AI Search datastore status
+            search_vertex_ai,  # AI-powered semantic search (uses free 5GB tier)
+            get_vertex_search_status,  # Check Vertex AI Search datastore status
         ],
         instruction=base_instruction,
-        after_agent_callback=auto_save_session_to_memory  # R5: Save to Memory Bank
+        after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )
 
     logger.info(
         "✅ LlmAgent created successfully",
-        extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"}
+        extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"},
     )
 
     return agent
@@ -264,25 +258,23 @@ def create_runner() -> Runner:
             "spiffe_id": AGENT_SPIFFE_ID,
             "project_id": PROJECT_ID,
             "location": LOCATION,
-            "agent_engine_id": AGENT_ENGINE_ID
-        }
+            "agent_engine_id": AGENT_ENGINE_ID,
+        },
     )
 
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
+        project_id=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
     )
     logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
 
     # R5: VertexAiMemoryBankService (long-term persistent memory)
     memory_service = VertexAiMemoryBankService(
-        project=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
+        project=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
     )
-    logger.info("✅ Memory Bank service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
+    logger.info(
+        "✅ Memory Bank service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
 
     # Get agent with after_agent_callback configured
     agent = get_agent()
@@ -292,7 +284,7 @@ def create_runner() -> Runner:
         agent=agent,
         app_name=APP_NAME,
         session_service=session_service,
-        memory_service=memory_service
+        memory_service=memory_service,
     )
 
     logger.info(
@@ -301,8 +293,8 @@ def create_runner() -> Runner:
             "spiffe_id": AGENT_SPIFFE_ID,
             "app_name": APP_NAME,
             "has_session_service": True,
-            "has_memory_service": True
-        }
+            "has_memory_service": True,
+        },
     )
 
     return runner
@@ -324,14 +316,13 @@ if __name__ == "__main__":
         logger.warning(
             "⚠️  Running agent locally. Production deployments must use "
             "Vertex AI Agent Engine via GitHub Actions (R4).",
-            extra={"spiffe_id": AGENT_SPIFFE_ID}
+            extra={"spiffe_id": AGENT_SPIFFE_ID},
         )
 
     try:
         runner = create_runner()
         logger.info(
-            "🚀 Agent Engine runner ready",
-            extra={"spiffe_id": AGENT_SPIFFE_ID}
+            "🚀 Agent Engine runner ready", extra={"spiffe_id": AGENT_SPIFFE_ID}
         )
 
         # For local testing only - Agent Engine manages this in production
@@ -344,6 +335,6 @@ if __name__ == "__main__":
         logger.error(
             f"❌ Failed to create runner: {e}",
             extra={"spiffe_id": AGENT_SPIFFE_ID},
-            exc_info=True
+            exc_info=True,
         )
         sys.exit(1)

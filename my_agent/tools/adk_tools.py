@@ -16,14 +16,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Documentation directory path
-DOCS_BASE_PATH = Path(__file__).parent.parent.parent / "000-docs" / "google-reference" / "adk"
+DOCS_BASE_PATH = (
+    Path(__file__).parent.parent.parent / "000-docs" / "google-reference" / "adk"
+)
 
 
-def search_adk_docs(
-    query: str,
-    max_results: int = 5,
-    context_lines: int = 3
-) -> str:
+def search_adk_docs(query: str, max_results: int = 5, context_lines: int = 3) -> str:
     """
     Search local ADK documentation for relevant information.
 
@@ -65,7 +63,7 @@ def search_adk_docs(
         # Search each file
         for doc_file in doc_files:
             try:
-                with open(doc_file, 'r', encoding='utf-8') as f:
+                with open(doc_file, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
                 # Search for matches
@@ -82,21 +80,23 @@ def search_adk_docs(
                         # Find nearest heading (go backwards to find section)
                         heading = None
                         for j in range(i, -1, -1):
-                            if lines[j].startswith('#'):
+                            if lines[j].startswith("#"):
                                 heading = lines[j].strip()
                                 break
 
                         # Calculate relevance score (simple: count of matching terms)
                         score = sum(1 for term in search_terms if term in line_lower)
 
-                        results.append({
-                            'file': doc_file.name,
-                            'line_num': i + 1,
-                            'heading': heading or "N/A",
-                            'context': ''.join(context),
-                            'score': score,
-                            'matched_line': line.strip()
-                        })
+                        results.append(
+                            {
+                                "file": doc_file.name,
+                                "line_num": i + 1,
+                                "heading": heading or "N/A",
+                                "context": "".join(context),
+                                "score": score,
+                                "matched_line": line.strip(),
+                            }
+                        )
 
             except Exception as e:
                 logger.error(f"Error reading {doc_file}: {e}")
@@ -106,12 +106,12 @@ def search_adk_docs(
             return f"ℹ️ No matches found for query: '{query}'"
 
         # Sort by relevance score (descending)
-        results.sort(key=lambda x: x['score'], reverse=True)
+        results.sort(key=lambda x: x["score"], reverse=True)
 
         # Format top N results
         formatted_results = [
             f"📄 **Search Results for: '{query}'**\n",
-            f"Found {len(results)} matches. Showing top {min(max_results, len(results))}:\n"
+            f"Found {len(results)} matches. Showing top {min(max_results, len(results))}:\n",
         ]
 
         for idx, result in enumerate(results[:max_results], 1):
@@ -124,16 +124,14 @@ def search_adk_docs(
                 f"\n**Context:**\n```\n{result['context'].strip()}\n```\n"
             )
 
-        return ''.join(formatted_results)
+        return "".join(formatted_results)
 
     except Exception as e:
         logger.error(f"Error in search_adk_docs: {e}", exc_info=True)
         return f"❌ Error searching documentation: {str(e)}"
 
 
-def get_adk_api_reference(
-    topic: str
-) -> str:
+def get_adk_api_reference(topic: str) -> str:
     """
     Get comprehensive API reference for a specific ADK topic.
 
@@ -163,11 +161,11 @@ def get_adk_api_reference(
         if not api_ref_path.exists():
             return f"❌ API reference not found: {api_ref_path}"
 
-        with open(api_ref_path, 'r', encoding='utf-8') as f:
+        with open(api_ref_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Search for topic (case-insensitive heading search)
-        pattern = rf'^#+\s+{re.escape(topic)}(?:\s+Class)?.*$'
+        pattern = rf"^#+\s+{re.escape(topic)}(?:\s+Class)?.*$"
         match = re.search(pattern, content, re.MULTILINE | re.IGNORECASE)
 
         if not match:
@@ -196,12 +194,14 @@ def get_adk_api_reference(
         heading_level = len(match.group().split()[0])  # Count # characters
 
         # Find next heading of same or higher level
-        next_heading_pattern = rf'^#{{{1,{heading_level}}}}\s+'
+        next_heading_pattern = rf"^#{{{1,{heading_level}}}}\s+"
         remaining_content = content[start_pos:]
-        next_match = re.search(next_heading_pattern, remaining_content[1:], re.MULTILINE)
+        next_match = re.search(
+            next_heading_pattern, remaining_content[1:], re.MULTILINE
+        )
 
         if next_match:
-            section = remaining_content[:next_match.start() + 1]
+            section = remaining_content[: next_match.start() + 1]
         else:
             section = remaining_content
 
@@ -246,7 +246,7 @@ def list_adk_documentation() -> str:
 
         result = [
             "📚 **Available ADK Documentation:**\n",
-            f"**Location:** `{DOCS_BASE_PATH}`\n\n"
+            f"**Location:** `{DOCS_BASE_PATH}`\n\n",
         ]
 
         for doc_file in doc_files:
@@ -254,12 +254,12 @@ def list_adk_documentation() -> str:
 
             # Try to extract first heading as description
             try:
-                with open(doc_file, 'r', encoding='utf-8') as f:
+                with open(doc_file, "r", encoding="utf-8") as f:
                     first_lines = [next(f) for _ in range(5)]
                     description = None
                     for line in first_lines:
-                        if line.startswith('#'):
-                            description = line.strip('# \n')
+                        if line.startswith("#"):
+                            description = line.strip("# \n")
                             break
                     if not description:
                         description = "ADK Documentation"
@@ -267,8 +267,7 @@ def list_adk_documentation() -> str:
                 description = "ADK Documentation"
 
             result.append(
-                f"- **{doc_file.name}** ({size_kb:.1f} KB)\n"
-                f"  {description}\n"
+                f"- **{doc_file.name}** ({size_kb:.1f} KB)\n" f"  {description}\n"
             )
 
         result.append(
@@ -277,7 +276,7 @@ def list_adk_documentation() -> str:
             f"- API Reference: `get_adk_api_reference('ClassName')`\n"
         )
 
-        return ''.join(result)
+        return "".join(result)
 
     except Exception as e:
         logger.error(f"Error in list_adk_documentation: {e}", exc_info=True)
@@ -285,8 +284,4 @@ def list_adk_documentation() -> str:
 
 
 # Tool metadata for ADK agent integration
-__all__ = [
-    'search_adk_docs',
-    'get_adk_api_reference',
-    'list_adk_documentation'
-]
+__all__ = ["search_adk_docs", "get_adk_api_reference", "list_adk_documentation"]

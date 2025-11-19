@@ -31,8 +31,7 @@ import httpx
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,18 +46,20 @@ PORT = int(os.getenv("PORT", "8080"))
 # Agent Engine REST API endpoint
 AGENT_ENGINE_URL = os.getenv(
     "AGENT_ENGINE_URL",
-    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query"
+    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
 )
 
 # Validate required environment variables
-if not all([SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, PROJECT_ID, LOCATION, AGENT_ENGINE_ID]):
+if not all(
+    [SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, PROJECT_ID, LOCATION, AGENT_ENGINE_ID]
+):
     raise ValueError("Missing required environment variables")
 
 # Create FastAPI app
 app = FastAPI(
     title="Bob's Brain Slack Webhook",
     description="Slack event handler proxying to Vertex AI Agent Engine",
-    version="0.6.0"
+    version="0.6.0",
 )
 
 # Slack API client
@@ -66,16 +67,12 @@ slack_client = httpx.AsyncClient(
     base_url="https://slack.com/api",
     headers={
         "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-        "Content-Type": "application/json"
-    }
+        "Content-Type": "application/json",
+    },
 )
 
 
-def verify_slack_signature(
-    body: bytes,
-    timestamp: str,
-    signature: str
-) -> bool:
+def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
     """
     Verify Slack request signature.
 
@@ -93,11 +90,12 @@ def verify_slack_signature(
 
     # Compute expected signature
     sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}"
-    expected_signature = 'v0=' + hmac.new(
-        SLACK_SIGNING_SECRET.encode(),
-        sig_basestring.encode(),
-        hashlib.sha256
-    ).hexdigest()
+    expected_signature = (
+        "v0="
+        + hmac.new(
+            SLACK_SIGNING_SECRET.encode(), sig_basestring.encode(), hashlib.sha256
+        ).hexdigest()
+    )
 
     # Compare signatures (constant-time)
     return hmac.compare_digest(expected_signature, signature)
@@ -107,7 +105,7 @@ def verify_slack_signature(
 async def slack_events(
     request: Request,
     x_slack_request_timestamp: str = Header(None),
-    x_slack_signature: str = Header(None)
+    x_slack_signature: str = Header(None),
 ) -> Dict[str, Any]:
     """
     Handle Slack events.
@@ -130,7 +128,9 @@ async def slack_events(
 
         # Verify Slack signature (production security)
         if x_slack_request_timestamp and x_slack_signature:
-            if not verify_slack_signature(body, x_slack_request_timestamp, x_slack_signature):
+            if not verify_slack_signature(
+                body, x_slack_request_timestamp, x_slack_signature
+            ):
                 logger.warning("Invalid Slack signature")
                 raise HTTPException(status_code=401, detail="Invalid signature")
 
@@ -168,8 +168,8 @@ async def slack_events(
                 extra={
                     "user": user_id,
                     "channel": channel_id,
-                    "text_length": len(text)
-                }
+                    "text_length": len(text),
+                },
             )
 
             # Remove bot mention from text
@@ -181,15 +181,12 @@ async def slack_events(
 
             # Query Agent Engine via REST (R3: no local Runner)
             agent_response = await query_agent_engine(
-                query=text,
-                session_id=f"{user_id}_{channel_id}"
+                query=text, session_id=f"{user_id}_{channel_id}"
             )
 
             # Post response to Slack
             await post_slack_message(
-                channel=channel_id,
-                text=agent_response,
-                thread_ts=thread_ts
+                channel=channel_id, text=agent_response, thread_ts=thread_ts
             )
 
             return {"ok": True}
@@ -217,24 +214,18 @@ async def query_agent_engine(query: str, session_id: str) -> str:
         str: Agent response text
     """
     try:
-        payload = {
-            "query": query,
-            "session_id": session_id
-        }
+        payload = {"query": query, "session_id": session_id}
 
         logger.info(
             "Querying Agent Engine",
-            extra={
-                "agent_engine_url": AGENT_ENGINE_URL,
-                "session_id": session_id
-            }
+            extra={"agent_engine_url": AGENT_ENGINE_URL, "session_id": session_id},
         )
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 AGENT_ENGINE_URL,
                 json=payload,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
 
             response.raise_for_status()
@@ -245,10 +236,7 @@ async def query_agent_engine(query: str, session_id: str) -> str:
 
         logger.info(
             "Agent Engine response received",
-            extra={
-                "response_length": len(response_text),
-                "session_id": session_id
-            }
+            extra={"response_length": len(response_text), "session_id": session_id},
         )
 
         return response_text
@@ -257,7 +245,7 @@ async def query_agent_engine(query: str, session_id: str) -> str:
         logger.error(
             f"Agent Engine returned error: {e.response.status_code}",
             extra={"detail": e.response.text},
-            exc_info=True
+            exc_info=True,
         )
         return "Sorry, I encountered an error processing your request."
 
@@ -280,10 +268,7 @@ async def post_slack_message(channel: str, text: str, thread_ts: str = None) -> 
         thread_ts: Thread timestamp (for replies)
     """
     try:
-        payload = {
-            "channel": channel,
-            "text": text
-        }
+        payload = {"channel": channel, "text": text}
 
         if thread_ts:
             payload["thread_ts"] = thread_ts
@@ -293,7 +278,7 @@ async def post_slack_message(channel: str, text: str, thread_ts: str = None) -> 
 
         logger.info(
             "Message posted to Slack",
-            extra={"channel": channel, "thread_ts": thread_ts}
+            extra={"channel": channel, "thread_ts": thread_ts},
         )
 
     except Exception as e:
@@ -312,7 +297,7 @@ async def health() -> Dict[str, str]:
         "status": "healthy",
         "service": "slack-webhook",
         "version": "0.6.0",
-        "agent_engine_url": AGENT_ENGINE_URL
+        "agent_engine_url": AGENT_ENGINE_URL,
     }
 
 
@@ -328,10 +313,7 @@ async def root() -> Dict[str, str]:
         "name": "Bob's Brain Slack Webhook",
         "version": "0.6.0",
         "description": "Slack event handler proxying to Vertex AI Agent Engine",
-        "endpoints": {
-            "events": "/slack/events",
-            "health": "/health"
-        }
+        "endpoints": {"events": "/slack/events", "health": "/health"},
     }
 
 
@@ -343,13 +325,8 @@ if __name__ == "__main__":
         extra={
             "project_id": PROJECT_ID,
             "location": LOCATION,
-            "agent_engine_id": AGENT_ENGINE_ID
-        }
+            "agent_engine_id": AGENT_ENGINE_ID,
+        },
     )
 
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=PORT,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")

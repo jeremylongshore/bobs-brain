@@ -22,9 +22,7 @@ DATASTORE_ID = os.getenv("VERTEX_SEARCH_DATASTORE_ID", "adk-documentation")
 
 
 def search_vertex_ai(
-    query: str,
-    max_results: int = 5,
-    extract_answers: bool = True
+    query: str, max_results: int = 5, extract_answers: bool = True
 ) -> str:
     """
     Search ADK documentation using Vertex AI Search with semantic understanding.
@@ -76,23 +74,28 @@ def search_vertex_ai(
             project=PROJECT_ID,
             location=LOCATION,
             data_store=DATASTORE_ID,
-            serving_config="default_config"
+            serving_config="default_config",
         )
 
         # Configure search request
         content_search_spec = discoveryengine.SearchRequest.ContentSearchSpec(
             snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
-                return_snippet=True,
-                max_snippet_count=3
+                return_snippet=True, max_snippet_count=3
             ),
-            summary_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
-                summary_result_count=max_results,
-                include_citations=True
-            ) if extract_answers else None,
-            extractive_content_spec=discoveryengine.SearchRequest.ContentSearchSpec.ExtractiveContentSpec(
-                max_extractive_answer_count=1,
-                max_extractive_segment_count=3
-            ) if extract_answers else None
+            summary_spec=(
+                discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
+                    summary_result_count=max_results, include_citations=True
+                )
+                if extract_answers
+                else None
+            ),
+            extractive_content_spec=(
+                discoveryengine.SearchRequest.ContentSearchSpec.ExtractiveContentSpec(
+                    max_extractive_answer_count=1, max_extractive_segment_count=3
+                )
+                if extract_answers
+                else None
+            ),
         )
 
         # Create search request
@@ -106,7 +109,7 @@ def search_vertex_ai(
             ),
             spell_correction_spec=discoveryengine.SearchRequest.SpellCorrectionSpec(
                 mode=discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO
-            )
+            ),
         )
 
         # Execute search
@@ -115,17 +118,19 @@ def search_vertex_ai(
         # Format results
         results = [
             f"🔍 **Vertex AI Search Results for:** '{query}'\n",
-            f"**Datastore:** {DATASTORE_ID}\n\n"
+            f"**Datastore:** {DATASTORE_ID}\n\n",
         ]
 
         # Extract summary/answers if available
-        if extract_answers and hasattr(response, 'summary') and response.summary:
-            summary_text = response.summary.summary_text if hasattr(response.summary, 'summary_text') else None
+        if extract_answers and hasattr(response, "summary") and response.summary:
+            summary_text = (
+                response.summary.summary_text
+                if hasattr(response.summary, "summary_text")
+                else None
+            )
             if summary_text:
                 results.append(
-                    f"📌 **AI-Generated Answer:**\n"
-                    f"{summary_text}\n\n"
-                    f"---\n\n"
+                    f"📌 **AI-Generated Answer:**\n" f"{summary_text}\n\n" f"---\n\n"
                 )
 
         # Process search results
@@ -135,13 +140,17 @@ def search_vertex_ai(
             document = result.document
 
             # Extract document metadata
-            title = document.derived_struct_data.get('title', 'Untitled')
-            snippet = document.derived_struct_data.get('snippets', [{}])[0].get('snippet', '')
-            link = document.derived_struct_data.get('link', 'N/A')
+            title = document.derived_struct_data.get("title", "Untitled")
+            snippet = document.derived_struct_data.get("snippets", [{}])[0].get(
+                "snippet", ""
+            )
+            link = document.derived_struct_data.get("link", "N/A")
 
             # Extract relevance score
-            relevance_score = getattr(result, 'relevance_score', None)
-            score_display = f" (score: {relevance_score:.3f})" if relevance_score else ""
+            relevance_score = getattr(result, "relevance_score", None)
+            score_display = (
+                f" (score: {relevance_score:.3f})" if relevance_score else ""
+            )
 
             results.append(
                 f"**Result {result_count}:**{score_display}\n"
@@ -152,10 +161,14 @@ def search_vertex_ai(
             )
 
             # Add extractive answers if available
-            if extract_answers and hasattr(document, 'derived_struct_data'):
-                extractive_answers = document.derived_struct_data.get('extractive_answers', [])
-                for idx, answer in enumerate(extractive_answers[:2], 1):  # Max 2 answers per result
-                    answer_text = answer.get('content', '')
+            if extract_answers and hasattr(document, "derived_struct_data"):
+                extractive_answers = document.derived_struct_data.get(
+                    "extractive_answers", []
+                )
+                for idx, answer in enumerate(
+                    extractive_answers[:2], 1
+                ):  # Max 2 answers per result
+                    answer_text = answer.get("content", "")
                     if answer_text:
                         results.append(
                             f"  💡 **Extracted Answer {idx}:** {answer_text}\n\n"
@@ -178,7 +191,7 @@ def search_vertex_ai(
             f"💡 **Tip:** For keyword-only search, use `search_adk_docs()` instead."
         )
 
-        return ''.join(results)
+        return "".join(results)
 
     except Exception as e:
         error_msg = str(e)
@@ -245,9 +258,7 @@ def get_vertex_search_status() -> str:
 
         # Build datastore path
         datastore_path = client.data_store_path(
-            project=PROJECT_ID,
-            location=LOCATION,
-            data_store=DATASTORE_ID
+            project=PROJECT_ID, location=LOCATION, data_store=DATASTORE_ID
         )
 
         # Get datastore info
@@ -261,7 +272,7 @@ def get_vertex_search_status() -> str:
             f"**Project:** {PROJECT_ID}\n",
             f"**Location:** {LOCATION}\n",
             f"**Content Config:** {datastore.content_config}\n",
-            f"**Status:** ✅ Active\n\n"
+            f"**Status:** ✅ Active\n\n",
         ]
 
         # Try to get document count (requires additional API call)
@@ -271,7 +282,7 @@ def get_vertex_search_status() -> str:
                 project=PROJECT_ID,
                 location=LOCATION,
                 data_store=DATASTORE_ID,
-                branch="default_branch"
+                branch="default_branch",
             )
             documents = doc_client.list_documents(parent=parent, page_size=1)
             # Note: Getting exact count requires iterating all results
@@ -285,7 +296,7 @@ def get_vertex_search_status() -> str:
             f"- View in Console: https://console.cloud.google.com/gen-app-builder/engines\n"
         )
 
-        return ''.join(result)
+        return "".join(result)
 
     except Exception as e:
         error_msg = str(e)
@@ -301,7 +312,4 @@ def get_vertex_search_status() -> str:
 
 
 # Tool metadata for ADK agent integration
-__all__ = [
-    'search_vertex_ai',
-    'get_vertex_search_status'
-]
+__all__ = ["search_vertex_ai", "get_vertex_search_status"]

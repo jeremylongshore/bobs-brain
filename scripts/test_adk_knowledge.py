@@ -23,7 +23,7 @@ from google.adk.runners import InMemoryRunner
 from my_agent.tools.adk_tools import (
     search_adk_docs,
     get_adk_api_reference,
-    list_adk_documentation
+    list_adk_documentation,
 )
 
 
@@ -62,7 +62,7 @@ When answering ADK questions:
 3. Explain both what and why
 4. Reference official patterns
 
-Be concise and helpful."""
+Be concise and helpful.""",
     )
 
     # Create in-memory runner for testing
@@ -73,22 +73,26 @@ Be concise and helpful."""
         # Query 1: Basic agent creation
         {
             "query": "How do I create a simple LlmAgent with tools in Google ADK? Show me code.",
-            "expected": ["LlmAgent", "tools", "model", "instruction"]
+            "expected": ["LlmAgent", "tools", "model", "instruction"],
         },
         # Query 2: Multi-agent system
         {
             "query": "What's the difference between SequentialAgent and ParallelAgent?",
-            "expected": ["SequentialAgent", "ParallelAgent", "sub_agents"]
+            "expected": ["SequentialAgent", "ParallelAgent", "sub_agents"],
         },
         # Query 3: Deployment
         {
             "query": "How do I deploy an agent to Vertex AI Agent Engine?",
-            "expected": ["adk deploy", "agent_engine", "Vertex"]
+            "expected": ["adk deploy", "agent_engine", "Vertex"],
         },
         # Query 4: Memory management
         {
             "query": "Explain the dual memory pattern with Session and Memory Bank.",
-            "expected": ["VertexAiSessionService", "VertexAiMemoryBankService", "Runner"]
+            "expected": [
+                "VertexAiSessionService",
+                "VertexAiMemoryBankService",
+                "Runner",
+            ],
         },
     ]
 
@@ -105,8 +109,7 @@ Be concise and helpful."""
         try:
             # Use run_debug() for testing
             events = await runner.run_debug(
-                query,
-                verbose=False  # Set to True for detailed logs
+                query, verbose=False  # Set to True for detailed logs
             )
 
             # Extract final response
@@ -115,32 +118,56 @@ Be concise and helpful."""
 
             for event in events:
                 # Track tool calls
-                if event.content and hasattr(event.content, 'parts'):
+                if event.content and hasattr(event.content, "parts"):
                     for part in event.content.parts:
-                        if hasattr(part, 'function_call'):
+                        if hasattr(part, "function_call"):
                             tool_calls.append(part.function_call.name)
 
                 # Get final response
                 if event.is_final_response():
-                    final_response = event.content.text if hasattr(event.content, 'text') else str(event.content)
+                    final_response = (
+                        event.content.text
+                        if hasattr(event.content, "text")
+                        else str(event.content)
+                    )
 
             if final_response:
                 print(f"🤖 **Bob's Response:**\n{final_response}\n")
 
                 # Check if expected terms are in response
                 response_lower = final_response.lower()
-                matched_terms = [term for term in expected_terms if term.lower() in response_lower]
+                matched_terms = [
+                    term for term in expected_terms if term.lower() in response_lower
+                ]
 
                 # Evaluate quality
                 if tool_calls:
                     print(f"✅ Tools used: {', '.join(tool_calls)}")
 
-                if len(matched_terms) >= len(expected_terms) * 0.7:  # At least 70% coverage
-                    print(f"✅ Response quality: GOOD (matched {len(matched_terms)}/{len(expected_terms)} expected terms)")
-                    results.append({"query": query, "status": "PASS", "matched": len(matched_terms)})
+                if (
+                    len(matched_terms) >= len(expected_terms) * 0.7
+                ):  # At least 70% coverage
+                    print(
+                        f"✅ Response quality: GOOD (matched {len(matched_terms)}/{len(expected_terms)} expected terms)"
+                    )
+                    results.append(
+                        {
+                            "query": query,
+                            "status": "PASS",
+                            "matched": len(matched_terms),
+                        }
+                    )
                 else:
-                    print(f"⚠️  Response quality: PARTIAL (matched {len(matched_terms)}/{len(expected_terms)} expected terms)")
-                    results.append({"query": query, "status": "PARTIAL", "matched": len(matched_terms)})
+                    print(
+                        f"⚠️  Response quality: PARTIAL (matched {len(matched_terms)}/{len(expected_terms)} expected terms)"
+                    )
+                    results.append(
+                        {
+                            "query": query,
+                            "status": "PARTIAL",
+                            "matched": len(matched_terms),
+                        }
+                    )
             else:
                 print("❌ No final response received")
                 results.append({"query": query, "status": "FAIL", "matched": 0})
@@ -169,7 +196,9 @@ Be concise and helpful."""
         print(f"\n🎉 **Overall: SUCCESS** - Bob demonstrates strong ADK knowledge!")
         return 0
     elif passed + partial >= len(results) * 0.75:
-        print(f"\n⚠️  **Overall: PARTIAL** - Bob has ADK knowledge but could be more accurate")
+        print(
+            f"\n⚠️  **Overall: PARTIAL** - Bob has ADK knowledge but could be more accurate"
+        )
         return 0
     else:
         print(f"\n❌ **Overall: NEEDS IMPROVEMENT** - Bob needs better ADK grounding")
