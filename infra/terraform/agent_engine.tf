@@ -31,6 +31,9 @@ resource "google_vertex_ai_reasoning_engine" "bob" {
       # AI Model Configuration
       MODEL_NAME       = var.model_name
 
+      # Vertex AI Search Configuration (Phase 3)
+      VERTEX_SEARCH_DATASTORE_ID = var.vertex_search_datastore_id
+
       # Python Configuration
       PYTHONUNBUFFERED = "1"
       PYTHONDONTWRITEBYTECODE = "1"

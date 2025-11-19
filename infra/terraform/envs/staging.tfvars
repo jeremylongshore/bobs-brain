@@ -31,6 +31,9 @@ agent_spiffe_id = "spiffe://intent.solutions/agent/bobs-brain/staging/us-central
 # AI Model Configuration
 model_name = "gemini-2.0-flash-exp"
 
+# Vertex AI Search Configuration (Phase 3)
+vertex_search_datastore_id = "adk-documentation"
+
 # Networking
 allow_public_access = true
 

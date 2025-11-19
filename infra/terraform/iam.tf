@@ -46,6 +46,13 @@ resource "google_project_iam_member" "agent_engine_logging" {
   member  = "serviceAccount:${google_service_account.agent_engine.email}"
 }
 
+# Phase 3: Vertex AI Search permissions for Agent Engine
+resource "google_project_iam_member" "agent_engine_discovery_engine" {
+  project = var.project_id
+  role    = "roles/discoveryengine.viewer"
+  member  = "serviceAccount:${google_service_account.agent_engine.email}"
+}
+
 # IAM Bindings for A2A Gateway
 # Needs to call Agent Engine REST API
 

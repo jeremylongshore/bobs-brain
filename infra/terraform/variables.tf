@@ -109,6 +109,13 @@ variable "model_name" {
   default     = "gemini-2.0-flash-exp"
 }
 
+# Vertex AI Search Configuration (Phase 3)
+variable "vertex_search_datastore_id" {
+  description = "Vertex AI Search datastore ID for ADK documentation"
+  type        = string
+  default     = "adk-documentation"
+}
+
 # Networking
 variable "allow_public_access" {
   description = "Allow unauthenticated access to gateways"

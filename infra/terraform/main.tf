@@ -24,6 +24,8 @@ resource "google_project_service" "required_apis" {
     "run.googleapis.com",              # Cloud Run
     "compute.googleapis.com",          # Compute Engine
     "storage-api.googleapis.com",      # Cloud Storage
+    "storage.googleapis.com",          # Cloud Storage (JSON API)
+    "discoveryengine.googleapis.com",  # Vertex AI Search (Phase 3)
     "iam.googleapis.com",              # IAM
     "cloudresourcemanager.googleapis.com", # Resource Manager
     "serviceusage.googleapis.com",     # Service Usage

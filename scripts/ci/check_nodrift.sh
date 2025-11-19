@@ -29,6 +29,7 @@ if grep -rE "from langchain|import langchain|from crewai|import crewai|from auto
     --exclude-dir=.venv \
     --exclude-dir=99-Archive \
     --exclude-dir=node_modules \
+    --exclude-dir=000-docs \
     . 2>/dev/null | grep -v "CLAUDE.md" | grep -v "check_nodrift.sh"; then
     echo "❌ VIOLATION R1: Alternative framework imports found"
     echo "   Only google-adk is allowed for agent implementation"
@@ -41,7 +42,7 @@ fi
 echo ""
 echo "R3: Checking for Runner imports in service/..."
 if [ -d "service" ]; then
-    if grep -rE "from google\.adk\.runner|from google\.adk\.serving" service/ 2>/dev/null; then
+    if grep -rE "^[^#]*from google\.adk\.runner|^[^#]*from google\.adk\.serving" service/ --exclude="*.md" 2>/dev/null; then
         echo "❌ VIOLATION R3: Runner or serving imports found in service/"
         echo "   Gateways must proxy to Agent Engine via REST, not run their own Runner"
         VIOLATIONS=$((VIOLATIONS + 1))
@@ -54,7 +55,9 @@ fi
 echo ""
 echo "R3: Checking for agent code imports in service/..."
 if [ -d "service" ]; then
-    if grep -rE "from my_agent|import my_agent" service/ 2>/dev/null; then
+    # Only match actual import statements (from my_agent import X or import my_agent)
+    # Exclude lines starting with #, and exclude docstring references
+    if grep -rE "^[[:space:]]*(from my_agent import|import my_agent)" service/ --exclude="*.md" 2>/dev/null; then
         echo "❌ VIOLATION R3: Direct agent imports found in service/"
         echo "   Gateways must NOT import agent code directly"
         VIOLATIONS=$((VIOLATIONS + 1))

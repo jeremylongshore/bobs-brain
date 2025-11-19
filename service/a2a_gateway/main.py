@@ -55,9 +55,57 @@ app = FastAPI(
     version="0.6.0"
 )
 
-# Import AgentCard (safe - no Runner import)
-# This imports only the card definition, not the agent runtime
-from my_agent.a2a_card import get_agent_card, get_agent_card_dict
+# R3 Compliance: No agent code imports
+# AgentCard logic is inlined here to avoid importing from my_agent/
+
+# Additional environment variables for AgentCard
+APP_NAME = os.getenv("APP_NAME", "bobs-brain")
+APP_VERSION = os.getenv("APP_VERSION", "0.6.0")
+PUBLIC_URL = os.getenv("PUBLIC_URL", "https://example.com")
+AGENT_SPIFFE_ID = os.getenv(
+    "AGENT_SPIFFE_ID",
+    "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown"
+)
+
+
+def get_agent_card_dict() -> Dict[str, Any]:
+    """
+    Generate AgentCard as dictionary (inlined for R3 compliance).
+
+    R3 Compliance: This logic is inlined here instead of importing
+    from my_agent/ to avoid gateway importing agent code.
+
+    R7 Compliance: Includes SPIFFE ID in description and explicit field.
+
+    Returns:
+        dict: AgentCard with agent metadata and capabilities
+    """
+    # R7: Include SPIFFE ID in description
+    description = f"""Bob's Brain - AI Assistant
+
+Identity: {AGENT_SPIFFE_ID}
+
+Capabilities:
+- General question answering
+- Information lookup
+- Task execution via tools
+- Multi-turn conversations with memory
+
+This agent uses dual memory (Session + Memory Bank) for context retention
+and is deployed on Vertex AI Agent Engine.
+
+A2A Protocol: This agent can be invoked by other agents using the
+Agent-to-Agent protocol for multi-agent orchestration.
+"""
+
+    return {
+        "name": APP_NAME,
+        "description": description.strip(),
+        "url": PUBLIC_URL,
+        "version": APP_VERSION,
+        "skills": [],
+        "spiffe_id": AGENT_SPIFFE_ID  # R7: Explicit SPIFFE field
+    }
 
 
 @app.get("/.well-known/agent.json")
@@ -67,6 +115,8 @@ async def agent_card() -> Dict[str, Any]:
 
     This endpoint is required by the A2A protocol specification
     for agent discovery and capability negotiation.
+
+    R3 Compliance: AgentCard logic is inlined here, no agent imports.
 
     Returns:
         dict: AgentCard with agent metadata and capabilities
