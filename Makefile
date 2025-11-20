@@ -286,6 +286,16 @@ print-rag-config: ## Print current RAG configuration (dry-run)
 	@$(PYTHON) scripts/print_rag_config.py
 	@echo ""
 
+print-agent-engine-config: ## Print Agent Engine deployment configuration (Phase AE1)
+	@echo "$(BLUE)🔍 Agent Engine Configuration:$(NC)"
+	@$(PYTHON) scripts/print_agent_engine_config.py
+	@echo ""
+
+print-agent-engine-config-verbose: ## Verbose Agent Engine config with full details
+	@echo "$(BLUE)🔍 Agent Engine Configuration (Verbose):$(NC)"
+	@$(PYTHON) scripts/print_agent_engine_config.py --verbose
+	@echo ""
+
 arv-gates: check-rag-readiness check-arv-minimum ## Run all ARV gates (RAG + minimum requirements)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
 	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
@@ -333,5 +343,6 @@ run-swe-pipeline-interactive: ## Run interactive SWE pipeline
 .PHONY: safe-commit pre-release clean-all version logs dev prod
 .PHONY: crawl-adk-docs crawl-test
 .PHONY: check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates
+.PHONY: print-agent-engine-config print-agent-engine-config-verbose
 .PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
 .PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
