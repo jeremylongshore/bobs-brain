@@ -26,8 +26,8 @@ from shared_contracts import (
 # Import repo registry
 from config.repos import list_repos, get_repo_by_id, RepoConfig
 
-# Import single-repo orchestrator
-from agents.iam_senior_adk_devops_lead.orchestrator import run_swe_pipeline_for_repo
+# Import single-repo orchestrator (relative import to avoid module path issues)
+from .orchestrator import run_swe_pipeline_for_repo
 
 
 def run_portfolio_swe(
