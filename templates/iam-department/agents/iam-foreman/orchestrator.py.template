@@ -1,0 +1,211 @@
+"""
+{{PRODUCT_DISPLAY_NAME}} IAM Department Foreman - SWE Pipeline Orchestrator
+
+TEMPLATE: Replace all {{PARAMETERS}} with your product-specific values.
+
+This foreman coordinates the iam-* specialist agents to execute software
+engineering pipelines: audit → issues → fixes → QA → documentation.
+
+Example replacements:
+- {{PRODUCT_NAME}} → "diagnosticpro"
+- {{FOREMAN_AGENT_NAME}} → "iam-senior-lead"
+"""
+
+import logging
+from typing import List, Optional
+from dataclasses import dataclass
+
+# TEMPLATE: Import your contracts from the ported location
+from agents.shared_contracts import (
+    PipelineRequest,
+    PipelineResult,
+    IssueSpec,
+    FixPlan,
+    QAVerdict,
+)
+
+# TEMPLATE: Import A2A adapter
+from agents.a2a.adapter import call_agent_local, call_agent_engine
+from agents.a2a.contracts import A2AAgentCall, A2AAgentResult
+
+# TEMPLATE: Import logging utilities
+from agents.utils.logging import (
+    get_logger,
+    log_pipeline_start,
+    log_pipeline_complete,
+    log_agent_step,
+)
+
+logger = get_logger(__name__)
+
+
+def run_swe_pipeline(request: PipelineRequest) -> PipelineResult:
+    """
+    Execute the software engineering pipeline.
+
+    Pipeline Flow:
+    1. iam-adk: Analyze codebase for issues
+    2. iam-issue: Convert findings to GitHub issue specs
+    3. iam-fix-plan: Design fixes (if mode allows)
+    4. iam-fix-impl: Implement fixes (if mode allows)
+    5. iam-qa: Validate changes
+    6. iam-doc: Update documentation
+
+    Args:
+        request: PipelineRequest with task description and mode
+
+    Returns:
+        PipelineResult with findings, issues, and artifacts
+
+    Pipeline Modes:
+    - preview: Analysis only, no artifacts
+    - dry-run: Generate artifacts, no GitHub interaction
+    - create: Full pipeline with GitHub issue creation
+    """
+    log_pipeline_start(
+        pipeline_run_id=request.pipeline_run_id,
+        repo_id=request.repo_hint,
+        task=request.task_description,
+        env=request.env,
+    )
+
+    # Initialize result
+    result = PipelineResult(
+        request=request,
+        pipeline_run_id=request.pipeline_run_id,
+        issues=[],
+        fixes=[],
+        qa_verdicts=[],
+        documentation_updates=[],
+    )
+
+    try:
+        # STEP 1: iam-adk Analysis
+        log_agent_step(
+            pipeline_run_id=request.pipeline_run_id,
+            agent="iam-adk",
+            step="analysis",
+            status="started",
+        )
+
+        # TEMPLATE: Call iam-adk via A2A adapter
+        # Choose call_agent_local or call_agent_engine based on mode
+        adk_call = A2AAgentCall(
+            agent_role="iam-adk",
+            prompt=request.task_description,
+            correlation_id=request.pipeline_run_id,
+            caller_spiffe_id=f"spiffe://intent.solutions/agent/{{PRODUCT_NAME}}/{{FOREMAN_AGENT_NAME}}",
+        )
+
+        # TEMPLATE: Implement your A2A routing logic
+        # For local mode:
+        adk_result = call_agent_local("iam-adk", adk_call)
+        # For engine mode (when Agent Engine deployed):
+        # adk_result = call_agent_engine("iam-adk", adk_call, env=request.env)
+
+        log_agent_step(
+            pipeline_run_id=request.pipeline_run_id,
+            agent="iam-adk",
+            step="analysis",
+            status="completed",
+        )
+
+        # STEP 2: iam-issue Specification
+        if request.mode in ("dry-run", "create"):
+            log_agent_step(
+                pipeline_run_id=request.pipeline_run_id,
+                agent="iam-issue",
+                step="issue_specs",
+                status="started",
+            )
+
+            # TEMPLATE: Call iam-issue to convert findings to issue specs
+            issue_call = A2AAgentCall(
+                agent_role="iam-issue",
+                prompt=f"Convert these findings to GitHub issues: {adk_result.response}",
+                context={"adk_findings": adk_result.response},
+                correlation_id=request.pipeline_run_id,
+                caller_spiffe_id=f"spiffe://intent.solutions/agent/{{PRODUCT_NAME}}/{{FOREMAN_AGENT_NAME}}",
+            )
+
+            issue_result = call_agent_local("iam-issue", issue_call)
+
+            log_agent_step(
+                pipeline_run_id=request.pipeline_run_id,
+                agent="iam-issue",
+                step="issue_specs",
+                status="completed",
+            )
+
+            # TEMPLATE: Parse IssueSpecs from result
+            # result.issues = parse_issue_specs(issue_result.response)
+
+        # STEP 3: iam-qa Validation
+        log_agent_step(
+            pipeline_run_id=request.pipeline_run_id,
+            agent="iam-qa",
+            step="validation",
+            status="started",
+        )
+
+        qa_call = A2AAgentCall(
+            agent_role="iam-qa",
+            prompt=f"Validate these changes: {adk_result.response}",
+            correlation_id=request.pipeline_run_id,
+            caller_spiffe_id=f"spiffe://intent.solutions/agent/{{PRODUCT_NAME}}/{{FOREMAN_AGENT_NAME}}",
+        )
+
+        qa_result = call_agent_local("iam-qa", qa_call)
+
+        log_agent_step(
+            pipeline_run_id=request.pipeline_run_id,
+            agent="iam-qa",
+            step="validation",
+            status="completed",
+        )
+
+        # TEMPLATE: Add more steps as needed:
+        # - iam-fix-plan (if fixes needed)
+        # - iam-fix-impl (if implementing)
+        # - iam-doc (if documenting)
+        # - iam-cleanup (if cleaning up)
+
+    except Exception as e:
+        logger.error(
+            f"Pipeline failed: {e}",
+            extra={"pipeline_run_id": request.pipeline_run_id},
+            exc_info=True,
+        )
+        result.error = str(e)
+
+    log_pipeline_complete(
+        pipeline_run_id=request.pipeline_run_id,
+        duration_seconds=0.0,  # TEMPLATE: Calculate actual duration
+        issues_found=len(result.issues),
+        fixes_applied=len(result.fixes),
+    )
+
+    return result
+
+
+# TEMPLATE: Add other pipeline-related functions as needed
+def validate_pipeline_request(request: PipelineRequest) -> bool:
+    """
+    Validate pipeline request before execution.
+
+    Args:
+        request: PipelineRequest to validate
+
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    # TEMPLATE: Implement validation logic
+    if not request.task_description:
+        logger.error("Pipeline request missing task description")
+        return False
+
+    if not request.repo_hint:
+        logger.error("Pipeline request missing repo hint")
+        return False
+
+    return True

@@ -1,0 +1,125 @@
+# {{PRODUCT_DISPLAY_NAME}} Repository Registry
+#
+# TEMPLATE: Configure this file with your product's repositories.
+#
+# This registry maps repository names/hints to actual GitHub repositories
+# for the IAM department to analyze.
+
+# ==============================================================================
+# TEMPLATE INSTRUCTIONS
+# ==============================================================================
+#
+# 1. Replace {{REPO_OWNER}} with your GitHub organization or username
+#    Example: "jeremylongshore", "mycompany", "yourorg"
+#
+# 2. Add your product's repositories below
+#
+# 3. For monorepos, use the `monorepo_root` field
+#
+# 4. Set `primary: true` for your main repository
+#
+# ==============================================================================
+
+repositories:
+  # TEMPLATE: Main product repository
+  - name: "{{PRODUCT_NAME}}"
+    full_name: "{{REPO_OWNER}}/{{PRODUCT_NAME}}"
+    url: "https://github.com/{{REPO_OWNER}}/{{PRODUCT_NAME}}"
+    primary: true
+    description: "{{PRODUCT_DISPLAY_NAME}} main repository"
+    primary_language: "Python"  # Or your primary language
+    frameworks:
+      - "Google ADK"
+      - "FastAPI"  # TEMPLATE: Add your frameworks
+    key_directories:
+      agents: "agents/"
+      service: "service/"
+      scripts: "scripts/"
+      tests: "tests/"
+      docs: "000-docs/"
+
+  # TEMPLATE: Add additional repositories as needed
+  # Example:
+  # - name: "{{PRODUCT_NAME}}-frontend"
+  #   full_name: "{{REPO_OWNER}}/{{PRODUCT_NAME}}-frontend"
+  #   url: "https://github.com/{{REPO_OWNER}}/{{PRODUCT_NAME}}-frontend"
+  #   primary: false
+  #   description: "Frontend application"
+  #   primary_language: "TypeScript"
+  #   frameworks:
+  #     - "React"
+  #     - "Next.js"
+
+# ==============================================================================
+# MONOREPO CONFIGURATION (if applicable)
+# ==============================================================================
+
+# TEMPLATE: If using a monorepo, configure subproject paths
+monorepos:
+  # Example:
+  # - name: "{{PRODUCT_NAME}}-monorepo"
+  #   full_name: "{{REPO_OWNER}}/{{PRODUCT_NAME}}-monorepo"
+  #   url: "https://github.com/{{REPO_OWNER}}/{{PRODUCT_NAME}}-monorepo"
+  #   subprojects:
+  #     - path: "packages/backend"
+  #       name: "backend"
+  #       primary_language: "Python"
+  #     - path: "packages/frontend"
+  #       name: "frontend"
+  #       primary_language: "TypeScript"
+
+# ==============================================================================
+# GITHUB INTEGRATION SETTINGS
+# ==============================================================================
+
+github:
+  # TEMPLATE: GitHub token configuration
+  # Set via environment variable: GITHUB_TOKEN
+  # Requires: repo read access (for analysis)
+  # Optional: repo write access (for issue creation)
+
+  # Default GitHub API settings
+  api_url: "https://api.github.com"
+
+  # Rate limiting
+  requests_per_hour: 5000  # GitHub API limit
+
+  # Issue creation settings
+  issue_creation:
+    enabled: false  # TEMPLATE: Set to true when ready for issue creation
+    default_labels:
+      - "iam-department"
+      - "automated"
+    default_assignees: []  # TEMPLATE: Add default assignees
+
+# ==============================================================================
+# REPOSITORY ANALYSIS SETTINGS
+# ==============================================================================
+
+analysis:
+  # File patterns to include
+  include_patterns:
+    - "**/*.py"
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.js"
+    - "**/*.jsx"
+    # TEMPLATE: Add your file patterns
+
+  # File patterns to exclude
+  exclude_patterns:
+    - "**/node_modules/**"
+    - "**/venv/**"
+    - "**/.venv/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/__pycache__/**"
+    - "**/.pytest_cache/**"
+    # TEMPLATE: Add your exclusions
+
+  # Directories to prioritize
+  priority_directories:
+    - "agents/"
+    - "src/"
+    - "lib/"
+    # TEMPLATE: Add your priority directories

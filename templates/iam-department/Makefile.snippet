@@ -1,0 +1,75 @@
+#################################
+# IAM Department Targets
+#################################
+#
+# TEMPLATE: Add these targets to your product's Makefile
+#
+# Replace {{PRODUCT_NAME}} and other parameters as needed.
+
+# ARV (Agent Readiness Verification) Gates
+check-rag-readiness: ## Check RAG configuration readiness
+	@echo "Checking RAG configuration for {{PRODUCT_NAME}}..."
+	@$(PYTHON) scripts/check_rag_readiness.py
+
+check-rag-readiness-verbose: ## Verbose RAG readiness check
+	@echo "Checking RAG configuration (verbose)..."
+	@$(PYTHON) scripts/check_rag_readiness.py --verbose
+
+check-arv-minimum: ## Check ARV minimum requirements
+	@echo "Checking ARV minimum requirements..."
+	@$(PYTHON) scripts/check_arv_minimum.py
+
+check-arv-minimum-verbose: ## Verbose ARV minimum check
+	@echo "Checking ARV minimum requirements (verbose)..."
+	@$(PYTHON) scripts/check_arv_minimum.py --verbose
+
+check-arv-engine-flags: ## Check ARV engine flags safety
+	@echo "Checking ARV engine flags..."
+	@$(PYTHON) scripts/check_arv_engine_flags.py
+
+check-arv-engine-flags-verbose: ## Verbose ARV engine flags check
+	@echo "Checking ARV engine flags (verbose)..."
+	@$(PYTHON) scripts/check_arv_engine_flags.py --verbose
+
+arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags ## Run all ARV gates
+	@echo "✅ All ARV gates passed for {{PRODUCT_NAME}}!"
+
+# SWE Pipeline Testing
+test-swe-pipeline: ## Run SWE pipeline tests
+	@echo "Running SWE pipeline tests..."
+	@$(PYTEST) tests/test_swe_pipeline.py -v --color=yes
+
+test-swe-pipeline-verbose: ## Run SWE pipeline tests (verbose)
+	@echo "Running SWE pipeline tests (verbose)..."
+	@$(PYTEST) tests/test_swe_pipeline.py -vvs --color=yes --tb=short
+
+test-swe-pipeline-coverage: ## Run SWE pipeline tests with coverage
+	@echo "Running SWE pipeline tests with coverage..."
+	@$(PYTEST) tests/test_swe_pipeline.py --cov=agents.iam_foreman --cov=agents.shared_contracts --cov-report=term --cov-report=html
+
+# Pipeline Demo/CLI
+run-swe-pipeline-demo: ## Run SWE pipeline demo
+	@echo "Running SWE pipeline demo..."
+	@$(PYTHON) scripts/run_swe_pipeline_once.py --repo-path tests/data/synthetic_repo --task "Audit for {{PRODUCT_NAME}} compliance"
+
+run-swe-pipeline-interactive: ## Run interactive SWE pipeline
+	@echo "Starting interactive SWE pipeline..."
+	@$(PYTHON) scripts/run_swe_pipeline_once.py --interactive
+
+# Configuration Validation
+print-rag-config: ## Print RAG configuration
+	@echo "RAG configuration for {{PRODUCT_NAME}}:"
+	@$(PYTHON) scripts/print_rag_config.py
+
+print-agent-engine-config: ## Print Agent Engine configuration
+	@echo "Agent Engine configuration:"
+	@$(PYTHON) scripts/print_agent_engine_config.py
+
+print-agent-engine-config-verbose: ## Verbose Agent Engine config
+	@echo "Agent Engine configuration (verbose):"
+	@$(PYTHON) scripts/print_agent_engine_config.py --verbose
+
+# TEMPLATE: Add product-specific targets below
+# Example:
+# test-{{PRODUCT_NAME}}-agents: ## Test {{PRODUCT_NAME}}-specific agents
+# 	@$(PYTEST) tests/test_{{PRODUCT_NAME}}_agents.py -v
