@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-11-19
+
+### Changed - Agent Factory Structure
+
+- **Repository Transformation**
+  - Transformed from single-agent repository to production-grade agent factory
+  - `my_agent/` → `agents/bob/` - Clear identity for Bob orchestrator
+  - `tools/` → `scripts/adk-docs-crawler/` - Purpose-driven organization
+  - `99-Archive/` → `archive/` - Consolidated historical code
+  - Ready for `agents/iam-adk/` and entire iam-* agent team
+
+- **Directory Structure** (Agent Factory Pattern)
+  - `agents/` - Home for all agents (Bob + future iam-* team)
+  - `agents/bob/` - Bob orchestrator agent
+  - `templates/` - Reusable agent scaffolds (specialist-agent-adk, orchestrator-agent)
+  - `scripts/` - Organized by purpose:
+    - `scripts/ci/` - CI scripts (check_nodrift.sh)
+    - `scripts/deployment/` - Deployment helpers (setup_vertex_search, version-selector)
+    - `scripts/adk-docs-crawler/` - ADK documentation crawler
+  - `archive/` - Legacy code preservation
+  - `archive/legacy-scripts/` - Archived startup scripts
+
+- **Import Paths** (Breaking Change)
+  - Updated: `my_agent` → `agents.bob` (5 files updated)
+  - `agents/bob/tools/__init__.py`
+  - `scripts/test_adk_knowledge.py`
+  - `tests/unit/test_a2a_card.py`
+  - `service/a2a_gateway/main.py` (comments)
+
+### Removed
+
+- **Empty Directories**
+  - Removed `adk-a2a/` (unused placeholder)
+  - Removed `tmp/` (unused placeholder)
+  - Removed `adk/` (unused placeholder)
+
+- **Redundant Files**
+  - Removed `.env.sample` (redundant with `.env.example`)
+
+- **Legacy Scripts**
+  - Archived `scripts/start_unified_bob_v2.sh` → `archive/legacy-scripts/`
+
+### Documentation
+
+- **Updated References**
+  - `CLAUDE.md` - Updated all agent and script paths
+  - `README.md` - Reflects new agent factory structure
+  - `.gitignore` - Added agent factory patterns
+
+- **Planning Document**
+  - `000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md` - Complete AAR of transformation
+
+### Impact
+
+- **Files Changed**: 2,304 files (2,273 archive consolidation, 31 structure)
+- **Commits**: 11 focused commits squashed to main
+- **Status**: CTO-ready, production-grade agent factory
+
 ## [0.7.0] - 2025-11-19
 
 ### Added - Phase 3: Vertex AI Search Grounding
