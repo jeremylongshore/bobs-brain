@@ -109,6 +109,65 @@ class PipelineResult:
 
 
 # ============================================================================
+# PORTFOLIO CONTRACTS (PHASE PORT2)
+# ============================================================================
+
+@dataclass
+class PerRepoResult:
+    """
+    Results for a single repository in a portfolio-wide SWE run.
+
+    Used by portfolio orchestrator to track results per repo.
+    """
+    repo_id: str
+    display_name: str
+    status: Literal["completed", "skipped", "error"]
+    pipeline_result: Optional[PipelineResult]
+    duration_seconds: float
+    error_message: Optional[str] = None
+
+    @property
+    def issues_found(self) -> int:
+        """Quick access to issue count."""
+        return self.pipeline_result.total_issues_found if self.pipeline_result else 0
+
+    @property
+    def issues_fixed(self) -> int:
+        """Quick access to fixes count."""
+        return self.pipeline_result.issues_fixed if self.pipeline_result else 0
+
+
+@dataclass
+class PortfolioResult:
+    """
+    Aggregated results from portfolio-wide SWE pipeline run.
+
+    Contains results for all repositories analyzed in a single portfolio sweep.
+    """
+    portfolio_run_id: str  # UUID for this portfolio run
+    repos: List[PerRepoResult]
+
+    # Aggregated metrics
+    total_repos_analyzed: int = 0
+    total_repos_skipped: int = 0
+    total_repos_errored: int = 0
+    total_issues_found: int = 0
+    total_issues_fixed: int = 0
+
+    # Issue breakdown
+    issues_by_severity: Dict[str, int] = field(default_factory=dict)
+    issues_by_type: Dict[str, int] = field(default_factory=dict)
+
+    # Repo rankings
+    repos_by_issue_count: List[tuple[str, int]] = field(default_factory=list)
+    repos_by_compliance_score: List[tuple[str, float]] = field(default_factory=list)
+
+    # Timing
+    portfolio_duration_seconds: float = 0.0
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+# ============================================================================
 # IAM-ADK: ANALYSIS CONTRACTS
 # ============================================================================
 
