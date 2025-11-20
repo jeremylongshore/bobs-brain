@@ -88,3 +88,8 @@ dist/
 *.tfvars
 !terraform.tfvars.example
 .terraform.lock.hcl
+
+# Agent factory structure
+agents/*/venv/
+agents/*/.venv/
+scripts/*/__pycache__/
