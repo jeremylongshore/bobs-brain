@@ -769,6 +769,150 @@ def run_full_pipeline(repo_path: str, task: str) -> PipelineResult:
     return run_swe_pipeline(request)
 
 
+def run_swe_pipeline_for_repo(
+    repo_id: str,
+    mode: str = "preview",
+    task: str = "Audit ADK patterns and compliance",
+    env: str = "dev"
+) -> PipelineResult:
+    """
+    Run SWE pipeline for a specific repo by ID from the registry.
+
+    This is a convenience function for PORT1 (multi-repo) that:
+    - Looks up repo_id in the registry
+    - Checks if repo is locally available
+    - Skips external repos with clear logging
+    - Runs full pipeline for local repos
+
+    Args:
+        repo_id: Repository identifier from config/repos.yaml
+        mode: Pipeline mode ("preview", "dry-run", "create")
+        task: Task description for the pipeline
+        env: Environment ("dev", "staging", "prod")
+
+    Returns:
+        PipelineResult with status and metrics
+    """
+    print(f"\n{'=' * 60}")
+    print(f"RUN SWE PIPELINE FOR REPO: {repo_id}")
+    print(f"{'=' * 60}")
+    print(f"Mode: {mode}")
+    print(f"Task: {task}")
+    print(f"Environment: {env}")
+    print(f"{'=' * 60}\n")
+
+    # Look up repo in registry
+    repo_config = get_repo_by_id(repo_id)
+
+    if not repo_config:
+        print(f"❌ ERROR: Repository '{repo_id}' not found in registry")
+        print(f"   Check config/repos.yaml for available repo IDs")
+        print()
+
+        # Return empty result indicating error
+        request = PipelineRequest(
+            repo_hint=repo_id,
+            repo_id=repo_id,
+            task_description=task,
+            env=env,
+            mode=mode,
+            metadata={"error": "repo_not_found"}
+        )
+        return PipelineResult(
+            request=request,
+            pipeline_run_id=request.pipeline_run_id,
+            issues=[],
+            plans=[],
+            implementations=[],
+            qa_report=[],
+            docs=[],
+            cleanup=[],
+            index_updates=[],
+            total_issues_found=0,
+            issues_fixed=0,
+            issues_documented=0,
+            pipeline_duration_seconds=0.0
+        )
+
+    # Check if repo is locally available
+    if not repo_config.is_local:
+        print(f"⏭️  SKIPPED: Repository '{repo_id}' has no local path")
+        print(f"   Local path: {repo_config.local_path}")
+        print(f"   GitHub: {repo_config.full_name}")
+        print(f"   To analyze this repo:")
+        print(f"     1. Clone it locally")
+        print(f"     2. Update local_path in config/repos.yaml")
+        print()
+
+        # Return result indicating skipped
+        request = PipelineRequest(
+            repo_hint=repo_config.full_name,
+            repo_id=repo_id,
+            github_owner=repo_config.github_owner,
+            github_repo=repo_config.github_repo,
+            task_description=task,
+            env=env,
+            mode=mode,
+            metadata={
+                "status": "skipped",
+                "reason": "no_local_path",
+                "local_path": repo_config.local_path
+            }
+        )
+        return PipelineResult(
+            request=request,
+            pipeline_run_id=request.pipeline_run_id,
+            issues=[],
+            plans=[],
+            implementations=[],
+            qa_report=[],
+            docs=[],
+            cleanup=[],
+            index_updates=[],
+            total_issues_found=0,
+            issues_fixed=0,
+            issues_documented=0,
+            pipeline_duration_seconds=0.0
+        )
+
+    # Repo is local - run the pipeline!
+    print(f"✅ Repository '{repo_id}' found and available locally")
+    print(f"   Display name: {repo_config.display_name}")
+    print(f"   Local path: {repo_config.local_path}")
+    print(f"   GitHub: {repo_config.full_name}")
+    if repo_config.arv_profile:
+        print(f"   ARV requirements:")
+        print(f"     - RAG: {repo_config.arv_profile.requires_rag}")
+        print(f"     - IAM Dept: {repo_config.arv_profile.requires_iam_dept}")
+        print(f"     - Tests: {repo_config.arv_profile.requires_tests}")
+    print()
+
+    # Build request from repo config
+    request = PipelineRequest(
+        repo_hint=repo_config.local_path,
+        repo_id=repo_id,
+        github_owner=repo_config.github_owner,
+        github_repo=repo_config.github_repo,
+        github_ref=repo_config.default_branch,
+        task_description=task,
+        env=env,
+        mode=mode,
+        metadata={
+            "display_name": repo_config.display_name,
+            "tags": repo_config.tags,
+            "arv_profile": {
+                "requires_rag": repo_config.arv_profile.requires_rag if repo_config.arv_profile else False,
+                "requires_iam_dept": repo_config.arv_profile.requires_iam_dept if repo_config.arv_profile else False,
+                "requires_tests": repo_config.arv_profile.requires_tests if repo_config.arv_profile else False,
+                "requires_dual_memory": repo_config.arv_profile.requires_dual_memory if repo_config.arv_profile else False
+            } if repo_config.arv_profile else {}
+        }
+    )
+
+    # Run the full pipeline
+    return run_swe_pipeline(request)
+
+
 if __name__ == "__main__":
     # Demo: Run a quick audit when executed directly
     print("Running demo pipeline...")
