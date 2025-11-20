@@ -1,0 +1,197 @@
+# A2A Protocol AgentCard for iam-senior-adk-devops-lead
+# This card defines how Bob and other agents can discover and invoke the foreman
+
+apiVersion: a2a/v1
+kind: AgentCard
+metadata:
+  name: iam-senior-adk-devops-lead
+  version: "0.1.0"
+  spiffe_id: spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.1.0
+
+spec:
+  description: |
+    ADK Department Foreman - Orchestrates iam-* specialist agents for the ADK/Agent
+    Engineering team. Acts as middle management between Bob (global orchestrator)
+    and specialist workers.
+
+  # A2A endpoint configuration
+  endpoint:
+    # In production, this will be the Cloud Run A2A gateway URL
+    url: ${FOREMAN_A2A_URL:-https://iam-senior-adk-devops-lead.run.app}
+    protocol: https
+    auth_method: oauth2
+
+  # Agent Engine backend
+  backend:
+    type: vertex-ai-agent-engine
+    project_id: ${PROJECT_ID}
+    location: ${LOCATION:-us-central1}
+    agent_engine_id: ${AGENT_ENGINE_ID}
+
+  # Input schema for A2A calls
+  input:
+    type: object
+    required: ["task", "request_id"]
+    properties:
+      request_id:
+        type: string
+        description: Unique identifier for request tracking
+        example: "req_001"
+
+      task:
+        type: string
+        description: High-level task description
+        example: "Audit agents/bob/ for ADK compliance and fix violations"
+
+      task_type:
+        type: string
+        enum: ["audit", "fix", "implement", "document", "cleanup", "general"]
+        default: "general"
+        description: Type of task to help with routing
+
+      context:
+        type: object
+        description: Additional context for the task
+        properties:
+          repo_path:
+            type: string
+            description: Repository path to focus on
+            example: "agents/bob/"
+          branch:
+            type: string
+            description: Git branch to work on
+            example: "main"
+          priority:
+            type: string
+            enum: ["low", "medium", "high", "urgent"]
+            default: "medium"
+          constraints:
+            type: array
+            items:
+              type: string
+            description: Any constraints or requirements
+            example: ["preserve existing API", "maintain backward compatibility"]
+
+      options:
+        type: object
+        description: Execution options
+        properties:
+          parallel:
+            type: boolean
+            default: false
+            description: Allow parallel specialist execution where possible
+          max_specialists:
+            type: integer
+            default: 8
+            description: Maximum specialists to engage
+          timeout_minutes:
+            type: integer
+            default: 30
+            description: Overall timeout for task completion
+
+  # Output schema
+  output:
+    type: object
+    required: ["request_id", "status", "plan"]
+    properties:
+      request_id:
+        type: string
+        description: Echo of input request_id
+
+      status:
+        type: string
+        enum: ["planning", "executing", "completed", "failed", "partial"]
+        description: Overall task status
+
+      plan:
+        type: object
+        description: Execution plan created by foreman
+        properties:
+          pattern:
+            type: string
+            enum: ["single", "sequential", "parallel", "mixed"]
+          workflow:
+            type: array
+            items:
+              type: object
+              properties:
+                step:
+                  type: integer
+                specialist:
+                  type: string
+                task:
+                  type: string
+                status:
+                  type: string
+                output:
+                  type: object
+
+      results:
+        type: object
+        description: Aggregated results from specialists
+        additionalProperties: true
+
+      recommendations:
+        type: array
+        items:
+          type: string
+        description: Follow-up actions recommended
+
+      issues:
+        type: array
+        items:
+          type: object
+        description: Any issues or blockers encountered
+
+  # Capabilities and skills
+  capabilities:
+    - task_planning
+    - specialist_delegation
+    - workflow_coordination
+    - result_aggregation
+    - repository_analysis
+    - compliance_checking
+    - pattern_validation
+    - quality_control
+    - progress_tracking
+    - issue_escalation
+
+  # Required tools/permissions
+  tools:
+    - delegate_to_specialist
+    - analyze_repository
+    - create_task_plan
+    - aggregate_results
+
+  # Dependencies on other agents
+  orchestrates:
+    - iam-adk
+    - iam-issue
+    - iam-fix-plan
+    - iam-fix-impl
+    - iam-qa
+    - iam-doc
+    - iam-cleanup
+    - iam-index
+
+  # Metadata for discovery
+  tags:
+    - foreman
+    - orchestrator
+    - adk
+    - devops
+    - department-lead
+
+  # Health check endpoint
+  health:
+    path: /health
+    interval: 60  # seconds
+
+  # Observability
+  metrics:
+    enabled: true
+    path: /metrics
+
+  logging:
+    level: INFO
+    include_spiffe: true
