@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
-from my_agent.tools.adk_tools import (
+from agents.bob.tools.adk_tools import (
     search_adk_docs,
     get_adk_api_reference,
     list_adk_documentation,

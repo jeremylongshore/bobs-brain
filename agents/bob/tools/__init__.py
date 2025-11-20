@@ -15,8 +15,8 @@ Example tool structure:
         func=my_tool_function
     )
 
-Then import in my_agent/agent.py:
-    from my_agent.tools import my_tool
+Then import in agents/bob/agent.py:
+    from agents.bob.tools import my_tool
 
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",

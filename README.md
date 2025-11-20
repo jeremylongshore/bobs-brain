@@ -57,7 +57,7 @@ Bob's Brain is a **specific implementation** of this template for Slack integrat
 bobs-brain/
 ├── .github/           # CI/CD workflows (drift check, tests, deploy)
 ├── 000-docs/          # All documentation (AARs, architecture, runbooks)
-├── my_agent/          # Agent implementation (ADK LlmAgent + tools)
+├── agents/bob/          # Agent implementation (ADK LlmAgent + tools)
 │   ├── agent.py       # Core agent with dual memory
 │   ├── a2a_card.py    # A2A protocol AgentCard
 │   └── tools/         # Custom tool implementations
@@ -78,7 +78,7 @@ bobs-brain/
 ```
 Slack → service/slack_webhook/ (Cloud Run)
           ↓ (REST API)
-       Vertex AI Agent Engine ← my_agent/ (ADK LlmAgent)
+       Vertex AI Agent Engine ← agents/bob/ (ADK LlmAgent)
           ↓
        Dual Memory (Session + Memory Bank)
 ```
@@ -258,8 +258,8 @@ adk deploy agent_engine my_agent \
 ```
 
 **What this does:**
-1. Packages agent code from `my_agent/`
-2. Uses `my_agent/agent_engine_app.py` as entrypoint (exports `app` variable)
+1. Packages agent code from `agents/bob/`
+2. Uses `agents/bob/agent_engine_app.py` as entrypoint (exports `app` variable)
 3. Builds Docker container
 4. Uploads to staging bucket
 5. Deploys to Agent Engine
@@ -424,7 +424,7 @@ git checkout -b feature/your-feature
 
 ### 2. Implement Changes
 
-- Edit code in `my_agent/` (agent logic)
+- Edit code in `agents/bob/` (agent logic)
 - Edit code in `service/` (gateways only - no Runner imports)
 - Add tests in `tests/`
 - Update docs in `000-docs/`
@@ -439,9 +439,9 @@ bash scripts/ci/check_nodrift.sh
 pytest
 
 # Linting
-flake8 my_agent/ service/
-black --check my_agent/ service/
-mypy my_agent/ service/
+flake8 agents/bob/ service/
+black --check agents/bob/ service/
+mypy agents/bob/ service/
 ```
 
 ### 4. Commit & Push
@@ -544,7 +544,7 @@ See [.env.example](.env.example) for complete configuration template.
 - ✅ 90-95% accuracy (up from 70-80% keyword-only)
 
 **Phase 4: Agent Engine Deployment**
-- ✅ Agent Engine entrypoint (`my_agent/agent_engine_app.py`)
+- ✅ Agent Engine entrypoint (`agents/bob/agent_engine_app.py`)
 - ✅ Terraform infrastructure (Agent Engine, Cloud Run, IAM, staging bucket)
 - ✅ GitHub Actions deployment workflow with WIF authentication
 - ✅ GitHub secrets configuration guide (WIF setup)
@@ -608,12 +608,12 @@ Bob: "No results found" ❌
 - ✅ **Cost: $0/month** (free 5GB tier, only 270KB docs = 0.0054% used)
 
 **Files Added:**
-- `my_agent/tools/vertex_search_tool.py` - Semantic search implementation
+- `agents/bob/tools/vertex_search_tool.py` - Semantic search implementation
 - `scripts/setup_vertex_search.sh` - Infrastructure setup automation
 - `000-docs/076-AT-IMPL-vertex-ai-search-grounding.md` - Complete guide
 
 **Files Modified:**
-- `my_agent/agent.py` - Added semantic search tools
+- `agents/bob/agent.py` - Added semantic search tools
 - `requirements.txt` - Added `google-cloud-discoveryengine>=0.11.0`
 - `.env.example` - Added `VERTEX_SEARCH_DATASTORE_ID`
 
