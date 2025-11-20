@@ -206,6 +206,203 @@ RAG_VARS = [
 
 
 # ==============================================================================
+# AGENT ENGINE TOPOLOGY (AE1)
+# ==============================================================================
+# Per-agent, per-environment Engine IDs for Agent Engine deployment
+# These follow the pattern: AGENT_ENGINE_{AGENT}_{ENV}
+# Read by: agents/config/agent_engine.py
+
+ENGINE_VARS = [
+    # Bob Agent Engine IDs
+    EnvVarSpec(
+        name="AGENT_ENGINE_BOB_ID_DEV",
+        required=False,
+        default=None,
+        description="Bob's Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="ENGINE_MODE enabled for Bob in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_BOB_ID_STAGING",
+        required=False,
+        default=None,
+        description="Bob's Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="ENGINE_MODE enabled for Bob in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_BOB_ID_PROD",
+        required=False,
+        default=None,
+        description="Bob's Agent Engine ID in prod (uses canonical fallback 5828234061910376448)",
+        category="engine",
+        envs=["prod"],
+        required_when="ENGINE_MODE enabled for Bob in prod",
+    ),
+    # Foreman Agent Engine IDs
+    EnvVarSpec(
+        name="AGENT_ENGINE_FOREMAN_ID_DEV",
+        required=False,
+        default=None,
+        description="Foreman's Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="ENGINE_MODE enabled for foreman in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_FOREMAN_ID_STAGING",
+        required=False,
+        default=None,
+        description="Foreman's Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="ENGINE_MODE enabled for foreman in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_FOREMAN_ID_PROD",
+        required=False,
+        default=None,
+        description="Foreman's Agent Engine ID in prod environment",
+        category="engine",
+        envs=["prod"],
+        required_when="ENGINE_MODE enabled for foreman in prod",
+    ),
+    # IAM Specialist Agent Engine IDs (Future-proofing)
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ADK_ID_DEV",
+        required=False,
+        default=None,
+        description="iam-adk Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ADK=true in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ADK_ID_STAGING",
+        required=False,
+        default=None,
+        description="iam-adk Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ADK=true in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ADK_ID_PROD",
+        required=False,
+        default=None,
+        description="iam-adk Agent Engine ID in prod environment",
+        category="engine",
+        envs=["prod"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ADK=true in prod",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ISSUE_ID_DEV",
+        required=False,
+        default=None,
+        description="iam-issue Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ISSUE=true in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ISSUE_ID_STAGING",
+        required=False,
+        default=None,
+        description="iam-issue Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ISSUE=true in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_ISSUE_ID_PROD",
+        required=False,
+        default=None,
+        description="iam-issue Agent Engine ID in prod environment",
+        category="engine",
+        envs=["prod"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_ISSUE=true in prod",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_FIX_ID_DEV",
+        required=False,
+        default=None,
+        description="iam-fix Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_FIX=true in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_FIX_ID_STAGING",
+        required=False,
+        default=None,
+        description="iam-fix Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_FIX=true in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_FIX_ID_PROD",
+        required=False,
+        default=None,
+        description="iam-fix Agent Engine ID in prod environment",
+        category="engine",
+        envs=["prod"],
+        required_when="ENGINE_MODE_FOREMAN_TO_IAM_FIX=true in prod",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_QA_ID_DEV",
+        required=False,
+        default=None,
+        description="iam-qa Agent Engine ID in dev environment",
+        category="engine",
+        envs=["dev"],
+        required_when="iam-qa deployed to Agent Engine in dev",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_QA_ID_STAGING",
+        required=False,
+        default=None,
+        description="iam-qa Agent Engine ID in staging environment",
+        category="engine",
+        envs=["staging"],
+        required_when="iam-qa deployed to Agent Engine in staging",
+    ),
+    EnvVarSpec(
+        name="AGENT_ENGINE_IAM_QA_ID_PROD",
+        required=False,
+        default=None,
+        description="iam-qa Agent Engine ID in prod environment",
+        category="engine",
+        envs=["prod"],
+        required_when="iam-qa deployed to Agent Engine in prod",
+    ),
+    # Alternative naming support (GCP_PROJECT_ID, VERTEX_LOCATION)
+    EnvVarSpec(
+        name="GCP_PROJECT_ID",
+        required=False,
+        default=None,
+        description="Alternative name for PROJECT_ID (GCP-style naming)",
+        category="engine",
+        envs=["dev", "staging", "prod"],
+        deprecated=False,  # Not deprecated, just an alias
+        canonical_replacement="PROJECT_ID",
+    ),
+    EnvVarSpec(
+        name="VERTEX_LOCATION",
+        required=False,
+        default=None,
+        description="Alternative name for LOCATION (Vertex AI style naming)",
+        category="engine",
+        envs=["dev", "staging", "prod"],
+        deprecated=False,  # Not deprecated, just an alias
+        canonical_replacement="LOCATION",
+    ),
+]
+
+
+# ==============================================================================
 # FEATURE FLAGS (LIVE1-3, RAG, Engine, Blue/Green)
 # ==============================================================================
 
@@ -481,6 +678,7 @@ SLACK_BOT_VARS = [
 ALL_VARS: List[EnvVarSpec] = (
     CORE_VARS
     + RAG_VARS
+    + ENGINE_VARS
     + FEATURE_FLAGS
     + STORAGE_VARS
     + NOTIFICATION_VARS
