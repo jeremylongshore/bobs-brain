@@ -1,0 +1,205 @@
+{
+  "version": "1.0",
+  "created": "2025-11-20T05:43:28.059905",
+  "purpose": "ADK documentation grounding for Bob's Brain agents",
+  "target_bucket": "bob-vertex-agent-datastore",
+  "documents": [
+    {
+      "url": "https://google.github.io/adk-docs/tools/",
+      "category": "tools",
+      "title": "ADK Tools Overview",
+      "description": "Main tools documentation for Google ADK",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools/",
+        "category": "tools",
+        "title": "ADK Tools Overview",
+        "description": "Main tools documentation for Google ADK",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059941",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "tools"
+        ]
+      },
+      "storage_path": "adk-docs/tools/adk_tools_overview.html"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/tools/built-in-tools/",
+      "category": "tools",
+      "title": "ADK Built-in Tools",
+      "description": "Pre-built tools available in ADK including GoogleSearchToolset, BigQueryToolset, etc.",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools/built-in-tools/",
+        "category": "tools",
+        "title": "ADK Built-in Tools",
+        "description": "Pre-built tools available in ADK including GoogleSearchToolset, BigQueryToolset, etc.",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059950",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "tools"
+        ]
+      },
+      "storage_path": "adk-docs/tools/adk_built-in_tools.html"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/tools-custom/",
+      "category": "custom-tools",
+      "title": "ADK Custom Tools",
+      "description": "How to create custom tools for ADK agents",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools-custom/",
+        "category": "custom-tools",
+        "title": "ADK Custom Tools",
+        "description": "How to create custom tools for ADK agents",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059958",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "custom-tools"
+        ]
+      },
+      "storage_path": "adk-docs/custom-tools/adk_custom_tools.html"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/tools-custom/function-tools/",
+      "category": "custom-tools",
+      "title": "ADK Function Tools",
+      "description": "Creating function-based custom tools with proper signatures",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools-custom/function-tools/",
+        "category": "custom-tools",
+        "title": "ADK Function Tools",
+        "description": "Creating function-based custom tools with proper signatures",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059961",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "custom-tools"
+        ]
+      },
+      "storage_path": "adk-docs/custom-tools/adk_function_tools.html"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/tools-custom/mcp-tools/",
+      "category": "custom-tools",
+      "title": "ADK MCP Tools",
+      "description": "Model Context Protocol tools for external integrations",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools-custom/mcp-tools/",
+        "category": "custom-tools",
+        "title": "ADK MCP Tools",
+        "description": "Model Context Protocol tools for external integrations",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059967",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "custom-tools"
+        ]
+      },
+      "storage_path": "adk-docs/custom-tools/adk_mcp_tools.html"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/tools/google-cloud/mcp-toolbox-for-databases/",
+      "category": "gcp-tools",
+      "title": "MCP Toolbox for Databases",
+      "description": "Database integration tools via MCP for CloudSQL, Firestore, BigQuery, etc.",
+      "metadata": {
+        "source_url": "https://google.github.io/adk-docs/tools/google-cloud/mcp-toolbox-for-databases/",
+        "category": "gcp-tools",
+        "title": "MCP Toolbox for Databases",
+        "description": "Database integration tools via MCP for CloudSQL, Firestore, BigQuery, etc.",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059970",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "gcp-tools"
+        ]
+      },
+      "storage_path": "adk-docs/gcp-tools/mcp_toolbox_for_databases.html"
+    },
+    {
+      "url": "https://arxiv.org/pdf/2201.11903",
+      "category": "research",
+      "title": "Chain-of-Thought Prompting Research",
+      "description": "Research paper on chain-of-thought prompting techniques",
+      "filename": "chain_of_thought_prompting_2201.11903.pdf",
+      "metadata": {
+        "source_url": "https://arxiv.org/pdf/2201.11903",
+        "category": "research",
+        "title": "Chain-of-Thought Prompting Research",
+        "description": "Research paper on chain-of-thought prompting techniques",
+        "ingestion_timestamp": "2025-11-20T05:43:28.059973",
+        "content_hash": "",
+        "file_type": "html",
+        "agent_relevance": [
+          "bob",
+          "iam-adk",
+          "iam-index"
+        ],
+        "tags": [
+          "adk",
+          "google-adk",
+          "vertex-ai",
+          "agent-development-kit",
+          "research"
+        ]
+      },
+      "storage_path": "adk-docs/research/chain_of_thought_prompting_2201.11903.pdf"
+    }
+  ]
+}
