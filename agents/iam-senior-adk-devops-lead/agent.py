@@ -9,12 +9,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools import (
-    delegate_to_specialist,
-    analyze_repository,
-    create_task_plan,
-    aggregate_results,
-)
+from agents.shared_tools import FOREMAN_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional, Dict, Any, List
@@ -261,15 +256,7 @@ def get_agent() -> LlmAgent:
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast and efficient for orchestration
         name="iam_senior_adk_devops_lead",  # Valid Python identifier
-        tools=[
-            # Orchestration tools
-            delegate_to_specialist,
-            create_task_plan,
-            aggregate_results,
-
-            # Analysis tools
-            analyze_repository,
-        ],
+        tools=FOREMAN_TOOLS,  # Use shared tools profile
         instruction=get_foreman_instruction(),
         after_agent_callback=auto_save_session_to_memory,  # R5: Memory persistence
     )

@@ -16,12 +16,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.adk_tools import (
-    search_adk_docs,
-    get_adk_api_reference,
-    list_adk_documentation,
-)
-from .tools.vertex_search_tool import search_vertex_ai, get_vertex_search_status
+from agents.shared_tools import BOB_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -216,15 +211,7 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="bobs_brain",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # ADK Documentation Tools (Phase 2: Local file search)
-            search_adk_docs,  # Keyword search across all ADK documentation
-            get_adk_api_reference,  # Get detailed API reference for specific topics
-            list_adk_documentation,  # List all available documentation files
-            # Vertex AI Search Tools (Phase 3: Semantic search)
-            search_vertex_ai,  # AI-powered semantic search (uses free 5GB tier)
-            get_vertex_search_status,  # Check Vertex AI Search datastore status
-        ],
+        tools=BOB_TOOLS,  # Use shared tool profile
         instruction=base_instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

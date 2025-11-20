@@ -2,12 +2,17 @@
 ADK Built-in Tools Module
 
 This module provides access to Google ADK's built-in tools and toolsets.
-These are official tools provided by the ADK framework.
+Based on official documentation:
+- https://google.github.io/adk-docs/tools/
+- https://google.github.io/adk-docs/tools/built-in-tools/
+- https://google.github.io/adk-docs/tools-custom/
 
-Note: Some tools are stubbed for future implementation when infrastructure is ready.
+ADK provides two ways to access tools:
+1. Pre-built tools via google.adk.toolsets
+2. Custom tools via @dataclass and FunctionTool
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,43 +22,62 @@ def get_google_search_tool() -> Any:
     """
     Get the Google Search tool from ADK.
 
-    This tool allows agents to search the web using Google Search.
+    Documentation: https://google.github.io/adk-docs/tools/built-in-tools/#google-search
+
+    This provides web search capabilities using Google Search API.
+
+    Usage:
+        from google.adk.toolsets import GoogleSearchToolset
+        tools = GoogleSearchToolset()
 
     Returns:
-        Google Search tool instance or stub
+        Google Search toolset instance or stub
     """
     try:
-        # Try to import the actual ADK Google Search tool
-        from google.adk.toolsets import GoogleSearchTool
+        # Import the actual ADK Google Search toolset
+        from google.adk.toolsets import GoogleSearchToolset
 
-        tool = GoogleSearchTool()
-        logger.info("✅ Loaded ADK GoogleSearchTool")
-        return tool
+        toolset = GoogleSearchToolset()
+        logger.info("✅ Loaded ADK GoogleSearchToolset")
+        return toolset
     except ImportError:
         # If not available, return a stub
-        logger.warning("GoogleSearchTool not available, using stub")
+        logger.warning("GoogleSearchToolset not available, using stub")
         return create_tool_stub(
             "google_search",
             "Search the web using Google",
-            "GoogleSearchTool will be available when ADK is fully configured"
+            "GoogleSearchToolset requires: pip install google-adk[search]"
         )
 
 
-def get_code_execution_tool_stub() -> Any:
+def get_code_execution_tool() -> Any:
     """
-    Get the Code Execution tool (currently stubbed).
+    Get the Code Execution tool from ADK.
 
-    This will enable sandboxed code execution when security is configured.
+    Documentation: https://google.github.io/adk-docs/tools/built-in-tools/#code-execution
+
+    Enables sandboxed Python code execution in Agent Engine.
+
+    Usage:
+        from google.adk.toolsets import CodeExecutionToolset
+        tools = CodeExecutionToolset()
 
     Returns:
-        Code execution tool stub
+        Code execution toolset or stub
     """
-    # TODO: Wire actual code execution when sandbox is configured
-    return create_tool_stub(
-        "code_execution",
-        "Execute code in a sandboxed environment",
-        "Code execution requires sandbox configuration in Agent Engine"
-    )
+    try:
+        from google.adk.toolsets import CodeExecutionToolset
+
+        toolset = CodeExecutionToolset()
+        logger.info("✅ Loaded ADK CodeExecutionToolset")
+        return toolset
+    except ImportError:
+        logger.warning("CodeExecutionToolset not available, using stub")
+        return create_tool_stub(
+            "code_execution",
+            "Execute Python code in sandbox",
+            "CodeExecutionToolset requires Agent Engine deployment"
+        )
 
 
 def get_repo_search_tool_stub() -> Any:
@@ -73,38 +97,90 @@ def get_repo_search_tool_stub() -> Any:
     )
 
 
-def get_bigquery_toolset_stub() -> Any:
+def get_bigquery_toolset() -> Any:
     """
-    Get the BigQuery toolset (currently stubbed).
+    Get the BigQuery toolset from ADK.
 
-    This will enable BigQuery operations when credentials are configured.
+    Documentation: https://google.github.io/adk-docs/tools/built-in-tools/#bigquery
+
+    Provides BigQuery data access and analysis capabilities.
+
+    Usage:
+        from google.adk.toolsets import BigQueryToolset
+        tools = BigQueryToolset(project_id="your-project")
 
     Returns:
-        BigQuery toolset stub
+        BigQuery toolset or stub
     """
-    # TODO: Wire BigQuery when project credentials are configured
-    return create_tool_stub(
-        "bigquery",
-        "Execute BigQuery operations",
-        "BigQuery toolset requires GCP project configuration"
-    )
+    try:
+        from google.adk.toolsets import BigQueryToolset
+        import os
+
+        project_id = os.getenv("PROJECT_ID")
+        if project_id:
+            toolset = BigQueryToolset(project_id=project_id)
+            logger.info("✅ Loaded ADK BigQueryToolset")
+            return toolset
+        else:
+            logger.warning("PROJECT_ID not set for BigQuery")
+            return create_tool_stub(
+                "bigquery",
+                "Execute BigQuery operations",
+                "BigQueryToolset requires PROJECT_ID environment variable"
+            )
+    except ImportError:
+        logger.warning("BigQueryToolset not available")
+        return create_tool_stub(
+            "bigquery",
+            "Execute BigQuery operations",
+            "BigQueryToolset requires: pip install google-adk[bigquery]"
+        )
 
 
-def get_mcp_toolset_stub() -> Any:
+def get_mcp_toolset() -> Any:
     """
-    Get the MCP (Model Context Protocol) toolset (currently stubbed).
+    Get the MCP (Model Context Protocol) toolset from ADK.
 
-    This will enable MCP server connections when configured.
+    Documentation: https://google.github.io/adk-docs/tools-custom/mcp-tools/
+
+    MCP enables connecting to external tool servers via the Model Context Protocol.
+
+    Usage:
+        from google.adk.toolsets import MCPToolset
+        tools = MCPToolset(server_url="http://localhost:3000")
+
+    Example MCP servers:
+        - Filesystem access
+        - Database connections
+        - API integrations
+        - Custom business logic
 
     Returns:
-        MCP toolset stub
+        MCP toolset or stub
     """
-    # TODO: Wire MCP when servers are configured
-    return create_tool_stub(
-        "mcp",
-        "Connect to MCP servers",
-        "MCP toolset requires server configuration"
-    )
+    try:
+        from google.adk.toolsets import MCPToolset
+        import os
+
+        mcp_server_url = os.getenv("MCP_SERVER_URL")
+        if mcp_server_url:
+            toolset = MCPToolset(server_url=mcp_server_url)
+            logger.info(f"✅ Loaded ADK MCPToolset for {mcp_server_url}")
+            return toolset
+        else:
+            logger.warning("MCP_SERVER_URL not configured")
+            return create_tool_stub(
+                "mcp",
+                "Connect to MCP servers",
+                "MCPToolset requires MCP_SERVER_URL environment variable"
+            )
+    except ImportError:
+        logger.warning("MCPToolset not available")
+        return create_tool_stub(
+            "mcp",
+            "Connect to MCP servers",
+            "MCPToolset requires: pip install google-adk[mcp]"
+        )
 
 
 def create_tool_stub(name: str, description: str, note: str) -> Any:

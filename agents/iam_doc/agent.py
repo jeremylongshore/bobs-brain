@@ -19,12 +19,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.documentation_tools import (
-    generate_aar,
-    update_readme,
-    create_design_doc,
-    list_documentation,
-)
+from agents.shared_tools import IAM_DOC_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -245,13 +240,7 @@ Be thorough, accurate, and helpful. Your documentation is how we transfer knowle
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_doc",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # Documentation Tools
-            generate_aar,  # Generate After-Action Reports
-            update_readme,  # Update README sections
-            create_design_doc,  # Create design documentation
-            list_documentation,  # List existing docs in 000-docs/
-        ],
+        tools=IAM_DOC_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

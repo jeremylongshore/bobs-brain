@@ -20,13 +20,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.qa_tools import (
-    generate_test_suite,
-    validate_test_coverage,
-    run_smoke_tests,
-    assess_fix_completeness,
-    produce_qa_verdict,
-)
+from agents.shared_tools import IAM_QA_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -295,14 +289,7 @@ When evaluating fixes, be thorough and pragmatic. A good test plan:
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_qa",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # QA Testing Tools
-            generate_test_suite,  # Design test plan from FixPlan
-            validate_test_coverage,  # Check coverage standards
-            run_smoke_tests,  # Basic functionality validation
-            assess_fix_completeness,  # Verify all steps implemented
-            produce_qa_verdict,  # Generate final QAVerdict
-        ],
+        tools=IAM_QA_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

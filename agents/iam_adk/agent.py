@@ -19,11 +19,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.analysis_tools import (
-    analyze_agent_code,
-    validate_adk_pattern,
-    check_a2a_compliance,
-)
+from agents.shared_tools import IAM_ADK_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -207,12 +203,7 @@ When analyzing code, be thorough but pragmatic. Focus on violations that impact 
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_adk",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # ADK Pattern Analysis Tools
-            analyze_agent_code,  # Analyze agent.py structure and compliance
-            validate_adk_pattern,  # Validate specific ADK patterns
-            check_a2a_compliance,  # Check A2A protocol compliance
-        ],
+        tools=IAM_ADK_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

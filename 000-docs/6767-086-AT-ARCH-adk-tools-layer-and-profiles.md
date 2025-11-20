@@ -199,7 +199,7 @@ agents/shared_tools/
 | Phase | Status | Description |
 |-------|--------|-------------|
 | Phase 3 | ✅ Complete | Shared tools layer created |
-| Phase 4 | 🔄 In Progress | Wiring agents to profiles |
+| Phase 4 | ✅ Complete | All agents wired to profiles |
 | Phase 5 | 📅 Planned | Vertex Search integration |
 | Phase 6 | 📅 Planned | Repository indexing |
 
@@ -260,16 +260,16 @@ def get_new_tool_stub() -> Any:
 
 | Agent | Old Tool Wiring | New Profile | Status |
 |-------|-----------------|-------------|--------|
-| Bob | Local imports | BOB_TOOLS | Ready |
-| Foreman | Local imports | FOREMAN_TOOLS | Ready |
-| iam-adk | Local imports | IAM_ADK_TOOLS | Ready |
-| iam-issue | Local imports | IAM_ISSUE_TOOLS | Ready |
-| iam-fix-plan | Local imports | IAM_FIX_PLAN_TOOLS | Ready |
-| iam-fix-impl | Local imports | IAM_FIX_IMPL_TOOLS | Ready |
-| iam-qa | Local imports | IAM_QA_TOOLS | Ready |
-| iam-doc | Local imports | IAM_DOC_TOOLS | Ready |
-| iam-cleanup | Local imports | IAM_CLEANUP_TOOLS | Ready |
-| iam-index | Local imports | IAM_INDEX_TOOLS | Ready |
+| Bob | Local imports | BOB_TOOLS | ✅ Wired |
+| Foreman | Local imports | FOREMAN_TOOLS | ✅ Wired |
+| iam-adk | Local imports | IAM_ADK_TOOLS | ✅ Wired |
+| iam-issue | Local imports | IAM_ISSUE_TOOLS | ✅ Wired |
+| iam-fix-plan | Local imports | IAM_FIX_PLAN_TOOLS | ✅ Wired |
+| iam-fix-impl | Local imports | IAM_FIX_IMPL_TOOLS | ✅ Wired |
+| iam-qa | Local imports | IAM_QA_TOOLS | ✅ Wired |
+| iam-doc | Local imports | IAM_DOC_TOOLS | ✅ Wired |
+| iam-cleanup | Local imports | IAM_CLEANUP_TOOLS | ✅ Wired |
+| iam-index | Local imports | IAM_INDEX_TOOLS | ✅ Wired |
 
 ## Maintenance
 
@@ -296,7 +296,8 @@ def get_new_tool_stub() -> Any:
 ---
 
 **Next Steps:**
-1. Wire all agents to use shared profiles (Phase 4)
+1. ✅ ~~Wire all agents to use shared profiles (Phase 4)~~ **COMPLETE**
 2. Activate repository search when indexed
 3. Configure code execution sandbox
 4. Enable BigQuery/GCS toolsets with credentials
+5. Add ADK documentation to storage bucket for grounding

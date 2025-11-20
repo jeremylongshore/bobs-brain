@@ -19,14 +19,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.cleanup_tools import (
-    detect_dead_code,
-    detect_unused_dependencies,
-    identify_naming_issues,
-    find_code_duplication,
-    analyze_structure,
-    propose_cleanup_task,
-)
+from agents.shared_tools import IAM_CLEANUP_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -303,15 +296,7 @@ Repository hygiene is critical for long-term maintainability. Be thorough in ana
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_cleanup",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # Cleanup Detection Tools
-            detect_dead_code,  # Find unreachable code
-            detect_unused_dependencies,  # Identify unused imports/deps
-            identify_naming_issues,  # Find naming violations
-            find_code_duplication,  # Spot duplicate code
-            analyze_structure,  # Assess organizational issues
-            propose_cleanup_task,  # Generate CleanupTask specifications
-        ],
+        tools=IAM_CLEANUP_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

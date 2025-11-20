@@ -9,14 +9,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools import (
-    index_adk_docs,
-    index_project_docs,
-    query_knowledge_base,
-    sync_vertex_search,
-    generate_index_entry,
-    analyze_knowledge_gaps
-)
+from agents.shared_tools import IAM_INDEX_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -204,14 +197,7 @@ Remember: You are the **knowledge nexus** - all agents rely on you for accurate,
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",
         name="iam_index",  # Python identifier (no hyphens)
-        tools=[
-            index_adk_docs,
-            index_project_docs,
-            query_knowledge_base,
-            sync_vertex_search,
-            generate_index_entry,
-            analyze_knowledge_gaps
-        ],
+        tools=IAM_INDEX_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory
     )

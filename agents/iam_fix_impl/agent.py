@@ -20,13 +20,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.implementation_tools import (
-    implement_fix_step,
-    validate_implementation,
-    generate_unit_tests,
-    check_compliance,
-    document_implementation,
-)
+from agents.shared_tools import IAM_FIX_IMPL_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -295,14 +289,7 @@ When implementing fixes, be meticulous and pragmatic. Good implementation:
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_fix_impl",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # Implementation Tools
-            implement_fix_step,  # Implement a single fix step
-            validate_implementation,  # Validate against FixPlan
-            generate_unit_tests,  # Create tests for changes
-            check_compliance,  # Verify Hard Mode compliance
-            document_implementation,  # Document decisions
-        ],
+        tools=IAM_FIX_IMPL_TOOLS,  # Use shared tools profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

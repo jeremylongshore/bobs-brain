@@ -20,13 +20,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.planning_tools import (
-    create_fix_plan,
-    validate_fix_plan,
-    assess_risk_level,
-    define_testing_strategy,
-    estimate_effort,
-)
+from agents.shared_tools import IAM_FIX_PLAN_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -254,14 +248,7 @@ When planning fixes, be thorough and realistic. A good fix plan:
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_fix_plan",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # Fix Planning Tools
-            create_fix_plan,  # Create FixPlan from IssueSpec
-            validate_fix_plan,  # Validate FixPlan completeness
-            assess_risk_level,  # Assess risk level
-            define_testing_strategy,  # Design testing strategy
-            estimate_effort,  # Estimate implementation effort
-        ],
+        tools=IAM_FIX_PLAN_TOOLS,  # Use shared tool profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )

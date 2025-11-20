@@ -19,12 +19,7 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from .tools.formatting_tools import (
-    format_issue_markdown,
-    generate_issue_labels,
-    validate_issue_spec,
-    create_github_issue_body,
-)
+from agents.shared_tools import IAM_ISSUE_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -216,13 +211,7 @@ When creating issues, be thorough and professional. Each issue should be:
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_issue",  # Required: Valid Python identifier (no hyphens)
-        tools=[
-            # Issue Formatting Tools
-            validate_issue_spec,  # Validate IssueSpec completeness
-            format_issue_markdown,  # Convert to GitHub markdown
-            generate_issue_labels,  # Create appropriate labels
-            create_github_issue_body,  # Create complete issue body
-        ],
+        tools=IAM_ISSUE_TOOLS,  # Use shared tool profile
         instruction=instruction,
         after_agent_callback=auto_save_session_to_memory,  # R5: Save to Memory Bank
     )
