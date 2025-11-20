@@ -277,7 +277,7 @@ Configure in repository settings (Settings → Secrets → Actions):
 | `REGION` | Deployment region | `us-central1` |
 | `STAGING_BUCKET` | GCS staging bucket URL | `gs://bobs-brain-dev-adk-staging` |
 
-**Setup Guide:** See [000-docs/068-OD-CONF-github-secrets-configuration.md](000-docs/068-OD-CONF-github-secrets-configuration.md)
+**Setup Guide:** See [000-docs/6767-068-OD-CONF-github-secrets-configuration.md](000-docs/6767-068-OD-CONF-github-secrets-configuration.md)
 
 ### Deployment Verification
 
@@ -334,13 +334,13 @@ curl -X POST https://bobs-brain-a2a-gateway-HASH.run.app/invoke \
 
 **Error Reporting** - Exception tracking and grouping
 
-**See:** [000-docs/069-OD-TELE-observability-telemetry-guide.md](000-docs/069-OD-TELE-observability-telemetry-guide.md)
+**See:** [000-docs/6767-069-OD-TELE-observability-telemetry-guide.md](000-docs/6767-069-OD-TELE-observability-telemetry-guide.md)
 
 ### Deployment Runbook
 
 For complete step-by-step deployment instructions:
 
-**📖 [000-docs/070-OD-RBOK-deployment-runbook.md](000-docs/070-OD-RBOK-deployment-runbook.md)**
+**📖 [000-docs/6767-070-OD-RBOK-deployment-runbook.md](000-docs/6767-070-OD-RBOK-deployment-runbook.md)**
 
 Includes:
 - Prerequisites checklist
@@ -366,16 +366,16 @@ Includes:
 
 **Architecture & Rules:**
 - **[CLAUDE.md](CLAUDE.md)** - Hard Mode rules and enforcement (800+ lines)
-- **[000-docs/053-AA-REPT-hardmode-baseline.md](000-docs/053-AA-REPT-hardmode-baseline.md)** - Phase 1-2 implementation AAR
-- **[000-docs/054-AT-ALIG-notebook-alignment-checklist.md](000-docs/054-AT-ALIG-notebook-alignment-checklist.md)** - Alignment with Google Cloud patterns
-- **[000-docs/055-AA-CRIT-import-path-corrections.md](000-docs/055-AA-CRIT-import-path-corrections.md)** - Import path verification
-- **[000-docs/056-AA-CONF-usermanual-import-verification.md](000-docs/056-AA-CONF-usermanual-import-verification.md)** - User manual compliance
+- **[000-docs/6767-053-AA-REPT-hardmode-baseline.md](000-docs/6767-053-AA-REPT-hardmode-baseline.md)** - Phase 1-2 implementation AAR
+- **[000-docs/6767-054-AT-ALIG-notebook-alignment-checklist.md](000-docs/6767-054-AT-ALIG-notebook-alignment-checklist.md)** - Alignment with Google Cloud patterns
+- **[000-docs/6767-055-AA-CRIT-import-path-corrections.md](000-docs/6767-055-AA-CRIT-import-path-corrections.md)** - Import path verification
+- **[000-docs/6767-056-AA-CONF-usermanual-import-verification.md](000-docs/6767-056-AA-CONF-usermanual-import-verification.md)** - User manual compliance
 
 **Deployment & Operations:**
-- **[000-docs/067-PM-PLAN-vertex-ai-deployment-plan.md](000-docs/067-PM-PLAN-vertex-ai-deployment-plan.md)** - Complete deployment plan with research
-- **[000-docs/068-OD-CONF-github-secrets-configuration.md](000-docs/068-OD-CONF-github-secrets-configuration.md)** - GitHub secrets setup guide (WIF)
-- **[000-docs/069-OD-TELE-observability-telemetry-guide.md](000-docs/069-OD-TELE-observability-telemetry-guide.md)** - Cloud Trace, Logging, Monitoring
-- **[000-docs/070-OD-RBOK-deployment-runbook.md](000-docs/070-OD-RBOK-deployment-runbook.md)** - Step-by-step deployment runbook
+- **[000-docs/6767-067-PM-PLAN-vertex-ai-deployment-plan.md](000-docs/6767-067-PM-PLAN-vertex-ai-deployment-plan.md)** - Complete deployment plan with research
+- **[000-docs/6767-068-OD-CONF-github-secrets-configuration.md](000-docs/6767-068-OD-CONF-github-secrets-configuration.md)** - GitHub secrets setup guide (WIF)
+- **[000-docs/6767-069-OD-TELE-observability-telemetry-guide.md](000-docs/6767-069-OD-TELE-observability-telemetry-guide.md)** - Cloud Trace, Logging, Monitoring
+- **[000-docs/6767-070-OD-RBOK-deployment-runbook.md](000-docs/6767-070-OD-RBOK-deployment-runbook.md)** - Step-by-step deployment runbook
 
 **Configuration:**
 - **[.env.example](.env.example)** - Configuration template with all required variables
@@ -610,7 +610,7 @@ Bob: "No results found" ❌
 **Files Added:**
 - `agents/bob/tools/vertex_search_tool.py` - Semantic search implementation
 - `scripts/setup_vertex_search.sh` - Infrastructure setup automation
-- `000-docs/076-AT-IMPL-vertex-ai-search-grounding.md` - Complete guide
+- `000-docs/6767-076-AT-IMPL-vertex-ai-search-grounding.md` - Complete guide
 
 **Files Modified:**
 - `agents/bob/agent.py` - Added semantic search tools
@@ -639,7 +639,7 @@ Bob: "No results found" ❌
 
 **What Was Wrong:**
 - Drift check flagged **documentation examples** as violations
-- Example: `000-docs/053-AA-REPT-hardmode-baseline.md` showed forbidden import patterns
+- Example: `000-docs/6767-053-AA-REPT-hardmode-baseline.md` showed forbidden import patterns
 - README files with example commands triggered R3 violations
 - Docstrings mentioning "from my_agent" triggered false positives
 - Made it harder to include educational content in docs

@@ -167,10 +167,10 @@ Where:
   (e.g., `agent-factory-phase-1`, `iam-senior-adk-devops-lead-design`).
 
 Examples:
-- `077-AA-PLAN-agent-factory-structure-cleanup.md`
-- `078-AA-REPT-agent-factory-structure-phase-1.md`
-- `079-AA-PLAN-iam-senior-adk-devops-lead-design.md`
-- `080-AA-REPT-iam-senior-adk-devops-lead-implementation.md`
+- `6767-077-AA-PLAN-agent-factory-structure-cleanup.md`
+- `6767-078-AA-REPT-agent-factory-structure-phase-1.md`
+- `6767-079-AA-PLAN-iam-senior-adk-devops-lead-design.md`
+- `6767-080-AA-REPT-iam-senior-adk-devops-lead-implementation.md`
 
 You must treat `000-docs/` as canonical:
 - If it isn't written there, it does not "exist" as a standard.

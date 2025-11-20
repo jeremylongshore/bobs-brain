@@ -221,7 +221,7 @@ a2a/              # Separate package: a2a-sdk (NOT part of google-adk)
 - **Implementation:** `my_agent/agent.py`, `my_agent/a2a_card.py`
 - **Dependencies:** `requirements.txt`
 - **Configuration:** `.env.example`
-- **Alignment Check:** `000-docs/054-AT-ALIG-notebook-alignment-checklist.md`
+- **Alignment Check:** `000-docs/6767-054-AT-ALIG-notebook-alignment-checklist.md`
 
 ---
 

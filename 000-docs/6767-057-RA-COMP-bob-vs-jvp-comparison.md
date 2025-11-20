@@ -413,10 +413,10 @@ deploy-agent-engine:
 **Structure:**
 ```
 000-docs/
-├── 053-AA-REPT-hardmode-baseline.md
-├── 054-AT-ALIG-notebook-alignment-checklist.md
-├── 055-AA-CRIT-import-path-corrections.md
-└── 056-AA-CONF-usermanual-import-verification.md
+├── 6767-053-AA-REPT-hardmode-baseline.md
+├── 6767-054-AT-ALIG-notebook-alignment-checklist.md
+├── 6767-055-AA-CRIT-import-path-corrections.md
+└── 6767-056-AA-CONF-usermanual-import-verification.md
 ```
 
 **Characteristics:**
@@ -436,8 +436,8 @@ deploy-agent-engine:
 **Structure:**
 ```
 000-docs/
-├── 001-AT-ARCH-iamjvp-architecture.md
-├── 008-AT-RELE-iamjvp-launch.md
+├── 6767-001-AT-ARCH-iamjvp-architecture.md
+├── 6767-008-AT-RELE-iamjvp-launch.md
 ├── USER-MANUALS.md  # Points to Google notebooks
 └── README.md
 
@@ -1193,6 +1193,6 @@ Both agents demonstrate Google ADK excellence - just with different philosophies
 
 ---
 
-**Document Filing:** `057-RA-COMP-bob-vs-jvp-comparison.md`
+**Document Filing:** `6767-057-RA-COMP-bob-vs-jvp-comparison.md`
 **Category:** RA (Reports & Analysis)
 **Type:** COMP (Comparison)

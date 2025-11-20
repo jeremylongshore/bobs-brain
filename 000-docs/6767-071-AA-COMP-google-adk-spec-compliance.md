@@ -382,7 +382,7 @@ if not AGENT_SPIFFE_ID:
 ```
 
 **Documentation:**
-- `000-docs/068-OD-CONF-github-secrets-configuration.md` - Complete WIF setup guide
+- `000-docs/6767-068-OD-CONF-github-secrets-configuration.md` - Complete WIF setup guide
 
 **Analysis:**
 - ✅ Uses official `google-github-actions/auth@v2` action

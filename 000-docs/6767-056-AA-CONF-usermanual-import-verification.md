@@ -192,8 +192,8 @@ Match the patterns demonstrated in:
 ## Related Documents
 
 - **User Manuals:** `000-docs/001-usermanual/README.md`
-- **Import Corrections AAR:** `000-docs/055-AA-CRIT-import-path-corrections.md`
-- **Alignment Checklist:** `000-docs/054-AT-ALIG-notebook-alignment-checklist.md`
+- **Import Corrections AAR:** `000-docs/6767-055-AA-CRIT-import-path-corrections.md`
+- **Alignment Checklist:** `000-docs/6767-054-AT-ALIG-notebook-alignment-checklist.md`
 - **Implementation:** `my_agent/agent.py`, `my_agent/a2a_card.py`
 
 ---

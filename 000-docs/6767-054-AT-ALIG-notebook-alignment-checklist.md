@@ -241,10 +241,10 @@ infra/terraform/                       # Infrastructure as Code
 #### ⚠️ MISSING
 ```markdown
 # Should create:
-000-docs/055-OD-GUID-deployment-runbook.md    # Step-by-step deployment
-000-docs/056-OD-GUID-local-development.md     # Local testing guide
-000-docs/057-DR-REFE-environment-variables.md # Complete env var reference
-000-docs/058-DR-REFE-api-endpoints.md         # Gateway API documentation
+000-docs/6767-055-OD-GUID-deployment-runbook.md    # Step-by-step deployment
+000-docs/6767-056-OD-GUID-local-development.md     # Local testing guide
+000-docs/6767-057-DR-REFE-environment-variables.md # Complete env var reference
+000-docs/6767-058-DR-REFE-api-endpoints.md         # Gateway API documentation
 ```
 
 ---
@@ -339,7 +339,7 @@ infra/terraform/                       # Infrastructure as Code
    ```
 
 4. **Document Environment Variables**
-   - Create `000-docs/057-DR-REFE-environment-variables.md`
+   - Create `000-docs/6767-057-DR-REFE-environment-variables.md`
    - List all required and optional variables
    - Include examples and default values
 

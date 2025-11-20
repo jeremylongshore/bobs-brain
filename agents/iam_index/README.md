@@ -69,7 +69,7 @@ Create IndexEntry objects for new content.
 ```python
 result = generate_index_entry(
     title="A2A Protocol Guide",
-    source="000-docs/045-AT-ARCH-a2a-protocol.md",
+    source="000-docs/6767-045-AT-ARCH-a2a-protocol.md",
     content_type="doc",
     summary="Complete A2A implementation guide"
 )

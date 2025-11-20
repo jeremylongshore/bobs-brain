@@ -106,7 +106,7 @@ Individual issue specification (consumed by iam-issue):
   "proposed_fix": {
     "approach": "Add memory service to create_runner()",
     "code_examples": "memory_service = VertexAiMemoryBankService(...)",
-    "references": "000-docs/002-AT-FLOW-memory-patterns.md"
+    "references": "000-docs/6767-002-AT-FLOW-memory-patterns.md"
   },
   "impact": "Sessions not persisted to Memory Bank",
   "effort": "MEDIUM"
@@ -335,9 +335,9 @@ agents/iam-adk/
 
 ## Related Documentation
 
-- `000-docs/001-PP-ARCH-agent-factory-structure.md` - Agent factory pattern
-- `000-docs/002-AT-FLOW-agent-interaction-patterns.md` - A2A patterns
-- `000-docs/003-AT-RULE-hard-mode-rules.md` - Hard Mode rules (R1-R8)
+- `000-docs/6767-001-PP-ARCH-agent-factory-structure.md` - Agent factory pattern
+- `000-docs/6767-002-AT-FLOW-agent-interaction-patterns.md` - A2A patterns
+- `000-docs/6767-003-AT-RULE-hard-mode-rules.md` - Hard Mode rules (R1-R8)
 - `agents/bob/README.md` - Bob orchestrator agent
 
 ## Contact

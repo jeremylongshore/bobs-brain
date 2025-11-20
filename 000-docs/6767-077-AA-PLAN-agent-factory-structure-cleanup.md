@@ -174,7 +174,7 @@ bobs-brain/                         # Canonical home for Bob + iam-* team
 │
 ├── 000-docs/                       # All documentation (R6) ✅
 │   ├── [001-076 existing docs]
-│   └── 077-AA-PLAN-agent-factory-structure-cleanup.md (this doc)
+│   └── 6767-077-AA-PLAN-agent-factory-structure-cleanup.md (this doc)
 │
 ├── agents/                         # 🆕 ALL AGENTS LIVE HERE
 │   ├── bob/                        # Bob orchestrator (moved from my_agent/)
@@ -371,7 +371,7 @@ scripts/start_unified_bob_v2.sh → archive/legacy-scripts/start_unified_bob_v2.
 
 #### CREATE New Documents
 ```bash
-000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md (this document)
+000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md (this document)
   - Discovery phase findings
   - Cleanup plan
   - Before/after structure
@@ -604,7 +604,7 @@ git commit -m "chore: remove redundant .env.sample
 # Create new docs
 # - agents/README.md
 # - templates/README.md
-# - 000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md
+# - 000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md
 
 # Update existing docs
 # - CLAUDE.md (paths)
@@ -612,7 +612,7 @@ git commit -m "chore: remove redundant .env.sample
 # - scripts/README.md
 
 git add agents/README.md templates/README.md
-git add 000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md
+git add 000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md
 git add CLAUDE.md README.md scripts/README.md
 
 git commit -m "docs: update documentation for agent factory structure
@@ -620,7 +620,7 @@ git commit -m "docs: update documentation for agent factory structure
 Created:
 - agents/README.md (agent registry)
 - templates/README.md (template guide)
-- 000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md (this AAR)
+- 000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md (this AAR)
 
 Updated:
 - CLAUDE.md (paths: my_agent → agents/bob)
@@ -693,7 +693,7 @@ git status
 ```bash
 git push origin chore/agent-factory-structure-cleanup
 gh pr create --title "Agent Factory Structure Cleanup" \
-  --body "See 000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md for full plan"
+  --body "See 000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md for full plan"
 ```
 
 **Step 2: Review Commits**

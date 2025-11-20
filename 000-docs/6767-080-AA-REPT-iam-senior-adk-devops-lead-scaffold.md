@@ -67,14 +67,14 @@ Successfully designed and scaffolded the `iam-senior-adk-devops-lead` agent, est
 ### Step 1: Repository Analysis
 ```bash
 # Reviewed existing structure
-cat 000-docs/077-AA-PLAN-agent-factory-structure-cleanup.md
+cat 000-docs/6767-077-AA-PLAN-agent-factory-structure-cleanup.md
 cat agents/bob/agent.py  # Reference implementation
 ```
 
 ### Step 2: Design Documentation
 ```bash
 # Created comprehensive design plan
-vim 000-docs/079-AA-PLAN-iam-senior-adk-devops-lead-design.md
+vim 000-docs/6767-079-AA-PLAN-iam-senior-adk-devops-lead-design.md
 ```
 
 **Key Sections:**
@@ -300,8 +300,8 @@ docs(000-docs): add AAR for foreman scaffold implementation
 
 ### New Files Created
 ```
-+ 000-docs/079-AA-PLAN-iam-senior-adk-devops-lead-design.md
-+ 000-docs/080-AA-REPT-iam-senior-adk-devops-lead-scaffold.md
++ 000-docs/6767-079-AA-PLAN-iam-senior-adk-devops-lead-design.md
++ 000-docs/6767-080-AA-REPT-iam-senior-adk-devops-lead-scaffold.md
 + agents/iam-senior-adk-devops-lead/__init__.py
 + agents/iam-senior-adk-devops-lead/agent.py
 + agents/iam-senior-adk-devops-lead/a2a_card.py
@@ -314,7 +314,7 @@ docs(000-docs): add AAR for foreman scaffold implementation
 
 ### Files Modified
 ```
-M 000-docs/078-DR-STND-opus-adk-agent-initialization.md (created)
+M 000-docs/6767-078-DR-STND-opus-adk-agent-initialization.md (created)
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Bob's Brain: Vertex AI Search Grounding (Phase 3)
 
-**Document ID:** 076-AT-IMPL-vertex-ai-search-grounding.md
+**Document ID:** 6767-076-AT-IMPL-vertex-ai-search-grounding.md
 **Date:** 2025-11-19
 **Status:** Implemented
 **Category:** Architecture & Technical - Implementation
@@ -593,7 +593,7 @@ gcloud alpha discovery-engine data-stores describe adk-documentation --project=$
    - GCS bucket + Vertex AI Search datastore
    - Document import and indexing
 
-3. **000-docs/076-AT-IMPL-vertex-ai-search-grounding.md** (this file)
+3. **000-docs/6767-076-AT-IMPL-vertex-ai-search-grounding.md** (this file)
    - Complete Phase 3 documentation
 
 ### Modified Files (3)
@@ -666,7 +666,7 @@ Dependencies:
 - Added VERTEX_SEARCH_DATASTORE_ID to .env.example
 
 Documentation:
-- Complete Phase 3 guide: 000-docs/076-AT-IMPL-vertex-ai-search-grounding.md
+- Complete Phase 3 guide: 000-docs/6767-076-AT-IMPL-vertex-ai-search-grounding.md
 - Setup instructions, troubleshooting, cost analysis
 - Comparison: keyword vs. semantic search
 

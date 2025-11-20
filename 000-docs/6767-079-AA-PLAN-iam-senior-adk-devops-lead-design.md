@@ -370,8 +370,8 @@ tests/unit/
 └── test_iam_senior_adk_devops_lead.py (200 lines)
 
 000-docs/
-├── 079-AA-PLAN-iam-senior-adk-devops-lead-design.md (this document)
-└── 080-AA-REPT-iam-senior-adk-devops-lead-scaffold.md (AAR skeleton)
+├── 6767-079-AA-PLAN-iam-senior-adk-devops-lead-design.md (this document)
+└── 6767-080-AA-REPT-iam-senior-adk-devops-lead-scaffold.md (AAR skeleton)
 ```
 
 **Total New Lines:** ~1,500 lines of code/documentation

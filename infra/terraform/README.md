@@ -673,8 +673,8 @@ terraform plan -var-file="envs/prod.tfvars" -detailed-exitcode
 
 ## Related Documentation
 
-- **Phase 4 Completion:** `000-docs/059-LS-COMP-phase-4-complete.md`
-- **Terraform Comparison:** `000-docs/057-AT-COMP-terraform-comparison.md`
+- **Phase 4 Completion:** `000-docs/6767-059-LS-COMP-phase-4-complete.md`
+- **Terraform Comparison:** `000-docs/6767-057-AT-COMP-terraform-comparison.md`
 - **Agent Engine:** `my_agent/README.md`
 - **A2A Gateway:** `service/a2a_gateway/README.md`
 - **Slack Webhook:** `service/slack_webhook/README.md`

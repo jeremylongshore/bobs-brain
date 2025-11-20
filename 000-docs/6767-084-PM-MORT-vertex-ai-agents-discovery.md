@@ -112,7 +112,7 @@ Three Vertex AI Agent Engine instances were discovered in project `205354194989`
 - [ ] Tag agents in GCP Console with purpose/status
 
 ### Short-term (P1)
-- [ ] Create `000-docs/085-OD-INVT-agent-inventory.md` with all agents
+- [ ] Create `000-docs/6767-085-OD-INVT-agent-inventory.md` with all agents
 - [ ] Add terraform import statements for existing agents
 - [ ] Document decommissioning process for legacy agents
 

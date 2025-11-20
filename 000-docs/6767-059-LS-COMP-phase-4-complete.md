@@ -755,7 +755,7 @@ terraform plan -detailed-exitcode
 ### Documentation (2)
 
 1. `infra/terraform/README.md` (800+ lines)
-2. `000-docs/059-LS-COMP-phase-4-complete.md` (this file)
+2. `000-docs/6767-059-LS-COMP-phase-4-complete.md` (this file)
 
 **Total Documentation:** 800+ lines
 

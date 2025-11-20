@@ -1,6 +1,6 @@
 # Bob's Brain: ADK Expert Grounding Implementation
 
-**Document ID:** 075-AT-IMPL-adk-expert-grounding.md
+**Document ID:** 6767-075-AT-IMPL-adk-expert-grounding.md
 **Date:** 2025-11-19
 **Status:** Implemented
 **Category:** Architecture & Technical - Implementation
@@ -607,7 +607,7 @@ grep "tool_call" logs/agent.log | grep "search_adk_docs" | wc -l
    - Test suite for ADK knowledge
    - 4 test cases with validation
 
-3. **000-docs/075-AT-IMPL-adk-expert-grounding.md** (this file)
+3. **000-docs/6767-075-AT-IMPL-adk-expert-grounding.md** (this file)
    - Complete implementation documentation
 
 ### Files Modified
@@ -647,7 +647,7 @@ Test Suite:
 - Ready to run once google-adk is installed
 
 Documentation:
-- Complete implementation guide in 000-docs/075-AT-IMPL-adk-expert-grounding.md
+- Complete implementation guide in 000-docs/6767-075-AT-IMPL-adk-expert-grounding.md
 - Architecture decisions, usage examples, limitations
 - Maintenance guide and next steps
 

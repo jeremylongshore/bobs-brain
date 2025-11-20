@@ -91,8 +91,8 @@ Each directory now contains a README.md with:
 
 **Current docs:**
 - `README.md` - Directory documentation
-- `001-AA-REPT-night-wrap-2025-11-11.md` - Night Wrap AAR
-- `050-AA-REPT-final-cleanup.md` - This document
+- `6767-001-AA-REPT-night-wrap-2025-11-11.md` - Night Wrap AAR
+- `6767-050-AA-REPT-final-cleanup.md` - This document
 
 ## Rationale
 
@@ -172,8 +172,8 @@ ls -1 000-docs/*.md | sort
 
 **Expected:**
 ```
-000-docs/001-AA-REPT-night-wrap-2025-11-11.md
-000-docs/050-AA-REPT-final-cleanup.md
+000-docs/6767-001-AA-REPT-night-wrap-2025-11-11.md
+000-docs/6767-050-AA-REPT-final-cleanup.md
 000-docs/README.md
 ```
 
@@ -256,7 +256,7 @@ ls -1 000-docs/*.md | sort
 ## References
 
 - **Document Filing System v2.0**: 000-docs/README.md
-- **Night Wrap AAR**: 000-docs/001-AA-REPT-night-wrap-2025-11-11.md
+- **Night Wrap AAR**: 000-docs/6767-001-AA-REPT-night-wrap-2025-11-11.md
 - **Archive Location**: `/home/jeremy/000-projects/iams/bobs-brain/99-Archive/2025-11-11-final-cleanup/`
 
 ---

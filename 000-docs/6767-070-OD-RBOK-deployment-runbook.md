@@ -169,7 +169,7 @@ https://github.com/jeremylongshore/bobs-brain/settings/secrets/actions
 | `REGION` | `us-central1` |
 | `STAGING_BUCKET` | `gs://bobs-brain-dev-adk-staging` |
 
-**IMPORTANT:** If WIF is not set up yet, follow the complete setup guide in `000-docs/068-OD-CONF-github-secrets-configuration.md`.
+**IMPORTANT:** If WIF is not set up yet, follow the complete setup guide in `000-docs/6767-068-OD-CONF-github-secrets-configuration.md`.
 
 **Checkpoint:**
 - ✅ All 5 secrets configured in GitHub
@@ -741,17 +741,17 @@ terraform destroy -target=google_cloud_run_service.slack_webhook
      --location=global \
      --workload-identity-pool=github-actions
    ```
-3. If missing, follow WIF setup guide: `000-docs/068-OD-CONF-github-secrets-configuration.md`
+3. If missing, follow WIF setup guide: `000-docs/6767-068-OD-CONF-github-secrets-configuration.md`
 
 ---
 
 ## References
 
-- **Deployment Plan:** `000-docs/067-PM-PLAN-vertex-ai-deployment-plan.md`
-- **GitHub Secrets Setup:** `000-docs/068-OD-CONF-github-secrets-configuration.md`
-- **Observability Guide:** `000-docs/069-OD-TELE-observability-telemetry-guide.md`
+- **Deployment Plan:** `000-docs/6767-067-PM-PLAN-vertex-ai-deployment-plan.md`
+- **GitHub Secrets Setup:** `000-docs/6767-068-OD-CONF-github-secrets-configuration.md`
+- **Observability Guide:** `000-docs/6767-069-OD-TELE-observability-telemetry-guide.md`
 - **ADK CLI Reference:** `000-docs/google-reference/adk/GOOGLE_ADK_CLI_REFERENCE.md`
-- **Hard Mode Rules:** `000-docs/001-PP-ARCH-hard-mode-baseline.md`
+- **Hard Mode Rules:** `000-docs/6767-001-PP-ARCH-hard-mode-baseline.md`
 
 ---
 

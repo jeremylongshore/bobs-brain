@@ -228,11 +228,11 @@ bobs-brain/
 │
 ├── 000-docs/                    # Documentation (R6)
 │   ├── 001-usermanual/          # Google Cloud notebooks
-│   ├── 056-AA-CONF-usermanual-import-verification.md
-│   ├── 057-AT-COMP-terraform-comparison.md
-│   ├── 058-LS-COMP-phase-3-complete.md
-│   ├── 059-LS-COMP-phase-4-complete.md
-│   └── 060-PM-SUMM-project-complete.md (this file)
+│   ├── 6767-056-AA-CONF-usermanual-import-verification.md
+│   ├── 6767-057-AT-COMP-terraform-comparison.md
+│   ├── 6767-058-LS-COMP-phase-3-complete.md
+│   ├── 6767-059-LS-COMP-phase-4-complete.md
+│   └── 6767-060-PM-SUMM-project-complete.md (this file)
 │
 ├── CLAUDE.md                    # Hard Mode rules and guidance
 ├── README.md                    # Project overview

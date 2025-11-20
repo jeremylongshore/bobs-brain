@@ -186,7 +186,7 @@ adk deploy agent_engine agents.iam_senior_adk_devops_lead \
 - `agents/iam-senior-adk-devops-lead/agent_engine_app.py`
 - `agents/iam-senior-adk-devops-lead/system-prompt.md`
 - `agents/iam-senior-adk-devops-lead/agent_card.yaml`
-- `000-docs/081-AA-REPT-foreman-a2a-bootstrap.md`
+- `000-docs/6767-081-AA-REPT-foreman-a2a-bootstrap.md`
 
 ### Existing Files (From Phase 1)
 - `agents/iam-senior-adk-devops-lead/agent.py`

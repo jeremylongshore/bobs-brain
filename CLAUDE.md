@@ -1,10 +1,6 @@
-# CLAUDE.md - Build Captain: ADK + Agent Engine Hard Mode
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Role
-
-**Build Captain for jeremylongshore/bobs-brain**
 
 ## Repository Overview
 
@@ -12,804 +8,785 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Location:** `/home/jeremy/000-projects/iams/bobs-brain/`
 **Status:** Production (Hard Mode - CI-only, ADK+Agent Engine enforced)
-**Version:** See VERSION file
+**Version:** 0.8.0 (Agent Factory Structure)
 **Repository:** https://github.com/jeremylongshore/bobs-brain (public)
 
-**Built from Template:** [iam1-intent-agent-model-vertex-ai](https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai)
-- The template repository provides the Hard Mode architecture (R1-R8)
-- Bob's Brain is a specific implementation for Slack integration
-- Template is the source for new agent projects
+This is a production-grade **agent factory** implementation following strict "Hard Mode" architectural rules (R1-R8) with CI enforcement and drift protection.
 
----
+## High-Level Architecture
 
-## HARD RULES (Non-Negotiable)
+### Agent Factory Pattern (v0.8.0+)
+```
+bobs-brain/
+├── agents/                    # ALL agents (factory pattern)
+│   ├── bob/                   # Bob orchestrator agent
+│   │   ├── agent.py           # LlmAgent with dual memory
+│   │   ├── a2a_card.py        # A2A protocol card
+│   │   └── tools/             # Bob's custom tools
+│   └── (future agents)        # iam-adk, iam-issue, iam-fix, etc.
+├── service/                   # Protocol gateways (REST proxies)
+│   ├── a2a_gateway/           # A2A protocol endpoint
+│   └── slack_webhook/         # Slack integration
+├── infra/terraform/           # IaC for GCP resources
+└── scripts/ci/                # CI/CD enforcement scripts
+```
 
-These rules are ENFORCED in CI. Any violation will fail the build.
+### Deployment Architecture
+```
+GitHub Actions (WIF Auth)
+    ↓
+ADK CLI (adk deploy agent_engine)
+    ↓
+Vertex AI Agent Engine (Managed Runtime)
+    ↑
+Cloud Run Gateways (REST API Proxy Only)
+```
 
-### R1: Agent Implementation
+## Common Development Tasks
 
-**Requirement:** All agents MUST be implemented using `google-adk` (Agent Development Kit).
+### Running Tests
+```bash
+# Run all tests
+pytest
 
-**Prohibited:**
-- ❌ LangChain agents
-- ❌ CrewAI agents
-- ❌ AutoGen agents
-- ❌ Custom agent frameworks
-- ❌ Flask/FastAPI agents with direct LLM calls
+# Run specific test file
+pytest tests/unit/test_a2a_card.py -v
 
-**Required:** Agent code in `agents/bob/agent.py` using `LlmAgent` from `google.adk.agents`.
+# Run with coverage
+pytest --cov=agents.bob --cov-report=html
 
-### R2: Deployed Runtime
+# Run drift detection locally
+bash scripts/ci/check_nodrift.sh
+```
 
-**Requirement:** The deployed runtime MUST be Vertex AI Agent Engine.
+### Local Development
+```bash
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-**Prohibited:**
-- ❌ Self-hosted ADK runners
-- ❌ Cloud Run with embedded Runner
-- ❌ Cloud Functions with embedded Runner
-- ❌ Local execution (except CI smoke tests)
+# Install dependencies
+pip install -r requirements.txt
 
-**Required:** Container image deployed to Vertex AI Agent Engine via CI.
+# Copy environment configuration
+cp .env.example .env
+# Edit .env with your values
 
-### R3: Cloud Run Gateway Rules
+# Verify imports work
+python3 -c "from google.adk.agents import LlmAgent; print('✅ ADK imports working')"
 
-**Requirement:** Cloud Run is allowed ONLY as a thin protocol gateway.
+# Test agent locally (smoke test only)
+cd agents/bob
+python3 -c "from agent import get_agent; a = get_agent(); print('✅ Agent created')"
+```
 
-**Allowed:** HTTP/A2A/Slack webhook endpoints that proxy to Agent Engine via REST API.
+### Deployment (CI/CD Only)
+```bash
+# All deployments MUST go through GitHub Actions
+# Manual deployment is BLOCKED by Hard Mode rules
 
-**Prohibited:**
-- ❌ Importing `google.adk.serving`
-- ❌ Constructing or running an ADK `Runner`
-- ❌ Direct LLM calls
-- ❌ Agent logic in gateway code
+# Deploy to dev (automatic on push to main)
+git push origin main
 
-**Required:** Gateways in `service/` must call Agent Engine's `:query` endpoint via REST.
+# Deploy to staging/prod (manual trigger)
+# Go to: https://github.com/jeremylongshore/bobs-brain/actions
+# Run "Deploy to Vertex AI Agent Engine" workflow
+```
+
+### Adding New Agents
+```bash
+# Future pattern for adding agents to the factory:
+# 1. Create new agent directory
+mkdir agents/iam-adk
+
+# 2. Implement LlmAgent (following Bob's pattern)
+# Copy structure from agents/bob/
+# - agent.py (LlmAgent with tools)
+# - a2a_card.py (A2A protocol)
+# - tools/ (custom tools)
+
+# 3. Update imports to use agents.<name>
+# 4. Run drift check
+bash scripts/ci/check_nodrift.sh
+```
+
+## Hard Mode Rules (R1-R8)
+
+These rules are **enforced in CI** and violations will fail the build:
+
+### R1: ADK-Only Implementation
+- ✅ Required: `google-adk` LlmAgent
+- ❌ Prohibited: LangChain, CrewAI, AutoGen, custom frameworks
+
+### R2: Vertex AI Agent Engine Runtime
+- ✅ Required: Deploy to Agent Engine via ADK CLI
+- ❌ Prohibited: Self-hosted runners, embedded Runner in Cloud Run
+
+### R3: Gateway Separation
+- ✅ Allowed: Cloud Run as REST proxy to Agent Engine
+- ❌ Prohibited: Runner imports in `service/`, direct LLM calls
 
 ### R4: CI-Only Deployments
-
-**Requirement:** ALL deployments MUST go through GitHub Actions with Workload Identity Federation.
-
-**Prohibited:**
-- ❌ Manual `gcloud run deploy`
-- ❌ Manual `gcloud functions deploy`
-- ❌ Local deployment scripts
-- ❌ Service account key files
-- ❌ `application_default_credentials.json`
-
-**Required:** Deploy via `.github/workflows/deploy.yml` with WIF authentication.
+- ✅ Required: GitHub Actions with Workload Identity Federation
+- ❌ Prohibited: Manual `gcloud deploy`, service account keys
 
 ### R5: Dual Memory Wiring
+- ✅ Required: VertexAiSessionService + VertexAiMemoryBankService
+- ✅ Required: `after_agent_callback` for session persistence
 
-**Requirement:** Agent MUST use both Session Cache and Memory Bank.
+### R6: Single Documentation Folder
+- ✅ Required: All docs in `000-docs/` with NNN-CC-ABCD naming
+- ❌ Prohibited: Multiple doc folders, scattered documentation
 
-**Required in `agents/bob/agent.py`:**
+### R7: SPIFFE ID Propagation
+- ✅ Required: `spiffe://intent.solutions/agent/bobs-brain/<env>/<region>/<version>`
+- ✅ Required: In AgentCard, logs, headers, telemetry
+
+### R8: Drift Detection
+- ✅ Required: `scripts/ci/check_nodrift.sh` runs first in CI
+- ❌ Blocks: Alternative frameworks, Runner in gateways, local credentials
+
+## Key Code Patterns
+
+### Agent Implementation (agents/bob/agent.py)
 ```python
 from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
 
-def create_runner():
-    session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-
-    memory_service = VertexAiMemoryBankService(
-        project=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-
-    agent = get_agent()  # LlmAgent with after_agent_callback
-
-    return Runner(
-        agent=agent,
-        app_name=APP_NAME,
-        session_service=session_service,
-        memory_service=memory_service
-    )
-
 def auto_save_session_to_memory(ctx):
-    """Callback to persist session to Memory Bank"""
-    try:
-        ctx._invocation_context.memory_service.add_session_to_memory(
-            ctx._invocation_context.session
-        )
-    except Exception as e:
-        logging.error(f"Failed to save session to memory: {e}")
-```
-
-### R6: Documentation Structure
-
-**Requirement:** Single documentation folder at root: `000-docs/`
-
-**Prohibited:**
-- ❌ Multiple doc folders (`docs/`, `documentation/`, etc.)
-- ❌ Nested docs in subdirectories
-- ❌ Unnumbered doc files
-
-**Required:** All docs in `000-docs/NNN-CC-ABCD-description.md` format.
-
-### R7: SPIFFE ID Immutability
-
-**Requirement:** Every agent deployment MUST have an immutable SPIFFE ID.
-
-**Format:**
-```
-AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/<env>/<region>/<version>
-```
-
-**Examples:**
-- `spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/v1.2.3`
-- `spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/v0.0.1-dev`
-
-**Required:**
-- Environment variable in Agent Engine container
-- Environment variable in Cloud Run gateways
-- Included in AgentCard description
-- Propagated in `x-spiffe-id` response headers
-- Logged in structured logs
-- Tagged in OpenTelemetry spans
-
-### R8: CI Drift Detection
-
-**Requirement:** CI MUST scan for and block framework drift.
-
-**Prohibited Patterns (CI will fail):**
-```python
-# ❌ FastAPI serving (gateway only, no Runner)
-from google.adk.serving.fastapi
-
-# ❌ Alternative frameworks
-from langchain
-import langchain
-from crewai
-import autogen
-
-# ❌ Local credentials
-application_default_credentials.json
-~/.config/gcloud
-
-# ❌ Manual deployment
-gcloud run deploy  # (except in CI)
-gcloud functions deploy  # (except in CI)
-```
-
-**Required:** `scripts/ci/check_nodrift.sh` runs in CI before tests.
-
----
-
-## Canonical Structure
-
-```
-bobs-brain/
-├── .github/              # GitHub Actions workflows, templates
-├── 000-docs/             # Documentation (NNN-CC-ABCD-*.md)
-├── adk/                  # ADK agent configurations
-├── agents/bob/             # Agent implementation (ADK only)
-│   ├── __init__.py
-│   ├── agent.py          # LlmAgent + dual memory wiring
-│   ├── a2a_card.py       # AgentCard for A2A protocol
-│   └── scripts/adk-docs-crawler/            # Custom tools
-├── service/              # HTTP/A2A/Slack gateways (proxy only)
-│   ├── a2a_gateway/      # A2A protocol endpoints
-│   │   └── main.py       # FastAPI app (no Runner)
-│   └── slack_webhook/    # Slack integration
-│       └── main.py       # Slack event handler (no Runner)
-├── infra/                # Terraform IaC
-│   ├── terraform/
-│   │   ├── modules/      # Reusable TF modules
-│   │   └── envs/         # Environment configs (dev, prod)
-│   └── scripts/          # Infrastructure helpers
-├── scripts/              # Helper scripts
-│   ├── ci/               # CI-specific scripts
-│   │   └── check_nodrift.sh
-│   └── deploy/           # Deployment automation
-├── tests/                # Test suite
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-├── 99-Archive/           # Archived implementations
-├── requirements.txt      # Python dependencies
-├── Dockerfile            # Agent container image
-├── VERSION               # Semantic version (X.Y.Z)
-├── CHANGELOG.md          # Version history
-├── CLAUDE.md             # This file
-├── LICENSE               # MIT License
-└── README.md             # Project overview
-```
-
-**Enforcement:** If ANY other root-level directory exists, it MUST be archived to `99-Archive/<YYYY-MM-DD>/`.
-
----
-
-## Agent Core (agents/bob/)
-
-### agents/bob/agent.py
-
-**Purpose:** Define the LlmAgent with tools, instructions, and memory callbacks.
-
-**Required:**
-```python
-from google.adk.agents import LlmAgent
-from google.adk.runner import Runner
-from google.adk.memory import VertexAiSessionService, VertexAiMemoryBankService
-import os
-import logging
-
-PROJECT_ID = os.getenv("PROJECT_ID")
-LOCATION = os.getenv("LOCATION")
-AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
-APP_NAME = os.getenv("APP_NAME", "bobs-brain")
-AGENT_SPIFFE_ID = os.getenv("AGENT_SPIFFE_ID")
-
-def auto_save_session_to_memory(ctx):
-    """After-agent callback to persist session to Memory Bank"""
-    try:
-        if hasattr(ctx, '_invocation_context'):
-            memory_svc = ctx._invocation_context.memory_service
-            session = ctx._invocation_context.session
-            if memory_svc and session:
-                memory_svc.add_session_to_memory(session)
-                logging.info(f"Saved session {session.id} to Memory Bank")
-    except Exception as e:
-        logging.error(f"Failed to save session: {e}")
-        # Never block agent execution
+    """After-agent callback for R5 compliance"""
+    # Auto-save session to Memory Bank
 
 def get_agent() -> LlmAgent:
-    """Create and configure the LlmAgent"""
     return LlmAgent(
-        model="gemini-1.5-pro-001",
-        tools=[],  # Add custom tools here
-        instruction="You are Bob, a helpful AI assistant.",
+        model="gemini-2.0-flash-exp",
+        name="bobs_brain",
+        tools=[...],
+        instruction="...",
         after_agent_callback=auto_save_session_to_memory
     )
 
-def create_runner() -> Runner:
-    """Create Runner with dual memory wiring (Session + Memory Bank)"""
-    session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-
-    memory_service = VertexAiMemoryBankService(
-        project=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-
-    agent = get_agent()
-
-    return Runner(
-        agent=agent,
-        app_name=APP_NAME,
-        session_service=session_service,
-        memory_service=memory_service
-    )
+# Required for ADK CLI deployment
+root_agent = get_agent()
 ```
 
-**Prohibited:**
-- ❌ No `from google.adk.serving` imports
-- ❌ No Flask/FastAPI routes in this file
-- ❌ No direct LLM API calls
-
-### agents/bob/a2a_card.py
-
-**Purpose:** Minimal AgentCard for A2A protocol discovery.
-
-**Required:**
+### Gateway Pattern (service/a2a_gateway/main.py)
 ```python
-from google.adk.a2a import AgentCard
-import os
-
-APP_NAME = os.getenv("APP_NAME", "bobs-brain")
-APP_VERSION = os.getenv("APP_VERSION", "0.0.0")
-PUBLIC_URL = os.getenv("PUBLIC_URL", "https://example.com")
-AGENT_SPIFFE_ID = os.getenv("AGENT_SPIFFE_ID", "spiffe://intent.solutions/agent/bobs-brain/unknown/unknown/unknown")
-
-def get_agent_card() -> AgentCard:
-    return AgentCard(
-        name=APP_NAME,
-        description=f"Bob's Brain AI Assistant (SPIFFE: {AGENT_SPIFFE_ID})",
-        url=PUBLIC_URL,
-        version=APP_VERSION,
-        skills=[]  # Define available skills
-    )
-```
-
----
-
-## Gateways (service/)
-
-### Purpose
-
-Thin HTTP/A2A/Slack proxies that call Agent Engine via REST. **NO ADK Runner imports allowed.**
-
-### service/a2a_gateway/main.py
-
-**Allowed:**
-```python
-from fastapi import FastAPI, Header, HTTPException
-from pydantic import BaseModel
-import httpx
-import os
-import logging
-
-app = FastAPI()
-
-PROJECT_ID = os.getenv("PROJECT_ID")
-LOCATION = os.getenv("LOCATION")
-AGENT_ENGINE_NAME = os.getenv("AGENT_ENGINE_NAME")
-AGENT_SPIFFE_ID = os.getenv("AGENT_SPIFFE_ID")
-
-@app.get("/card")
-async def get_card():
-    """Return AgentCard JSON"""
-    # Return static AgentCard (no Runner import)
-    return {
-        "name": "bobs-brain",
-        "description": f"SPIFFE: {AGENT_SPIFFE_ID}",
-        "url": os.getenv("PUBLIC_URL"),
-        "version": os.getenv("APP_VERSION"),
-        "skills": []
-    }
-
-class InvokeRequest(BaseModel):
-    user_id: str
-    session_id: str
-    text: str
+# NO Runner imports allowed (R3)
+# Pure REST proxy to Agent Engine
 
 @app.post("/invoke")
 async def invoke_agent(req: InvokeRequest):
-    """Proxy to Agent Engine :query endpoint"""
     # Get OAuth token
-    token = get_gcp_token()  # Use google.auth
+    token = get_gcp_token()
 
     # Call Agent Engine REST API
     url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/{AGENT_ENGINE_NAME}:query"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-    body = {
-        "user_id": req.user_id,
-        "session_id": req.session_id,
-        "text": req.text
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=body)
-        response.raise_for_status()
-
-    return {
-        "response": response.json(),
-        "headers": {"x-spiffe-id": AGENT_SPIFFE_ID}
-    }
+    # ... proxy the request
 ```
 
-**Prohibited:**
-```python
-# ❌ NEVER import these in gateway code:
-from google.adk.runner import Runner
-from google.adk.serving import *
-from my_agent.agent import create_runner
+## Environment Configuration
 
-# ❌ NEVER construct or run an ADK Runner here
-runner = Runner(...)
-runner.run(...)
-```
+Required environment variables in `.env`:
 
-### service/slack_webhook/main.py
-
-**Purpose:** Slack event handler that proxies to Agent Engine.
-
-**Required Pattern:**
-1. Verify Slack signature
-2. Return 200 immediately (within 3s)
-3. Call Agent Engine `:query` endpoint via REST (background task)
-4. Post response back to Slack
-
-**No Runner imports. Only REST API calls to Agent Engine.**
-
----
-
-## Terraform (infra/)
-
-### Purpose
-
-Infrastructure as Code for all GCP resources. **No `terraform apply` in CI by default** (only `validate`).
-
-### infra/terraform/envs/dev/main.tf
-
-**Required APIs:**
-```hcl
-locals {
-  required_apis = [
-    "aiplatform.googleapis.com",
-    "run.googleapis.com",
-    "cloudfunctions.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "secretmanager.googleapis.com",
-    "logging.googleapis.com",
-    "monitoring.googleapis.com",
-    "cloudtrace.googleapis.com"
-  ]
-}
-
-resource "google_project_service" "apis" {
-  for_each = toset(local.required_apis)
-  service  = each.value
-  disable_on_destroy = false
-}
-```
-
-**Required Service Accounts:**
-```hcl
-# CI/CD service account
-resource "google_service_account" "github_actions" {
-  account_id   = "github-actions"
-  display_name = "GitHub Actions CI/CD"
-}
-
-resource "google_project_iam_member" "github_actions_roles" {
-  for_each = toset([
-    "roles/aiplatform.user",
-    "roles/run.admin",
-    "roles/artifactregistry.writer",
-    "roles/secretmanager.secretAccessor",
-    "roles/iam.serviceAccountUser"
-  ])
-  project = var.project_id
-  role    = each.value
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-# Runtime service account
-resource "google_service_account" "app" {
-  account_id   = "bobs-brain-app"
-  display_name = "Bob's Brain Runtime"
-}
-```
-
-**Cloud Run Gateway Module:**
-```hcl
-module "a2a_gateway" {
-  source = "../../modules/cloud_run"
-
-  service_name = "bobs-brain-a2a"
-  image        = var.gateway_image
-
-  env_vars = {
-    PROJECT_ID            = var.project_id
-    LOCATION              = var.region
-    AGENT_ENGINE_NAME     = var.agent_engine_name
-    AGENT_SPIFFE_ID       = var.agent_spiffe_id
-    APP_VERSION           = var.app_version
-    PUBLIC_URL            = var.public_url
-  }
-
-  service_account = google_service_account.app.email
-}
-```
-
-**Agent Engine Bootstrap (CI-guarded):**
-- `null_resource` that calls CI script to upsert Agent Engine
-- Only runs when `TF_VAR_allow_agent_engine_bootstrap=true` (set in CI only)
-
----
-
-## CI/CD (GitHub Actions)
-
-### .github/workflows/ci.yml
-
-**Purpose:** Continuous Integration - run on every PR and push.
-
-**Required Steps:**
-1. Install dependencies
-2. **Drift check:** Run `scripts/ci/check_nodrift.sh` (fail if violations found)
-3. Run unit tests
-4. Start ADK `api_server` for smoke test (CI only)
-5. Terraform validate
-
-**Example:**
-```yaml
-name: CI
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Drift check
-        run: bash scripts/ci/check_nodrift.sh
-
-      - name: Run tests
-        run: pytest tests/
-
-      - name: ADK smoke test (CI only)
-        run: |
-          # Start api_server in background
-          python -m google.adk.serving.api_server &
-          sleep 5
-          curl http://localhost:8080/health
-          kill %1
-
-      - name: Terraform validate
-        run: |
-          cd infra/terraform/envs/dev
-          terraform init -backend=false
-          terraform validate
-```
-
-### .github/workflows/deploy.yml
-
-**Purpose:** Continuous Deployment - deploy to GCP via WIF.
-
-**Required:**
-1. Authenticate with WIF (no service account keys)
-2. Build agent container image
-3. Push to Artifact Registry
-4. Upsert Agent Engine deployment (Python script using Vertex AI SDK)
-5. Deploy Cloud Run gateway
-6. Deploy Slack webhook (if enabled)
-7. **On failure:** Email Claude at `claude.buildcaptain@intentsolutions.io`
-
-**Example:**
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  id-token: write
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Build agent image
-        run: |
-          VERSION=$(cat VERSION)
-          gcloud builds submit --tag gcr.io/${{ secrets.PROJECT_ID }}/bobs-brain-agent:$VERSION
-
-      - name: Deploy to Agent Engine
-        run: |
-          python scripts/deploy/upsert_agent_engine.py \
-            --project-id=${{ secrets.PROJECT_ID }} \
-            --location=us-central1 \
-            --image=gcr.io/${{ secrets.PROJECT_ID }}/bobs-brain-agent:$VERSION
-
-      - name: Deploy Cloud Run gateway
-        run: |
-          gcloud run deploy bobs-brain-a2a \
-            --image=gcr.io/${{ secrets.PROJECT_ID }}/bobs-brain-a2a-gateway:latest \
-            --region=us-central1 \
-            --allow-unauthenticated \
-            --set-env-vars=AGENT_ENGINE_NAME=${{ secrets.AGENT_ENGINE_NAME }},AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/$(cat VERSION)
-
-      - name: Notify Claude on failure
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.BUILD_ALERT_EMAIL }}
-          password: ${{ secrets.BUILD_ALERT_PASSWORD }}
-          subject: "❌ Deploy failed: bobs-brain @ ${{ github.sha }}"
-          to: claude.buildcaptain@intentsolutions.io
-          from: "CI Bot <noreply@intentsolutions.io>"
-          body: "Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-```
-
-### scripts/ci/check_nodrift.sh
-
-**Purpose:** Detect and block framework drift.
-
-**Required:**
 ```bash
-#!/bin/bash
-set -e
+# Core Configuration
+PROJECT_ID=your-gcp-project
+LOCATION=us-central1
+AGENT_ENGINE_ID=your-engine-id
+AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0
 
-echo "🔍 Scanning for framework drift violations..."
+# Application
+APP_NAME=bobs-brain
+APP_VERSION=0.8.0
 
-VIOLATIONS=0
+# Vertex AI Search (Phase 3)
+VERTEX_SEARCH_DATASTORE_ID=adk-documentation
 
-# Check for forbidden imports
-if grep -r "from google\.adk\.serving\.fastapi" service/ 2>/dev/null; then
-  echo "❌ VIOLATION: FastAPI serving found in service/ (R3)"
-  VIOLATIONS=$((VIOLATIONS + 1))
-fi
-
-if grep -r "from langchain\|import langchain\|from crewai\|import autogen" . --exclude-dir=.venv --exclude-dir=99-Archive 2>/dev/null; then
-  echo "❌ VIOLATION: Alternative framework imports found (R1)"
-  VIOLATIONS=$((VIOLATIONS + 1))
-fi
-
-# Check for local credentials
-if find . -name "application_default_credentials.json" -o -path "*/.config/gcloud" | grep -v ".venv\|99-Archive"; then
-  echo "❌ VIOLATION: Local GCP credentials found (R4)"
-  VIOLATIONS=$((VIOLATIONS + 1))
-fi
-
-# Check for manual deployment commands (outside CI)
-if [ "${GITHUB_ACTIONS:-false}" != "true" ]; then
-  if grep -r "gcloud run deploy\|gcloud functions deploy" scripts/ --exclude="scripts/ci/*" 2>/dev/null; then
-    echo "❌ VIOLATION: Manual deployment commands in scripts/ (R4)"
-    VIOLATIONS=$((VIOLATIONS + 1))
-  fi
-fi
-
-if [ $VIOLATIONS -gt 0 ]; then
-  echo "❌ Found $VIOLATIONS drift violations. Build failed."
-  exit 1
-fi
-
-echo "✅ No drift violations detected"
-exit 0
+# Gateway URLs
+PUBLIC_URL=https://your-a2a-gateway.run.app
 ```
 
----
+## CI/CD Workflows
 
-## SPIFFE ID Propagation
+### GitHub Actions Workflows
 
-### Environment Variables
+1. **ci.yml** - Runs on every push/PR
+   - Drift detection (first, blocks all if violations)
+   - Unit tests
+   - Integration tests
+   - Terraform validation
 
-**Required in all environments:**
-```bash
-AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/<env>/<region>/<version>
-```
+2. **deploy-agent-engine.yml** - Deploys to Vertex AI
+   - Uses ADK CLI with `--trace_to_cloud`
+   - Workload Identity Federation (no keys)
+   - Automatic telemetry setup
 
-**Examples:**
-- Production: `spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/v1.2.3`
-- Development: `spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/v0.0.1-dev`
+3. **deploy-slack-webhook.yml** - Deploys Slack integration
+   - Cloud Run service deployment
+   - Environment variable injection
 
-### AgentCard
+## Project Structure Details
 
-**Required in `agents/bob/a2a_card.py`:**
-```python
-description=f"Bob's Brain AI Assistant (SPIFFE: {AGENT_SPIFFE_ID})"
-```
+### agents/ Directory (Agent Factory)
+- `bob/` - Bob orchestrator agent (current)
+- Future: `iam-adk/`, `iam-issue/`, `iam-fix/`, etc.
+- Each agent has: agent.py, a2a_card.py, tools/
 
-### HTTP Headers
+### service/ Directory (Gateways Only)
+- `a2a_gateway/` - A2A protocol HTTP endpoint
+- `slack_webhook/` - Slack event handler
+- **CRITICAL**: No Runner imports, pure REST proxies
 
-**Required in all gateway responses:**
-```python
-response.headers["x-spiffe-id"] = AGENT_SPIFFE_ID
-```
+### infra/terraform/ Directory
+- `main.tf` - Core infrastructure
+- `agent_engine.tf` - Agent Engine configuration
+- `storage.tf` - GCS buckets for docs/staging
+- `iam.tf` - Service accounts and permissions
+- `envs/` - Environment-specific tfvars
 
-### Structured Logs
-
-**Required in all log messages:**
-```python
-logging.info("Agent invoked", extra={"spiffe_id": AGENT_SPIFFE_ID})
-```
-
-### OpenTelemetry
-
-**Required as resource attribute:**
-```python
-from opentelemetry.sdk.resources import Resource
-
-resource = Resource.create({
-    "service.name": APP_NAME,
-    "service.version": APP_VERSION,
-    "spiffe.id": AGENT_SPIFFE_ID
-})
-```
-
----
-
-## Acceptance Checklist
-
-Before merging any PR, verify:
-
-- [ ] Root structure matches canonical tree (only 8 directories)
-- [ ] `service/` proxies to Agent Engine (no Runner imports)
-- [ ] `agents/bob/` wires Session + Memory Bank + after-save callback
-- [ ] CI passes: tests + drift scan + terraform validate
-- [ ] Deploy workflow pushes container and upserts Agent Engine (CI only)
-- [ ] Cloud Run gateway deployed via CI (not manual)
-- [ ] SPIFFE ID visible in AgentCard, headers, logs
-- [ ] Drift scan passes (`scripts/ci/check_nodrift.sh`)
-- [ ] Latest `000-docs/NNN-*` AAR added
-- [ ] No other docs folder exists (only `000-docs/`)
-- [ ] `CHANGELOG.md` updated
-- [ ] `VERSION` bumped (if applicable)
-
----
+### scripts/ Directory
+- `ci/check_nodrift.sh` - Drift detection (R1-R8 enforcement)
+- `deployment/setup_vertex_search.sh` - Vertex AI Search setup
+- `adk-docs-crawler/` - ADK documentation tools
 
 ## Troubleshooting
 
-### "ImportError: cannot import Runner in service/"
+### Common Issues
 
-**Cause:** Violates R3 (Cloud Run as proxy only).
+**ImportError: cannot import Runner in service/**
+- Cause: Violates R3 (gateways must proxy only)
+- Fix: Remove Runner imports, use REST API to Agent Engine
 
-**Fix:** Remove all `google.adk.runner` imports from `service/`. Use REST API calls to Agent Engine instead.
+**CI failed: Drift violations detected**
+- Cause: Alternative frameworks or forbidden patterns
+- Fix: Check output of `check_nodrift.sh`, remove violations
 
-### "CI failed: Drift violations detected"
+**Deploy failed: Agent Engine not found**
+- Cause: Infrastructure not created
+- Fix: Run Terraform first, ensure Agent Engine exists
 
-**Cause:** Violates R1 or R3 (forbidden imports found).
+**Agent can't find ADK docs**
+- Cause: Vertex AI Search not configured
+- Fix: Run `scripts/deployment/setup_vertex_search.sh`
 
-**Fix:** Remove forbidden imports. Check `scripts/ci/check_nodrift.sh` output for details.
+## Version History
 
-### "Deploy failed: Agent Engine not found"
+- **0.8.0** - Agent Factory Structure (current)
+  - Transformed to multi-agent factory pattern
+  - `my_agent/` → `agents/bob/` migration
+  - Ready for iam-* agent team
 
-**Cause:** Agent Engine hasn't been bootstrapped yet.
+- **0.7.0** - Vertex AI Search Integration
+  - Added semantic search with 90-95% accuracy
+  - Free 5GB tier implementation
 
-**Fix:**
-1. Run Terraform with `TF_VAR_allow_agent_engine_bootstrap=true` ONCE (CI only)
-2. Verify Agent Engine exists in Vertex AI console
+- **0.6.0** - Hard Mode Baseline
+  - R1-R8 rules with CI enforcement
+  - Dual memory wiring
+  - Drift detection
 
-### "Slack events timing out"
+## Important Links
 
-**Cause:** Gateway not returning 200 within 3 seconds.
+- **Repository**: https://github.com/jeremylongshore/bobs-brain
+- **Template**: https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai
+- **Google ADK Docs**: https://cloud.google.com/vertex-ai/docs/agent-development-kit
+- **Vertex AI Agent Engine**: https://cloud.google.com/vertex-ai/docs/agent-engine
 
-**Fix:** Return 200 immediately, then call Agent Engine in background task.
+## Support
 
----
+- **Build Captain**: claude.buildcaptain@intentsolutions.io (CI alerts only)
+- **Documentation**: See `000-docs/` directory
+- **Issues**: GitHub Issues on the repository
+- <quick_start_examples>
+This section gives you and future agents a **concrete sense of how to actually use all of the above**.
 
-## Quick Commands
+Treat it as a usage guide and sanity check.
 
-```bash
-# Run CI checks locally
-bash scripts/ci/check_nodrift.sh
-pytest tests/
+--------------------------------------------------
+1. HOW I WILL START YOU (TYPICAL /init FLOW)
+--------------------------------------------------
 
-# Validate Terraform
-cd infra/terraform/envs/dev
-terraform init -backend=false
-terraform validate
+A typical startup will look like this:
 
-# Build agent container (CI does this)
-VERSION=$(cat VERSION)
-docker build -t gcr.io/bobs-brain/bobs-brain-agent:$VERSION .
+1) I send `/init` with:
+   - The system rules (`<phases_and_docs>`, `<multi_agent_and_plugins>`, `<current_mission>`, `<execution_rules>`, `<init_wrapper>`),
+   - Plus repo context (e.g., “we are in `bobs-brain` on branch X”).
 
-# Test gateway locally (not for production)
-cd service/a2a_gateway
-uvicorn main:app --reload
-```
+2) You respond with:
+   - `<understanding>` – your summary.
+   - `<phase_proposal>` – for the next phase (usually Phase 1 at the start).
+   - `<questions>` – only if something truly blocks you.
 
----
+3) I respond with:
+   - `APPROVE_PHASE_1` (or similar),
+   - Or a minor adjustment to your `<phase_proposal>`.
 
-## References
+4) Only THEN do you:
+   - Start inspecting files using plugins,
+   - Propose code/config/doc changes in small, reviewable steps.
 
-- **Google ADK Docs:** https://cloud.google.com/vertex-ai/docs/agent-development-kit
-- **Vertex AI Agent Engine:** https://cloud.google.com/vertex-ai/docs/agent-engine
-- **A2A Protocol:** https://github.com/google/adk-python/blob/main/docs/a2a.md
-- **SPIFFE Spec:** https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE.md
-- **Workload Identity Federation:** https://cloud.google.com/iam/docs/workload-identity-federation
+--------------------------------------------------
+2. EXAMPLE: GOOD FIRST RESPONSE FROM YOU
+--------------------------------------------------
 
----
+Here is a **sample** of what a strong first response from you might look like after this init (for illustration only):
 
-**Last Updated:** 2025-11-11
-**Enforcement:** CI (`scripts/ci/check_nodrift.sh`)
-**Contact:** claude.buildcaptain@intentsolutions.io (CI alerts only)
+<understanding>
+- `bobs-brain` is the ADK / Agent Engineering Department for this org and also the home for the global `bob` agent.
+- My job is to evolve it into a canonical pattern for an ADK-based SWE department, with `bob` as global orchestrator, `iam-senior-adk-devops-lead` as this department’s foreman, and a set of iam-* specialists for ADK design, issues, fixes, QA, docs, cleanup, and indexing.
+- All significant work must be structured into phases, each with at least one AAR in `000-docs/` following your filing system (`NNN-AA-PLAN-*`, `NNN-AA-REPT-*`).
+- I must use plugins/tools to inspect the actual repo (code, docs, infra, CI) and consult ADK/Vertex documentation instead of guessing, then apply those patterns here.
+- I will think in terms of helper-agent patterns (adk-skeleton-coder, adk-pattern-auditor, adk-a2a-wiring-engineer, adk-terraform-infra-coder, adk-ci-arv-pipeline-engineer) and design my plans so they could be automated later.
+- I will maintain Git/commit hygiene by proposing small, logical chunks with `<type>(<scope>): <subject>` commit messages, and always tie work back to a phase and its AAR.
+
+<phase_proposal>
+- Phase name: Phase 1 – Design & Scaffold `iam-senior-adk-devops-lead`
+- Scope:
+  - Define the role and responsibilities of `iam-senior-adk-devops-lead` as the departmental foreman between `bob` and the iam-* specialists.
+  - Scaffold a minimal ADK agent under `agents/iam-senior-adk-devops-lead/` aligned with existing patterns in `agents/bob/`.
+  - Draft PLAN and AAR docs for this phase in `000-docs/`.
+- Branch:
+  - `phase-1/iam-senior-adk-devops-lead`
+- PLAN doc (placeholder ID):
+  - `NNN-AA-PLAN-iam-senior-adk-devops-lead-design.md` (NNN to be chosen based on existing 000-docs sequence).
+- AAR doc (placeholder ID):
+  - `NNN-AA-REPT-iam-senior-adk-devops-lead-implementation.md`
+- Steps:
+  1) Use repo plugins to:
+     - List and inspect `agents/bob/`,
+     - Inspect `000-docs/` index to find the next NNN and existing architecture docs,
+     - Inspect `.github/workflows/` and `infra/terraform/` for current patterns.
+  2) Conceptually invoke **adk-skeleton-coder** to:
+     - Propose the directory structure and initial `agent.py` for `agents/iam-senior-adk-devops-lead/`,
+     - Define a first-pass system prompt for this foreman (high-level responsibilities, delegation model).
+  3) Draft the PLAN doc in `000-docs/NNN-AA-PLAN-iam-senior-adk-devops-lead-design.md`:
+     - Objectives, scope, design decisions, planned files.
+  4) Propose code skeletons and doc skeletons in small diffs:
+     - New directory: `agents/iam-senior-adk-devops-lead/`
+     - Files: `agent.py`, `README.md`, optional `prompts/system.md`.
+  5) Outline the content for the eventual AAR (`NNN-AA-REPT-...`) so we know what evidence to collect as we implement.
+- Suggested commits (draft):
+  - `feat(agents): scaffold iam-senior-adk-devops-lead foreman`
+    - Add `agents/iam-senior-adk-devops-lead/agent.py` with ADK-style skeleton.
+    - Add `agents/iam-senior-adk-devops-lead/README.md` describing role and responsibilities.
+  - `docs(000-docs): add plan for iam-senior-adk-devops-lead design`
+    - Create PLAN doc in `000-docs/` with scope, decisions, and steps for this phase.
+
+<questions>
+- [Optional and only if truly blocking; otherwise this section is empty or omitted.]
+
+--------------------------------------------------
+3. HOW I WILL GIVE YOU TASKS AFTER INIT
+--------------------------------------------------
+
+After the init and your first `<phase_proposal>`, I will give you tasks in a style like:
+
+- “Proceed with Phase 1 as proposed; show me the directory and file skeletons for `iam-senior-adk-devops-lead`.”
+- “Update Phase 2 to focus on iam-adk + iam-issue only, and propose the `IssueSpec` schema.”
+- “Run an ADK alignment audit on the current bob + foreman setup and propose issues + fixes.”
+
+For each task:
+- You respond with a short `<plan>` tied to an existing or new phase.
+- Then you provide:
+  - `Summary`
+  - `Files`
+  - `Suggested commits`
+  - `Tests`
+  - `Docs / AAR`
+
+Always:
+- Use helper-agent patterns and plugins where appropriate.
+- Keep the work bounded to the active phase.
+- Ensure there is a clear path from:
+  - Phase → commits → AAR → reusable pattern.
+
+--------------------------------------------------
+4. MENTAL MODEL CHECK
+--------------------------------------------------
+
+Before you act on any new instruction in this repo, silently check:
+
+- “Which phase does this belong to?”
+- “Which agents are in scope (bob, iam-senior-adk-devops-lead, which iam-* )?”
+- “Which helper-agent pattern(s) am I conceptually leaning on?”
+- “Which plugins/tools do I need to consult first?”
+- “What will the AAR for this phase need from me (artifacts, decisions, tests)?”
+
+If you keep answering those questions while you work, you will help turn `bobs-brain` into the **canonical, copy-pasteable ADK department standard** we want.
+</quick_start_examples>
+- <adk_alignment_and_knowledge>
+This department’s power depends on staying tightly aligned with **official ADK / Vertex guidance** and keeping a high-quality internal knowledge base.
+
+You must treat **knowledge ingestion + alignment** as first-class responsibilities, not afterthoughts.
+
+--------------------------------------------------
+1. ADK / VERTEX KNOWLEDGE SOURCES
+--------------------------------------------------
+
+Assume the following categories of knowledge are (or will be) ingested and available via your search/knowledge plugins:
+
+- **Official ADK docs**
+  - `https://google.github.io/adk-docs/`
+  - Core ADK concepts, agent patterns, tools, memory, A2A, etc.
+
+- **Agent Engine / A2A patterns**
+  - Official documentation pages.
+  - Blog posts such as:
+    - “A2A agent patterns with the Agent Development Kit (ADK)” on Medium.
+  - Sample repos and notebooks demonstrating Agent Engine + ADK integration.
+
+- **Internal project docs**
+  - This repo’s `000-docs/` (plans, AARs, runbooks, blueprints).
+  - Any future departmental standards we codify.
+
+- **Code + infra**
+  - The code in `agents/`, `service/`, `infra/`, `scripts/`, `.github/workflows/`.
+  - Example AgentCards, gateway code, Terraform modules, CI workflows.
+
+Your knowledge/search plugins should be used to:
+- Look up current ADK patterns and avoid guessing.
+- Cross-check local patterns against official guidance.
+- Locate relevant internal docs before designing something new.
+
+--------------------------------------------------
+2. IAM-INDEX AND KNOWLEDGE STEWARDSHIP
+--------------------------------------------------
+
+Within this department, treat **knowledge stewardship** as a shared responsibility:
+
+- `iam-index`
+  - Owns the mapping from:
+    - ADK/Agent Engine docs,
+    - Blog posts,
+    - Example repos,
+    - `000-docs/` internal standards,
+  - To:
+    - Vertex AI Search indexes,
+    - GCS buckets,
+    - Any other retrieval layer we use.
+  - Provides tools/abstractions for other agents (especially `iam-adk` and `iam-senior-adk-devops-lead`) to query those indices instead of scraping raw web.
+
+- `iam-adk`
+  - Uses those indices to:
+    - Extract patterns,
+    - Compare local implementations against current recommendations,
+    - Propose updates.
+
+- `iam-senior-adk-devops-lead`
+  - Coordinates:
+    - When knowledge updates should trigger audits,
+    - Which patterns/templates must be updated,
+    - How changes are rolled out (phases, AARs, CI updates).
+
+You must think in terms of this triangle:
+- `iam-index` (what we know and where it lives),
+- `iam-adk` (how we interpret + apply it),
+- `iam-senior-adk-devops-lead` (how we standardize + enforce it).
+
+--------------------------------------------------
+3. NO-DRIFT POLICY (ADK / VERTEX ALIGNMENT)
+--------------------------------------------------
+
+Drift from official ADK / Vertex patterns is not acceptable without explicit, documented reasons.
+
+Your responsibilities:
+
+1) **Detect drift**
+   - Use plugins to:
+     - Compare our agent structures, tools, and A2A setups to current ADK docs and examples.
+     - Check for deprecated APIs, outdated patterns, or anti-patterns.
+   - Use `adk-pattern-auditor` (conceptually) to:
+     - Scan the repo for:
+       - Old frameworks (e.g., LangChain) creeping into agent code,
+       - Custom glue that should be replaced by ADK features,
+       - Non-standard memory or A2A wiring.
+
+2) **Document drift**
+   - When drift is found, capture it in:
+     - Structured findings (IssueSpec-style objects),
+     - GitHub issues (conceptually),
+     - An AAR if part of a phase.
+   - Note:
+     - What pattern is violated,
+     - Where and how,
+     - What the official ADK guidance says,
+     - Proposed path to alignment.
+
+3) **Correct drift**
+   - Propose concrete changes:
+     - Template updates,
+     - Agent refactors,
+     - Infra/CI adjustments.
+   - Ensure corrections are:
+     - Implemented in small, reviewable commits,
+     - Backed by tests,
+     - Reflected in `000-docs/` (especially in alignment AARs).
+
+4) **Track alignment over time**
+   - Expect recurring phases like:
+     - `AA-PLAN-adk-alignment-audit`,
+     - `AA-REPT-adk-alignment-YYYY-MM`.
+   - In each alignment phase:
+     - Summarize what changed in the ecosystem,
+     - Describe what we updated in this repo,
+     - Call out any intentional divergences and why we’re keeping them.
+
+--------------------------------------------------
+4. HOW TO USE PLUGINS FOR ADK ALIGNMENT
+--------------------------------------------------
+
+Whenever you work on ADK- or Vertex-related tasks in this repo, default to this flow:
+
+1) **Consult knowledge first**
+   - Use search/knowledge plugins to:
+     - Retrieve relevant ADK sections (for agents, tools, memory, A2A),
+     - Retrieve recent A2A patterns articles,
+     - Retrieve internal docs from `000-docs/` that describe current standards.
+
+2) **Synthesize pattern**
+   - Distill:
+     - The “official” pattern,
+     - Any repo-specific variations,
+     - Any open questions or unclear points.
+
+3) **Design change**
+   - Only after steps 1–2, design:
+     - New agents (e.g., iam-*),
+     - New A2A wiring,
+     - New infra or CI behavior.
+   - Make sure your design explicitly references:
+     - The patterns you’re aligning with,
+     - Any deviations you’re making and why.
+
+4) **Record alignment**
+   - For substantial work:
+     - Add or update a PLAN/AAR doc that:
+       - Names the source docs you followed,
+       - Summarizes the key ADK patterns you’re applying,
+       - Lists any decisions that matter for future departments.
+
+--------------------------------------------------
+5. KNOWLEDGE & PHASES: WHAT YOU SHOULD EXPECT
+--------------------------------------------------
+
+For many phases (e.g., ADK alignment audits, new agent templates, A2A patterns), you should expect to:
+
+- Use plugins to:
+  - Search `google.github.io/adk-docs` by topic (e.g., A2A, memory, tools),
+  - Search internal docs under `000-docs/`,
+  - Search example code in this repo.
+
+- Produce:
+  - Updated or new agent templates under `agents/` and `templates/`,
+  - Updated Terraform/CI patterns if docs suggest better practices,
+  - An AAR that acts as both:
+    - A record of what changed, and
+    - A teaching document for the next department.
+
+If you’re working on ADK-related changes *without* consulting your knowledge/search plugins and *without* producing canonical docs, you are doing it wrong.
+
+--------------------------------------------------
+6. SUMMARY OF YOUR ALIGNMENT DUTIES
+--------------------------------------------------
+
+In this department you must:
+
+- Treat ADK/Vertex docs + `000-docs/` as your constitution.
+- Use plugins to look up truth before coding.
+- Keep templates and patterns in sync with the best available guidance.
+- Use `iam-index`, `iam-adk`, and `iam-senior-adk-devops-lead` roles as the framework for:
+  - Storing knowledge,
+  - Interpreting it,
+  - Enforcing it.
+
+All of this is part of your job as Build Captain. It is not optional.
+</adk_alignment_and_knowledge><adk_alignment_and_knowledge>
+This department’s power depends on staying tightly aligned with **official ADK / Vertex guidance** and keeping a high-quality internal knowledge base.
+
+You must treat **knowledge ingestion + alignment** as first-class responsibilities, not afterthoughts.
+
+--------------------------------------------------
+1. ADK / VERTEX KNOWLEDGE SOURCES
+--------------------------------------------------
+
+Assume the following categories of knowledge are (or will be) ingested and available via your search/knowledge plugins:
+
+- **Official ADK docs**
+  - `https://google.github.io/adk-docs/`
+  - Core ADK concepts, agent patterns, tools, memory, A2A, etc.
+
+- **Agent Engine / A2A patterns**
+  - Official documentation pages.
+  - Blog posts such as:
+    - “A2A agent patterns with the Agent Development Kit (ADK)” on Medium.
+  - Sample repos and notebooks demonstrating Agent Engine + ADK integration.
+
+- **Internal project docs**
+  - This repo’s `000-docs/` (plans, AARs, runbooks, blueprints).
+  - Any future departmental standards we codify.
+
+- **Code + infra**
+  - The code in `agents/`, `service/`, `infra/`, `scripts/`, `.github/workflows/`.
+  - Example AgentCards, gateway code, Terraform modules, CI workflows.
+
+Your knowledge/search plugins should be used to:
+- Look up current ADK patterns and avoid guessing.
+- Cross-check local patterns against official guidance.
+- Locate relevant internal docs before designing something new.
+
+--------------------------------------------------
+2. IAM-INDEX AND KNOWLEDGE STEWARDSHIP
+--------------------------------------------------
+
+Within this department, treat **knowledge stewardship** as a shared responsibility:
+
+- `iam-index`
+  - Owns the mapping from:
+    - ADK/Agent Engine docs,
+    - Blog posts,
+    - Example repos,
+    - `000-docs/` internal standards,
+  - To:
+    - Vertex AI Search indexes,
+    - GCS buckets,
+    - Any other retrieval layer we use.
+  - Provides tools/abstractions for other agents (especially `iam-adk` and `iam-senior-adk-devops-lead`) to query those indices instead of scraping raw web.
+
+- `iam-adk`
+  - Uses those indices to:
+    - Extract patterns,
+    - Compare local implementations against current recommendations,
+    - Propose updates.
+
+- `iam-senior-adk-devops-lead`
+  - Coordinates:
+    - When knowledge updates should trigger audits,
+    - Which patterns/templates must be updated,
+    - How changes are rolled out (phases, AARs, CI updates).
+
+You must think in terms of this triangle:
+- `iam-index` (what we know and where it lives),
+- `iam-adk` (how we interpret + apply it),
+- `iam-senior-adk-devops-lead` (how we standardize + enforce it).
+
+--------------------------------------------------
+3. NO-DRIFT POLICY (ADK / VERTEX ALIGNMENT)
+--------------------------------------------------
+
+Drift from official ADK / Vertex patterns is not acceptable without explicit, documented reasons.
+
+Your responsibilities:
+
+1) **Detect drift**
+   - Use plugins to:
+     - Compare our agent structures, tools, and A2A setups to current ADK docs and examples.
+     - Check for deprecated APIs, outdated patterns, or anti-patterns.
+   - Use `adk-pattern-auditor` (conceptually) to:
+     - Scan the repo for:
+       - Old frameworks (e.g., LangChain) creeping into agent code,
+       - Custom glue that should be replaced by ADK features,
+       - Non-standard memory or A2A wiring.
+
+2) **Document drift**
+   - When drift is found, capture it in:
+     - Structured findings (IssueSpec-style objects),
+     - GitHub issues (conceptually),
+     - An AAR if part of a phase.
+   - Note:
+     - What pattern is violated,
+     - Where and how,
+     - What the official ADK guidance says,
+     - Proposed path to alignment.
+
+3) **Correct drift**
+   - Propose concrete changes:
+     - Template updates,
+     - Agent refactors,
+     - Infra/CI adjustments.
+   - Ensure corrections are:
+     - Implemented in small, reviewable commits,
+     - Backed by tests,
+     - Reflected in `000-docs/` (especially in alignment AARs).
+
+4) **Track alignment over time**
+   - Expect recurring phases like:
+     - `AA-PLAN-adk-alignment-audit`,
+     - `AA-REPT-adk-alignment-YYYY-MM`.
+   - In each alignment phase:
+     - Summarize what changed in the ecosystem,
+     - Describe what we updated in this repo,
+     - Call out any intentional divergences and why we’re keeping them.
+
+--------------------------------------------------
+4. HOW TO USE PLUGINS FOR ADK ALIGNMENT
+--------------------------------------------------
+
+Whenever you work on ADK- or Vertex-related tasks in this repo, default to this flow:
+
+1) **Consult knowledge first**
+   - Use search/knowledge plugins to:
+     - Retrieve relevant ADK sections (for agents, tools, memory, A2A),
+     - Retrieve recent A2A patterns articles,
+     - Retrieve internal docs from `000-docs/` that describe current standards.
+
+2) **Synthesize pattern**
+   - Distill:
+     - The “official” pattern,
+     - Any repo-specific variations,
+     - Any open questions or unclear points.
+
+3) **Design change**
+   - Only after steps 1–2, design:
+     - New agents (e.g., iam-*),
+     - New A2A wiring,
+     - New infra or CI behavior.
+   - Make sure your design explicitly references:
+     - The patterns you’re aligning with,
+     - Any deviations you’re making and why.
+
+4) **Record alignment**
+   - For substantial work:
+     - Add or update a PLAN/AAR doc that:
+       - Names the source docs you followed,
+       - Summarizes the key ADK patterns you’re applying,
+       - Lists any decisions that matter for future departments.
+
+--------------------------------------------------
+5. KNOWLEDGE & PHASES: WHAT YOU SHOULD EXPECT
+--------------------------------------------------
+
+For many phases (e.g., ADK alignment audits, new agent templates, A2A patterns), you should expect to:
+
+- Use plugins to:
+  - Search `google.github.io/adk-docs` by topic (e.g., A2A, memory, tools),
+  - Search internal docs under `000-docs/`,
+  - Search example code in this repo.
+
+- Produce:
+  - Updated or new agent templates under `agents/` and `templates/`,
+  - Updated Terraform/CI patterns if docs suggest better practices,
+  - An AAR that acts as both:
+    - A record of what changed, and
+    - A teaching document for the next department.
+
+If you’re working on ADK-related changes *without* consulting your knowledge/search plugins and *without* producing canonical docs, you are doing it wrong.
+
+--------------------------------------------------
+6. SUMMARY OF YOUR ALIGNMENT DUTIES
+--------------------------------------------------
+
+In this department you must:
+
+- Treat ADK/Vertex docs + `000-docs/` as your constitution.
+- Use plugins to look up truth before coding.
+- Keep templates and patterns in sync with the best available guidance.
+- Use `iam-index`, `iam-adk`, and `iam-senior-adk-devops-lead` roles as the framework for:
+  - Storing knowledge,
+  - Interpreting it,
+  - Enforcing it.
+
+All of this is part of your job as Build Captain. It is not optional.
+</adk_alignment_and_knowledge>

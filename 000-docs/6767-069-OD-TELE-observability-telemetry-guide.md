@@ -581,7 +581,7 @@ Should include `roles/aiplatform.user`.
 
 ## Next Steps
 
-1. **Deploy to dev environment** (follow `070-OD-RBOK-deployment-runbook.md`)
+1. **Deploy to dev environment** (follow `6767-070-OD-RBOK-deployment-runbook.md`)
 2. **Verify all telemetry** (use checklist above)
 3. **Create custom dashboard** (follow "Creating a Custom Dashboard" section)
 4. **Set up alert policies** (use recommended alerts)
