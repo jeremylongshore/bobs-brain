@@ -316,6 +316,64 @@ bash scripts/ci/check_nodrift.sh
 ✅ **Git history clean**
 ✅ **Ready for deployment**
 
+## Template Extraction (Post-Implementation)
+
+Following the successful department implementation, the IAM department pattern was extracted into a reusable template for other product repositories.
+
+### Phase T1: Extractable Template Skeleton
+**Outcome:** Created `templates/iam-department/` with parameterized agent templates
+
+**Deliverables:**
+- Template scope document (6767-104)
+- 7 template files with {{PARAMETER}} placeholders
+- Template README with quick start guide
+- 30+ identified parameters for customization
+
+### Phase T2: Porting Guide + Integration Checklist
+**Outcome:** Comprehensive porting documentation for teams
+
+**Deliverables:**
+- Porting guide (6767-105) with step-by-step instructions
+- Integration checklist (6767-106) with 400+ validation items
+- Updated CLAUDE.md and README.md with template links
+
+**Key Features:**
+- Minimal viable port: < 1 day setup time
+- Full integration: 1 week timeline
+- Parameter replacement automation via bash script
+- ARV checks for validation
+
+### Phase T3: Operations & Day-to-Day Use
+**Outcome:** Operational runbook and user guide
+
+**Deliverables:**
+- Operations runbook (6767-107) with troubleshooting workflows
+- User guide (6767-108) explaining agent roles and usage patterns
+- Cross-linked ARV/AAR documentation
+
+**Target Audiences:**
+- Operations runbook: DevOps teams, SREs
+- User guide: Developers, product managers
+
+### Template Reusability
+
+The IAM department template enables:
+
+**Reusable Components:**
+- Multi-agent architecture (orchestrator → foreman → specialists)
+- SWE pipeline (audit → issues → fixes → QA → docs)
+- Shared contracts and A2A communication
+- ARV checks and CI/CD patterns
+- Service gateways (A2A, Slack)
+
+**Product Repos Ready to Port:**
+- DiagnosticPro (diagnosticpro-prod)
+- PipelinePilot (pipelinepilot-dev)
+- Hustle (hustle-production)
+- Future products using ADK/Agent Engine
+
+**Template Version:** 1.0.0 (stable)
+
 ## Conclusion
 
 The ADK/Agent Engineering Department has been successfully implemented in the `bobs-brain` repository. The implementation demonstrates:
@@ -325,8 +383,9 @@ The ADK/Agent Engineering Department has been successfully implemented in the `b
 3. **Compliance:** 100% adherence to Hard Mode rules
 4. **Documentation:** Complete audit trail and operational guides
 5. **Production Readiness:** All components ready for deployment
+6. **Reusability:** Extracted as template for other product repositories
 
-The department is now a **canonical reference implementation** for ADK-based agent systems, ready to be replicated across other departments and organizations.
+The department is now a **canonical reference implementation** for ADK-based agent systems, ready to be replicated across other departments and organizations. The template extraction ensures that other teams can adopt this pattern with minimal friction (1-2 days basic setup, 1 week full integration).
 
 ## Appendices
 

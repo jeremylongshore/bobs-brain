@@ -248,9 +248,22 @@ Combined ARV gates ensure both RAG foundation and observability are ready.
 
 ## Related Documents
 
+### Operational Standards
 - **6767-093-DR-STND-bob-rag-readiness-standard.md** - RAG readiness standard (Phase RC1)
 - **6767-094-AT-ARCH-iam-swe-pipeline-orchestration.md** - Pipeline architecture
+- **6767-100-DR-STND-arv-minimum-gate-for-bobs-brain.md** - This document (ARV minimum gate)
+- **6767-107-RB-OPS-adk-department-operations-runbook.md** - Daily operations and troubleshooting
+
+### Template & Porting Documentation
+- **6767-104-DR-STND-iam-department-template-scope-and-rules.md** - Template scope and reusability
+- **6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md** - Step-by-step porting guide
+- **6767-106-DR-STND-iam-department-integration-checklist.md** - Integration checklist
+- **6767-108-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md** - User guide
+
+### Repository Guidance
 - **CLAUDE.md** - Repository guidance and ARV gate usage
+- **README.md** - Quick start and architecture overview
+- **templates/iam-department/README.md** - Template quick start
 
 ## Changelog
 
