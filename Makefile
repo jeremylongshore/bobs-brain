@@ -271,14 +271,24 @@ check-rag-readiness-verbose: ## Verbose RAG readiness check with details
 	@$(PYTHON) scripts/check_rag_readiness.py --verbose
 	@echo ""
 
+check-arv-minimum: ## Check ARV minimum requirements (Phase RC2)
+	@echo "$(BLUE)🔍 Checking ARV Minimum Requirements...$(NC)"
+	@$(PYTHON) scripts/check_arv_minimum.py
+	@echo ""
+
+check-arv-minimum-verbose: ## Verbose ARV minimum check with details
+	@echo "$(BLUE)🔍 Checking ARV Minimum Requirements (Verbose)...$(NC)"
+	@$(PYTHON) scripts/check_arv_minimum.py --verbose
+	@echo ""
+
 print-rag-config: ## Print current RAG configuration (dry-run)
 	@echo "$(BLUE)📋 Current RAG Configuration:$(NC)"
 	@$(PYTHON) scripts/print_rag_config.py
 	@echo ""
 
-arv-gates: check-rag-readiness ## Run all ARV gates (currently just RAG)
+arv-gates: check-rag-readiness check-arv-minimum ## Run all ARV gates (RAG + minimum requirements)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
-	@echo "$(GREEN)✅ ARV gates passed!$(NC)"
+	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
 
 #################################
 # SWE Pipeline Testing
