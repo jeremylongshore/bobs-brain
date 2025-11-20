@@ -213,6 +213,218 @@ git push origin main
 
 ---
 
+## 📦 Portfolio Multi-Repo Audits
+
+Bob's Brain can audit and manage **multiple repositories** simultaneously through its portfolio orchestrator system.
+
+### Repository Registry
+
+All target repositories are defined in `config/repos.yaml`:
+
+```yaml
+repos:
+  - id: bobs-brain
+    display_name: "Bob's Brain"
+    local_path: "."  # Current repository
+    github_owner: "jeremylongshore"
+    github_repo: "bobs-brain"
+    tags: ["adk", "agents", "production"]
+    arv_profile:
+      requires_rag: true
+      requires_iam_dept: true
+    slack_channel: "#bobs-brain-alerts"
+
+  - id: diagnosticpro
+    display_name: "DiagnosticPro"
+    local_path: "external"  # Not checked out locally
+    tags: ["production", "firebase"]
+    slack_channel: "#diagnosticpro-alerts"
+```
+
+**Path Semantics:**
+- `"."` = Current repository (bobs-brain)
+- `"external"` = Not available locally (gracefully skipped)
+- Relative path = Local checkout (e.g., `../diagnosticpro`)
+
+### Portfolio Orchestrator
+
+Run multi-repo audits programmatically:
+
+```python
+from agents.iam_senior_adk_devops_lead.portfolio_orchestrator import run_portfolio_swe
+
+# Audit all local repos
+result = run_portfolio_swe(mode='preview')
+
+# Audit specific repos
+result = run_portfolio_swe(repo_ids=['bobs-brain', 'diagnosticpro'], mode='preview')
+
+# Access aggregated results
+print(f"Repos analyzed: {result.total_repos_analyzed}")
+print(f"Issues found: {result.total_issues_found}")
+print(f"Fix rate: {result.total_issues_fixed / result.total_issues_found * 100:.1f}%")
+
+# Issue breakdowns
+for severity, count in result.issues_by_severity.items():
+    print(f"{severity}: {count} issues")
+```
+
+### Portfolio CLI
+
+Run audits from the command line:
+
+```bash
+# Audit all local repos (default)
+python3 scripts/run_portfolio_swe.py
+
+# Audit specific repos
+python3 scripts/run_portfolio_swe.py --repos bobs-brain,diagnosticpro
+
+# Filter by tag
+python3 scripts/run_portfolio_swe.py --tag production
+
+# Different modes
+python3 scripts/run_portfolio_swe.py --mode dry-run  # Preview changes
+python3 scripts/run_portfolio_swe.py --mode create   # Create fixes
+
+# Export results
+python3 scripts/run_portfolio_swe.py --output report.json
+python3 scripts/run_portfolio_swe.py --markdown report.md
+python3 scripts/run_portfolio_swe.py --output report.json --markdown report.md  # Both
+```
+
+**CLI Options:**
+- `--repos` - Comma-separated repo IDs or "all"
+- `--tag` - Filter repos by tag (e.g., "production")
+- `--mode` - Pipeline mode: preview (default), dry-run, create
+- `--env` - Environment: dev (default), staging, prod
+- `--output` - JSON export path
+- `--markdown` - Markdown report path
+- `--parallel` - Enable parallel execution (future)
+
+### Portfolio ARV Checks
+
+Run Agent Readiness Verification across all local repos:
+
+```bash
+# Check ARV requirements for all local repos
+make check-arv-portfolio
+
+# Or directly
+python3 scripts/check_arv_minimum.py --portfolio
+```
+
+**Output:**
+```
+======================================================================
+ARV MINIMUM GATE CHECK - PORTFOLIO MODE (PORT2)
+======================================================================
+
+📋 Checking 1 local repositories...
+  • bobs-brain: Bob's Brain (Local path: .)
+
+⏭️  Skipping 4 external repositories:
+  • diagnosticpro: DiagnosticPro (local_path=external)
+  • pipelinepilot: PipelinePilot (local_path=external)
+  • ...
+
+[... ARV checks run ...]
+
+PORTFOLIO SUMMARY
+======================================================================
+Repos checked: 1
+Repos passed: 1
+Repos failed: 0
+Repos skipped: 4
+======================================================================
+```
+
+### CI/CD Integration (PORT3 - Design)
+
+**Workflow:** `.github/workflows/portfolio-swe.yml`
+
+**Triggers:**
+- Scheduled: Nightly at 2 AM UTC
+- Manual: Workflow dispatch with options
+
+**Features:**
+- ✅ Multi-repo ARV checks
+- ✅ Automated portfolio audits
+- ✅ JSON/Markdown export
+- ✅ GitHub Actions artifact storage (90 days)
+- 📐 GCS result storage (LIVE1+ design)
+- 📐 Slack notifications (LIVE3 design)
+- 📐 GitHub issue creation (LIVE3 design)
+
+**Manual Trigger:**
+```bash
+gh workflow run portfolio-swe.yml \
+  --ref main \
+  --field repos=all \
+  --field mode=preview \
+  --field environment=dev
+```
+
+**Integration Status:**
+- **PORT3 (Current):** Design-only, local-only operation
+- **LIVE1:** Enable GCS storage, BigQuery integration
+- **LIVE2:** Enable Vertex AI Search, Agent Engine calls
+- **LIVE3:** Enable Slack notifications, GitHub issues
+
+**See:** [CI/Slack Integration Design](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md)
+
+### Portfolio Results
+
+**JSON Structure:**
+```json
+{
+  "portfolio_run_id": "c98cc8f2-bc2d-4db1-aa7d-9d21e0ce92a9",
+  "timestamp": "2025-11-20T03:52:34Z",
+  "duration_seconds": 0.33,
+  "summary": {
+    "total_repos_analyzed": 1,
+    "total_repos_skipped": 4,
+    "total_issues_found": 3,
+    "total_issues_fixed": 2,
+    "fix_rate": 66.7
+  },
+  "issues_by_severity": {
+    "medium": 1,
+    "low": 2
+  },
+  "issues_by_type": {
+    "adk_violation": 2,
+    "missing_doc": 1
+  },
+  "repos_by_issue_count": [
+    ["bobs-brain", 3]
+  ],
+  "repos": [
+    {
+      "repo_id": "bobs-brain",
+      "display_name": "Bob's Brain",
+      "status": "completed",
+      "duration_seconds": 0.32,
+      "issues_found": 3,
+      "issues_fixed": 2
+    }
+  ]
+}
+```
+
+**Markdown Report Example:**
+- Summary table with key metrics
+- Issues breakdown by severity and type
+- Repo rankings by issue count and compliance score
+- Per-repo details with status and timing
+
+**See Documentation:**
+- [Multi-Repo Portfolio Scope](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md) - PORT1/PORT2/PORT3 plan
+- [Portfolio Orchestrator Implementation](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md) - PORT2 AAR
+- [CI/Slack Integration Design](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md) - PORT3 design
+
+---
+
 ## 🚀 Deployment to Vertex AI Agent Engine
 
 Bob's Brain deploys to **Vertex AI Agent Engine** using ADK CLI with full CI/CD automation.

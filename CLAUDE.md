@@ -110,6 +110,148 @@ mkdir agents/iam-adk
 bash scripts/ci/check_nodrift.sh
 ```
 
+## Portfolio Multi-Repo Operations
+
+Bob's Brain includes a **portfolio orchestrator** for managing multiple repositories simultaneously (PORT1/PORT2/PORT3 phases).
+
+### Repository Registry
+
+**File:** `config/repos.yaml`
+
+Defines all target repositories with metadata:
+- `id` - Short identifier
+- `display_name` - User-friendly name
+- `local_path` - ".", "external", or relative path
+- `github_owner`, `github_repo` - GitHub coordinates
+- `tags` - For filtering (e.g., "production", "adk")
+- `arv_profile` - ARV requirements per repo
+- `slack_channel` - Alert destination (LIVE3)
+
+**Python API:**
+```python
+from config.repos import list_repos, get_repo_by_id
+
+# List all repos
+all_repos = list_repos()
+
+# Get specific repo
+repo = get_repo_by_id('bobs-brain')
+print(repo.display_name)  # "Bob's Brain"
+print(repo.is_local)       # True
+print(repo.is_current_repo)  # True
+```
+
+### Portfolio Orchestrator
+
+**File:** `agents/iam_senior_adk_devops_lead/portfolio_orchestrator.py`
+
+Run multi-repo SWE audits:
+```python
+from agents.iam_senior_adk_devops_lead.portfolio_orchestrator import run_portfolio_swe
+
+# Audit all local repos
+result = run_portfolio_swe(mode='preview')
+
+# Audit specific repos
+result = run_portfolio_swe(repo_ids=['bobs-brain'], mode='preview')
+
+# Access results
+print(f"Repos analyzed: {result.total_repos_analyzed}")
+print(f"Issues found: {result.total_issues_found}")
+print(f"Fix rate: {result.total_issues_fixed / result.total_issues_found * 100:.1f}%")
+```
+
+### Portfolio CLI
+
+**File:** `scripts/run_portfolio_swe.py`
+
+```bash
+# Run portfolio audit on all local repos
+python3 scripts/run_portfolio_swe.py
+
+# Specific repos
+python3 scripts/run_portfolio_swe.py --repos bobs-brain,diagnosticpro
+
+# Filter by tag
+python3 scripts/run_portfolio_swe.py --tag production
+
+# Export results
+python3 scripts/run_portfolio_swe.py \
+  --output portfolio-results.json \
+  --markdown portfolio-report.md
+
+# Different modes
+python3 scripts/run_portfolio_swe.py --mode preview   # Read-only
+python3 scripts/run_portfolio_swe.py --mode dry-run  # Show what would change
+python3 scripts/run_portfolio_swe.py --mode create   # Create fixes
+```
+
+### Portfolio ARV Checks
+
+**File:** `scripts/check_arv_minimum.py`
+
+```bash
+# Check ARV minimum across all local repos
+make check-arv-portfolio
+
+# Or directly
+python3 scripts/check_arv_minimum.py --portfolio
+```
+
+**Output shows:**
+- Local repos checked
+- External repos skipped
+- Per-repo ARV results
+- Portfolio summary (passed/failed/skipped)
+
+### CI/CD Integration (PORT3 - Design)
+
+**Workflow:** `.github/workflows/portfolio-swe.yml`
+
+**Status:** Design-only (PORT3), integrations disabled until LIVE phases
+
+**Current capabilities:**
+- ✅ Scheduled nightly audits (2 AM UTC)
+- ✅ Manual workflow dispatch with options
+- ✅ Multi-repo ARV checks
+- ✅ JSON/Markdown export
+- ✅ GitHub Actions artifacts (90-day retention)
+
+**Future capabilities (design-only):**
+- 📐 GCS result storage (LIVE1+)
+- 📐 BigQuery metrics (LIVE2+)
+- 📐 Slack notifications (LIVE3)
+- 📐 GitHub issue creation (LIVE3)
+
+**Manual trigger:**
+```bash
+gh workflow run portfolio-swe.yml \
+  --ref main \
+  --field repos=all \
+  --field mode=preview \
+  --field environment=dev
+```
+
+### Portfolio Documentation
+
+- **PORT1/PORT2/PORT3 Plan:** `000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md`
+- **PORT2 AAR:** `000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md`
+- **PORT3 CI/Slack Design:** `000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md`
+
+### When to Use Portfolio Features
+
+**Use portfolio orchestrator when:**
+- Auditing multiple repos for compliance (ADK patterns, ARV requirements)
+- Generating aggregated reports across repos
+- Running nightly quality checks on all managed repos
+- Comparing repos by issue count or compliance score
+
+**Use single-repo pipeline when:**
+- Deep-diving into a specific repo
+- Implementing fixes in one repo
+- Testing changes locally before portfolio run
+- Working within a specific repo's context
+
 ## Using Bob's Brain as a Reusable Template
 
 Bob's Brain serves as the **canonical reference implementation** for the IAM department pattern. It can be ported to other product repositories (DiagnosticPro, PipelinePilot, Hustle, etc.) as a complete multi-agent software engineering department.
