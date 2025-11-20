@@ -56,6 +56,11 @@ resource "google_cloud_run_service" "a2a_gateway" {
         }
 
         env {
+          name  = "DEPLOYMENT_ENV"
+          value = var.environment
+        }
+
+        env {
           name  = "PORT"
           value = "8080"
         }
@@ -172,6 +177,11 @@ resource "google_cloud_run_service" "slack_webhook" {
         env {
           name  = "SLACK_SIGNING_SECRET"
           value = var.slack_signing_secret
+        }
+
+        env {
+          name  = "DEPLOYMENT_ENV"
+          value = var.environment
         }
 
         env {
