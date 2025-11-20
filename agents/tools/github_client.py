@@ -16,6 +16,14 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
+# Import structured logging (Phase RC2)
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.logging import get_logger
+
+# Create logger
+logger = get_logger(__name__)
+
 
 @dataclass
 class RepoFile:
@@ -128,10 +136,21 @@ class GitHubClient:
 
             # Check for rate limiting
             if response.status_code == 403 and "rate limit" in response.text.lower():
+                logger.log_error(
+                    "github_rate_limit_exceeded",
+                    endpoint=endpoint,
+                    reset_at=response.headers.get('X-RateLimit-Reset'),
+                    remaining=response.headers.get('X-RateLimit-Remaining')
+                )
                 raise GitHubRateLimitError(f"GitHub API rate limit exceeded. Reset at: {response.headers.get('X-RateLimit-Reset')}")
 
             # Check for auth errors
             if response.status_code in (401, 403):
+                logger.log_error(
+                    "github_auth_failed",
+                    endpoint=endpoint,
+                    status_code=response.status_code
+                )
                 raise GitHubAuthError(f"GitHub authentication failed: {response.status_code} - {response.text[:200]}")
 
             # Raise for other HTTP errors
@@ -140,6 +159,11 @@ class GitHubClient:
             return response
 
         except requests.exceptions.RequestException as e:
+            logger.log_error(
+                "github_request_failed",
+                endpoint=endpoint,
+                error=str(e)
+            )
             raise GitHubClientError(f"GitHub API request failed: {e}")
 
     def list_repo_files(
