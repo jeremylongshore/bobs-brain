@@ -12,6 +12,7 @@ Part of Phase RC2 observability and ARV improvements.
 Usage:
     python scripts/check_arv_minimum.py
     python scripts/check_arv_minimum.py --verbose
+    python scripts/check_arv_minimum.py --portfolio  # Check all local repos
 
 Exit codes:
     0 - ARV minimum requirements met
@@ -23,10 +24,20 @@ import os
 import sys
 import argparse
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 # Add repo root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+repo_root = Path(__file__).parent.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(repo_root / "agents"))
+
+# Import repo registry (PORT2 - for portfolio mode)
+try:
+    from config.repos import list_repos, RepoConfig
+    REGISTRY_AVAILABLE = True
+except ImportError as e:
+    REGISTRY_AVAILABLE = False
+    REGISTRY_ERROR = str(e)
 
 
 class ARVMinimumChecker:
@@ -309,21 +320,103 @@ class ARVMinimumChecker:
             return 2
 
 
+def run_portfolio_checks(verbose: bool = False) -> int:
+    """
+    Run ARV minimum checks across all local repos (PORT2 feature).
+
+    Currently, this runs the check on the current repo and reports
+    portfolio-style metrics. Future: iterate through all local repos.
+    """
+    if not REGISTRY_AVAILABLE:
+        print("❌ Registry not available. Cannot run portfolio checks.")
+        print("   Install config/repos.py to enable portfolio mode.")
+        return 2
+
+    print("\n" + "=" * 70)
+    print("ARV MINIMUM GATE CHECK - PORTFOLIO MODE (PORT2)")
+    print("=" * 70)
+
+    # Get all local repos
+    try:
+        all_repos = list_repos()
+        local_repos = [r for r in all_repos if r.is_local]
+
+        print(f"\n📋 Checking {len(local_repos)} local repositories...")
+        print()
+
+        for repo in local_repos:
+            print(f"  • {repo.id}: {repo.display_name}")
+            print(f"    Local path: {repo.local_path}")
+
+        # For external repos
+        external_repos = [r for r in all_repos if not r.is_local]
+        if external_repos:
+            print(f"\n⏭️  Skipping {len(external_repos)} external repositories:")
+            for repo in external_repos:
+                print(f"  • {repo.id}: {repo.display_name} (local_path={repo.local_path})")
+
+        print()
+
+    except Exception as e:
+        print(f"❌ Error loading registry: {e}")
+        return 2
+
+    # Run check on current repo
+    # (Future: iterate through all local repos if we have multiple)
+    print("=" * 70)
+    print(f"CHECKING: bobs-brain (current repository)")
+    print("=" * 70)
+
+    checker = ARVMinimumChecker(verbose=verbose)
+    result = checker.run()
+
+    # Portfolio summary
+    print("\n" + "=" * 70)
+    print("PORTFOLIO SUMMARY")
+    print("=" * 70)
+    print(f"Repos checked: {len(local_repos)}")
+    print(f"Repos passed: {1 if result == 0 else 0}")
+    print(f"Repos failed: {0 if result == 0 else 1}")
+    print(f"Repos skipped: {len(external_repos)}")
+    print("=" * 70 + "\n")
+
+    return result
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Check ARV minimum requirements (Phase RC2)"
+        description="Check ARV minimum requirements (Phase RC2)",
+        epilog="""
+Examples:
+  # Check current repo (default)
+  python scripts/check_arv_minimum.py
+
+  # Portfolio mode - check all local repos
+  python scripts/check_arv_minimum.py --portfolio
+
+  # Verbose output
+  python scripts/check_arv_minimum.py --verbose
+        """
     )
     parser.add_argument(
         "--verbose", "-v",
         action="store_true",
         help="Show detailed output"
     )
+    parser.add_argument(
+        "--portfolio", "-p",
+        action="store_true",
+        help="Run checks across all local repos (PORT2 feature)"
+    )
 
     args = parser.parse_args()
 
-    checker = ARVMinimumChecker(verbose=args.verbose)
-    return checker.run()
+    if args.portfolio:
+        return run_portfolio_checks(verbose=args.verbose)
+    else:
+        checker = ARVMinimumChecker(verbose=args.verbose)
+        return checker.run()
 
 
 if __name__ == "__main__":

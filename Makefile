@@ -281,6 +281,11 @@ check-arv-minimum-verbose: ## Verbose ARV minimum check with details
 	@$(PYTHON) scripts/check_arv_minimum.py --verbose
 	@echo ""
 
+check-arv-portfolio: ## Check ARV minimum across all local repos (PORT2)
+	@echo "$(BLUE)📦 Checking ARV Minimum Requirements (Portfolio Mode)...$(NC)"
+	@$(PYTHON) scripts/check_arv_minimum.py --portfolio
+	@echo ""
+
 check-arv-engine-flags: ## Check ARV engine flags safety (Phase AE3)
 	@echo "$(BLUE)🚦 Checking ARV Engine Flags...$(NC)"
 	@$(PYTHON) scripts/check_arv_engine_flags.py
