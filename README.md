@@ -7,9 +7,9 @@
 [![Agent Engine](https://img.shields.io/badge/Vertex%20AI-Agent%20Engine-4285F4.svg)](https://cloud.google.com/vertex-ai/docs/agent-engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Your AI teammate that keeps codebases clean, documented, and ready for production.**
+**Specialist AI team for auditing and fixing Google Vertex/ADK design systems.**
 
-Production Slack assistant built with Google ADK, Vertex AI Agent Engine, A2A protocol, Session Cache + Memory Bank. Hard Mode architecture enforces drift-free development. Open source for everyone.
+Bob's Brain orchestrates expert agents that ensure your codebase follows Google's ADK and Vertex AI patterns. Built with Google ADK, Vertex AI Agent Engine, A2A protocol, Session Cache + Memory Bank. Hard Mode architecture enforces drift-free development.
 
 [Quick Start](#-quick-start) • [What It Does](#-what-bob-does) • [Hard Mode Rules](#%EF%B8%8F-hard-mode-explained) • [Use as Template](#-use-as-template)
 
@@ -19,18 +19,47 @@ Production Slack assistant built with Google ADK, Vertex AI Agent Engine, A2A pr
 
 ## 👋 What is Bob's Brain?
 
-Bob's Brain is a **Slack AI assistant that actually helps your team ship better code.** Think of it as that senior engineer who remembers to update docs, catches architectural drift, and makes sure your CI doesn't break at 2am.
+Bob's Brain is a **Slack AI assistant with a specialist team focused on auditing and constructing fixes for Google Vertex/ADK design systems.** This isn't a general-purpose coding assistant – it's a precision tool that ensures your agents, infrastructure, and architecture align with Google's ADK and Vertex AI recommended patterns.
 
-We built Bob using Google's Agent Development Kit (ADK) and Vertex AI Agent Engine, following what we call **"Hard Mode"** – a set of strict architectural rules that make agents maintainable, scalable, and actually production-ready.
+**Key Focus:** Audit Google Vertex/ADK design compliance → Detect drift → Construct fixes → Maintain alignment
 
-### Why Bob Exists
+### Bob's Multi-Department Architecture
 
-Most AI coding assistants are demos. They work great in tutorials, fall apart in production. Bob's different:
+Bob is the **global orchestrator** that coordinates multiple specialist departments. This repo contains Bob's **first specialist team** – the **iam-* department** (Intent Agent Model) – focused exclusively on ADK/Vertex compliance:
 
-- **Actually deployed** - Running in production Slack workspaces, not just localhost
-- **Multi-repo aware** - Audits your entire portfolio, not just one project
-- **Self-documenting** - Generates AARs, architecture docs, and runbooks as it works
-- **Template-ready** - Copy this entire setup to your product in days, not months
+```
+┌─────────────────────────────────────────────────────────┐
+│  Bob (Global Orchestrator)                              │
+│  • Slack interface                                      │
+│  • Routes requests to specialist departments            │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+       ┌──────────────────┴────────────────────┐
+       │                                       │
+       ▼                                       ▼
+┌──────────────────────┐            ┌──────────────────────┐
+│ iam-* Department     │            │ Future Departments   │
+│ (THIS REPO)          │            │ (Coming Soon)        │
+│                      │            │                      │
+│ Focus: ADK/Vertex    │            │ • Data pipeline team │
+│ compliance audits    │            │ • Security team      │
+│ and fixes            │            │ • Performance team   │
+└──────────────────────┘            └──────────────────────┘
+```
+
+**This repo = Bob's first specialist department, not Bob's entire brain.**
+
+### Why This Team Exists
+
+Building with Google ADK and Vertex AI requires strict architectural patterns. Most teams drift over time:
+
+- ❌ Mix LangChain with ADK code
+- ❌ Self-host runners instead of using Agent Engine
+- ❌ Scatter docs across wikis and random files
+- ❌ Skip memory wiring or do it incorrectly
+- ❌ Violate Google's recommended patterns
+
+**This team prevents that drift.** It audits your repos, detects violations, constructs fixes, and keeps you aligned with Google's ADK/Vertex standards.
 
 ### What Makes It "Hard Mode"
 
@@ -49,61 +78,84 @@ We enforce 8 architectural rules (R1-R8) that prevent the usual agent chaos:
 
 ---
 
-## 🎯 What Bob Does
+## 🎯 What This Team Does
 
-Bob orchestrates an entire **software engineering department** of specialist agents:
+The **iam-* department** is a specialist team focused exclusively on **Google Vertex/ADK design system compliance**:
 
-### Core Capabilities
+### Core Capabilities (ADK/Vertex Focused)
 
-**🔍 Code Audits**
-- Scans repos for ADK/Vertex compliance
-- Detects architectural drift and anti-patterns
-- Checks documentation quality and completeness
+**🔍 ADK/Vertex Compliance Audits**
+- Scans repos for ADK import violations (no LangChain, CrewAI mixing)
+- Detects drift from Google's recommended Agent Engine patterns
+- Validates memory wiring (Session + Memory Bank)
+- Checks A2A protocol implementation
+- Ensures SPIFFE identity propagation
+- Verifies gateway separation (no Runner in Cloud Run)
 
-**🛠️ Automated Fixes**
-- Creates fix plans for detected issues
-- Generates pull requests with proper context
-- Runs QA checks before suggesting merges
+**🛠️ Automated ADK/Vertex Fixes**
+- Constructs fix plans for ADK pattern violations
+- Generates PRs to align with Vertex AI recommended architecture
+- Refactors code to follow Google's ADK patterns
+- Runs QA checks against ADK/Vertex standards
 
-**📋 Portfolio Management**
-- Audits multiple repos simultaneously
-- Aggregates metrics across your entire org
-- Stores results in centralized GCS buckets
+**📋 Portfolio-Wide ADK Compliance**
+- Audits multiple repos for ADK/Vertex compliance simultaneously
+- Aggregates ADK pattern violations across your org
+- Tracks compliance scores and fix rates
+- Stores audit results in centralized GCS buckets
 
-**📝 Documentation**
-- Writes AARs (After-Action Reports) for all major work
-- Generates architecture diagrams and runbooks
-- Maintains a searchable knowledge hub
+**📝 ADK/Vertex Documentation**
+- Writes AARs for all ADK pattern fixes
+- Generates architecture docs showing Vertex AI alignment
+- Documents ADK-specific patterns and decisions
+- Maintains searchable knowledge of ADK/Vertex patterns
 
 **💬 Slack Integration**
-- Responds to questions about your codebase
-- Sends alerts for failed CI/CD runs
-- Creates GitHub issues from Slack threads (coming soon)
+- Answers questions about ADK/Vertex patterns
+- Sends alerts for ADK compliance failures
+- Helps teams understand Google's recommended architectures
 
-### The Multi-Agent Team
+### The iam-* Specialist Team (ADK/Vertex Compliance)
 
-Bob coordinates specialist agents for different tasks:
+This department has 8 specialist agents, each focused on a specific aspect of ADK/Vertex compliance:
 
 ```
 ┌─────────────┐
-│     Bob     │  ← Global orchestrator (your Slack interface)
+│     Bob     │  ← Global orchestrator (routes ADK/Vertex requests here)
 └──────┬──────┘
        │
-┌──────▼──────────────────────────┐
-│ iam-senior-adk-devops-lead      │  ← Department foreman
-└──────┬──────────────────────────┘
+┌──────▼──────────────────────────────────────────────────┐
+│ iam-senior-adk-devops-lead (Foreman)                    │
+│ • Coordinates ADK/Vertex compliance audits              │
+│ • Delegates to specialist agents                        │
+└──────┬───────────────────────────────────────────────────┘
        │
        ├─→ iam-adk         (ADK/Vertex pattern expert)
-       ├─→ iam-issue       (Issue detector & spec writer)
-       ├─→ iam-fix-plan    (Fix strategy planner)
-       ├─→ iam-fix-impl    (Fix implementer)
-       ├─→ iam-qa          (Quality assurance)
-       ├─→ iam-docs        (Documentation specialist)
-       ├─→ iam-cleanup     (Code cleanup & refactoring)
-       └─→ iam-index       (Knowledge hub curator)
+       │                   Knows Google's recommended patterns
+       │
+       ├─→ iam-issue       (ADK violation detector)
+       │                   Scans for drift from Google patterns
+       │
+       ├─→ iam-fix-plan    (ADK fix strategy planner)
+       │                   Designs fixes to align with Vertex AI
+       │
+       ├─→ iam-fix-impl    (ADK fix implementer)
+       │                   Refactors code to Google standards
+       │
+       ├─→ iam-qa          (ADK compliance QA)
+       │                   Validates fixes against Google patterns
+       │
+       ├─→ iam-docs        (ADK/Vertex documentation)
+       │                   Documents alignment decisions
+       │
+       ├─→ iam-cleanup     (ADK codebase cleanup)
+       │                   Removes deprecated ADK patterns
+       │
+       └─→ iam-index       (ADK knowledge curator)
+                           Maintains ADK/Vertex pattern library
 ```
 
-Each agent has a specific job. No agent tries to do everything. Clean delegation, clear responsibilities.
+**Important:** This team ONLY handles ADK/Vertex compliance work. General software engineering, data pipelines, security audits, etc. are handled by Bob's other departments (coming soon).
 
 ---
 
