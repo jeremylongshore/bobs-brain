@@ -5,7 +5,9 @@
 repos:
   # Core Bob's Brain repositories
   - id: bobs-brain
+    display_name: "Bob's Brain"
     description: "Primary Bob/IAM department repo - ADK agents and infrastructure"
+    local_path: "."  # Current repository
     github_owner: "jeremylongshore"
     github_repo: "bobs-brain"
     default_branch: "main"
@@ -15,9 +17,17 @@ repos:
       - "core"
       - "production"
     allow_write: false  # Read-only for now
+    arv_profile:
+      requires_rag: true
+      requires_iam_dept: true
+      requires_tests: true
+      requires_dual_memory: true
+    slack_channel: "#bobs-brain-alerts"  # Placeholder only
 
   - id: bobs-brain-sandbox
+    display_name: "Bob's Brain Sandbox"
     description: "Sandbox test repo for pipeline experiments"
+    local_path: "external"  # TODO: Not checked out locally
     github_owner: "jeremylongshore"
     github_repo: "bobs-brain-sandbox"
     default_branch: "main"
@@ -25,33 +35,54 @@ repos:
       - "sandbox"
       - "testing"
     allow_write: false  # Will enable when ready
+    arv_profile:
+      requires_rag: false
+      requires_iam_dept: false
+      requires_tests: false  # Sandbox - tests not required
+    slack_channel: "#bobs-brain-sandbox"  # Placeholder
 
   # Related projects (placeholders for future integration)
-  - id: diagnosticpro-platform
-    description: "DiagnosticPro customer platform (Firebase/React)"
-    github_owner: "TBD"
-    github_repo: "diagnosticpro-platform"
+  - id: diagnosticpro
+    display_name: "DiagnosticPro"
+    description: "DiagnosticPro repair and diagnostic platform"
+    local_path: "external"  # TODO: Not checked out locally yet
+    github_owner: "TBD"  # TODO: Set actual GitHub owner
+    github_repo: "diagnostic-platform"
     default_branch: "main"
     tags:
-      - "customer-app"
+      - "product"
       - "firebase"
-      - "react"
-    allow_write: false
+      - "vertex-ai"
+    allow_write: false  # TODO: Enable when ready
+    arv_profile:
+      requires_rag: false
+      requires_iam_dept: false  # TODO: Port IAM department template
+      requires_tests: true
+    slack_channel: "#diagnosticpro-alerts"  # TODO: Create channel
 
-  - id: iamnews-brightstream
-    description: "BrightStream positive news platform"
-    github_owner: "TBD"
-    github_repo: "brightstream"
+  - id: pipelinepilot
+    display_name: "PipelinePilot"
+    description: "PipelinePilot B2B sales automation platform"
+    local_path: "external"  # TODO: Not checked out locally yet
+    github_owner: "TBD"  # TODO: Set actual GitHub owner
+    github_repo: "pipeline-pilot"
     default_branch: "main"
     tags:
-      - "iamnews"
-      - "content"
+      - "product"
+      - "b2b"
       - "genkit"
-    allow_write: false
+    allow_write: false  # TODO: Enable when ready
+    arv_profile:
+      requires_rag: false
+      requires_iam_dept: false  # TODO: Port IAM department template
+      requires_tests: true
+    slack_channel: "#pipelinepilot-alerts"  # TODO: Create channel
 
   # Template repositories
   - id: iam1-template
+    display_name: "IAM1 Template"
     description: "IAM1 Intent Agent Model template repository"
+    local_path: "external"  # TODO: Clone for reference
     github_owner: "jeremylongshore"
     github_repo: "iam1-intent-agent-model-vertex-ai"
     default_branch: "main"
@@ -60,6 +91,11 @@ repos:
       - "reference"
       - "adk"
     allow_write: false
+    arv_profile:
+      requires_rag: false
+      requires_iam_dept: true
+      requires_tests: true
+    slack_channel: null  # No Slack integration for templates
 
 # Configuration
 settings:

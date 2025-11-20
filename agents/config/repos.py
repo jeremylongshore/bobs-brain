@@ -13,16 +13,30 @@ from typing import List, Optional, Dict, Any
 
 
 @dataclass
+class ARVProfile:
+    """Agent Readiness Verification profile for a repository."""
+
+    requires_rag: bool = False
+    requires_iam_dept: bool = False
+    requires_tests: bool = False
+    requires_dual_memory: bool = False
+
+
+@dataclass
 class RepoConfig:
     """Configuration for a target repository."""
 
     id: str
+    display_name: str
     description: str
+    local_path: str  # "." for current repo, "external" if not checked out, or relative path
     github_owner: str
     github_repo: str
     default_branch: str
     tags: List[str] = field(default_factory=list)
     allow_write: bool = False
+    arv_profile: Optional[ARVProfile] = None
+    slack_channel: Optional[str] = None
 
     @property
     def full_name(self) -> str:
@@ -38,6 +52,16 @@ class RepoConfig:
     def api_url(self) -> str:
         """Get GitHub API URL."""
         return f"https://api.github.com/repos/{self.full_name}"
+
+    @property
+    def is_local(self) -> bool:
+        """Check if repository is available locally."""
+        return self.local_path != "external"
+
+    @property
+    def is_current_repo(self) -> bool:
+        """Check if this is the current repository."""
+        return self.local_path == "."
 
     def has_tag(self, tag: str) -> bool:
         """Check if repo has a specific tag."""
@@ -88,14 +112,29 @@ class RepoRegistry:
 
         # Load repos
         for repo_data in data.get('repos', []):
+            # Parse ARV profile if present
+            arv_profile = None
+            arv_data = repo_data.get('arv_profile')
+            if arv_data:
+                arv_profile = ARVProfile(
+                    requires_rag=arv_data.get('requires_rag', False),
+                    requires_iam_dept=arv_data.get('requires_iam_dept', False),
+                    requires_tests=arv_data.get('requires_tests', False),
+                    requires_dual_memory=arv_data.get('requires_dual_memory', False)
+                )
+
             repo = RepoConfig(
                 id=repo_data['id'],
+                display_name=repo_data.get('display_name', repo_data['id']),
                 description=repo_data['description'],
+                local_path=repo_data.get('local_path', 'external'),
                 github_owner=repo_data['github_owner'],
                 github_repo=repo_data['github_repo'],
                 default_branch=repo_data['default_branch'],
                 tags=repo_data.get('tags', []),
-                allow_write=repo_data.get('allow_write', False)
+                allow_write=repo_data.get('allow_write', False),
+                arv_profile=arv_profile,
+                slack_channel=repo_data.get('slack_channel')
             )
             self._repos[repo.id] = repo
 
