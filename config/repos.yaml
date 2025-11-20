@@ -1,0 +1,92 @@
+# Repository Target Registry
+# Defines target repositories for SWE pipeline operations
+# Use repo_id values when triggering pipeline runs
+
+repos:
+  # Core Bob's Brain repositories
+  - id: bobs-brain
+    description: "Primary Bob/IAM department repo - ADK agents and infrastructure"
+    github_owner: "jeremylongshore"
+    github_repo: "bobs-brain"
+    default_branch: "main"
+    tags:
+      - "adk"
+      - "agents"
+      - "core"
+      - "production"
+    allow_write: false  # Read-only for now
+
+  - id: bobs-brain-sandbox
+    description: "Sandbox test repo for pipeline experiments"
+    github_owner: "jeremylongshore"
+    github_repo: "bobs-brain-sandbox"
+    default_branch: "main"
+    tags:
+      - "sandbox"
+      - "testing"
+    allow_write: false  # Will enable when ready
+
+  # Related projects (placeholders for future integration)
+  - id: diagnosticpro-platform
+    description: "DiagnosticPro customer platform (Firebase/React)"
+    github_owner: "TBD"
+    github_repo: "diagnosticpro-platform"
+    default_branch: "main"
+    tags:
+      - "customer-app"
+      - "firebase"
+      - "react"
+    allow_write: false
+
+  - id: iamnews-brightstream
+    description: "BrightStream positive news platform"
+    github_owner: "TBD"
+    github_repo: "brightstream"
+    default_branch: "main"
+    tags:
+      - "iamnews"
+      - "content"
+      - "genkit"
+    allow_write: false
+
+  # Template repositories
+  - id: iam1-template
+    description: "IAM1 Intent Agent Model template repository"
+    github_owner: "jeremylongshore"
+    github_repo: "iam1-intent-agent-model-vertex-ai"
+    default_branch: "main"
+    tags:
+      - "template"
+      - "reference"
+      - "adk"
+    allow_write: false
+
+# Configuration
+settings:
+  # Default behavior
+  default_allow_write: false
+  require_explicit_write_permission: true
+
+  # Rate limiting (requests per hour)
+  github_api_rate_limit: 100
+
+  # File filtering for analysis
+  analysis_file_patterns:
+    - "*.py"
+    - "*.yaml"
+    - "*.yml"
+    - "*.md"
+    - "*.json"
+    - "*.toml"
+
+  analysis_exclude_patterns:
+    - "*.pyc"
+    - "__pycache__/*"
+    - ".git/*"
+    - "node_modules/*"
+    - "venv/*"
+    - ".venv/*"
+
+  # Size limits
+  max_file_size_bytes: 1048576  # 1MB per file
+  max_total_size_bytes: 10485760  # 10MB total per analysis

@@ -47,3 +47,22 @@ labels = {
 # Staging bucket created by storage.tf (output: staging_bucket_url)
 # Used by: adk deploy agent_engine --staging_bucket
 # Format: gs://<project-id>-adk-staging
+
+# Knowledge Hub Configuration (org-wide knowledge repository)
+# TODO: Wire actual service account emails after projects are configured
+knowledge_hub_project_id = "datahub-intent"
+knowledge_bucket_prefix  = "datahub-intent"  # Using project name as bucket name
+
+# Service accounts that need knowledge hub access (empty for now)
+# These will be populated with actual SA emails when ready
+bobs_brain_runtime_sa = ""  # TODO: Get from Agent Engine deployment
+bobs_brain_search_sa  = ""  # TODO: Get from Vertex AI Search setup
+
+# Additional consumers can be added here
+consumer_service_accounts = [
+  # Example:
+  # {
+  #   email  = "diagnosticpro-agent@diagnosticpro-dev.iam.gserviceaccount.com"
+  #   prefix = "diagnosticpro/"
+  # }
+]

@@ -1,0 +1,19 @@
+# Agent configuration (with violations)
+name: example-agent
+version: 0.1.0
+
+# VIOLATION: Using OpenAI model
+model: gpt-4
+
+# VIOLATION: Missing required fields
+# Missing: instruction
+# Missing: tools configuration
+# Missing: memory configuration
+
+# VIOLATION: Incorrect structure
+custom_config:
+  api_key: ${OPENAI_API_KEY}  # VIOLATION: Hardcoded secret reference
+  temperature: 0.7
+
+# VIOLATION: No A2A configuration
+# VIOLATION: No observability configuration

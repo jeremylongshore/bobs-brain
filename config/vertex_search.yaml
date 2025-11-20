@@ -1,0 +1,138 @@
+# Vertex AI Search Configuration
+# Maps environments to datastores and bucket prefixes
+#
+# This configuration defines the RAG infrastructure for Bob + foreman
+# using the org-wide knowledge hub pattern (datahub-intent)
+
+# Project Constants
+knowledge_hub:
+  project_id: "datahub-intent"  # Actual deployed project
+  location: "us-central1"
+
+# Environment-specific configurations
+environments:
+  production:
+    # Vertex AI Search Datastore
+    datastore:
+      id: "bobs-brain-prod-rag"  # TODO: Create this datastore
+      project_id: "bobs-brain"   # Project ID: 205354194989
+      location: "us"              # Vertex Search uses 'us' or 'eu'
+      type: "unstructured"
+
+    # GCS Source
+    source:
+      bucket: "datahub-intent"
+      prefix: "bobs-brain/"
+      uri_pattern: "gs://datahub-intent/bobs-brain/**"
+
+    # Agent Configuration
+    agents:
+      - bob
+      - iam-senior-adk-devops-lead
+
+    # Search Settings
+    search:
+      refresh_schedule: "daily"
+      include_patterns:
+        - "*.md"
+        - "*.txt"
+        - "*.json"
+        - "*.yaml"
+        - "*.py"
+      exclude_patterns:
+        - "*.log"
+        - "*.tmp"
+        - "__pycache__/**"
+
+  staging:
+    # Vertex AI Search Datastore (Staging)
+    datastore:
+      id: "bobs-brain-staging-rag"  # TODO: Create this datastore
+      project_id: "bobs-brain"
+      location: "us"
+      type: "unstructured"
+
+    # GCS Source (Dev Bucket)
+    source:
+      bucket: "datahub-intent-dev"  # TODO: Create dev bucket
+      prefix: "bobs-brain/"
+      uri_pattern: "gs://datahub-intent-dev/bobs-brain/**"
+
+    # Agent Configuration
+    agents:
+      - bob
+      - iam-senior-adk-devops-lead
+      - iam-adk  # Test new agents in staging first
+
+    # Search Settings
+    search:
+      refresh_schedule: "hourly"  # More frequent for testing
+      include_patterns:
+        - "*.md"
+        - "*.txt"
+        - "*.json"
+        - "*.yaml"
+        - "*.py"
+
+  development:
+    # Local Development Configuration
+    datastore:
+      id: "bobs-brain-dev-rag"
+      project_id: "bobs-brain-dev"  # TODO: Dev project if exists
+      location: "us"
+      type: "unstructured"
+
+    # GCS Source (Dev Bucket)
+    source:
+      bucket: "datahub-intent-dev"
+      prefix: "bobs-brain/"
+      uri_pattern: "gs://datahub-intent-dev/bobs-brain/**"
+
+    # Agent Configuration
+    agents:
+      - bob
+      - iam-senior-adk-devops-lead
+      - "*"  # All agents available in dev
+
+    # Search Settings
+    search:
+      refresh_schedule: "manual"  # Manual refresh for dev
+
+# Datastore Creation Commands (for reference)
+setup_commands:
+  create_prod_datastore: |
+    gcloud ai search datastores create bobs-brain-prod-rag \
+      --location=us \
+      --project=bobs-brain \
+      --type=unstructured
+
+  create_staging_datastore: |
+    gcloud ai search datastores create bobs-brain-staging-rag \
+      --location=us \
+      --project=bobs-brain \
+      --type=unstructured
+
+  import_prod_data: |
+    gcloud ai search documents import \
+      --datastore=bobs-brain-prod-rag \
+      --location=us \
+      --project=bobs-brain \
+      --gcs-uri=gs://datahub-intent/bobs-brain/**
+
+  import_staging_data: |
+    gcloud ai search documents import \
+      --datastore=bobs-brain-staging-rag \
+      --location=us \
+      --project=bobs-brain \
+      --gcs-uri=gs://datahub-intent-dev/bobs-brain/**
+
+# Legacy Configuration (for backwards compatibility)
+legacy:
+  datastore:
+    id: "bob-vertex-agent-datastore"
+    project_id: "bobs-brain"
+    location: "us"
+  source:
+    bucket: "bobs-brain-bob-vertex-agent-rag"
+    documents: 8718  # Current document count
+  migration_flag: "USE_ORG_KNOWLEDGE"  # Set to "true" to use new datastores

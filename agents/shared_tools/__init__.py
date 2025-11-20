@@ -38,6 +38,12 @@ from .custom_tools import (
     get_delegation_tools,
 )
 
+# Import org knowledge hub Vertex Search tools
+from .vertex_search import (
+    get_bob_vertex_search_tool,
+    get_foreman_vertex_search_tool,
+)
+
 
 # ============================================================================
 # TOOL PROFILES - Define which tools each agent can access
@@ -49,14 +55,24 @@ def get_bob_tools() -> List[Any]:
 
     Bob needs:
     - Search capabilities (Google, ADK docs, Vertex AI)
-    - Knowledge access
+    - Knowledge access via org knowledge hub
     - Future: delegation to iam-* agents
     """
     tools = []
 
-    # Search and knowledge tools
+    # Core web search
     tools.append(get_google_search_tool())
+
+    # ADK documentation tools
     tools.extend(get_adk_docs_tools())
+
+    # Org Knowledge Hub RAG (new centralized approach)
+    vertex_tool = get_bob_vertex_search_tool()
+    if vertex_tool:
+        tools.append(vertex_tool)
+        logger.info("✅ Added org knowledge hub Vertex Search for Bob")
+
+    # Legacy Vertex Search (backwards compatibility)
     tools.extend(get_vertex_search_tools())
 
     # Future expansions (stubbed for now)
@@ -74,6 +90,7 @@ def get_foreman_tools() -> List[Any]:
     - Delegation to specialists
     - Repository analysis
     - Compliance checking
+    - RAG access to org knowledge hub
     """
     tools = []
 
@@ -82,6 +99,12 @@ def get_foreman_tools() -> List[Any]:
 
     # Analysis capabilities
     tools.append(get_google_search_tool())
+
+    # Org Knowledge Hub RAG (same as Bob)
+    vertex_tool = get_foreman_vertex_search_tool()
+    if vertex_tool:
+        tools.append(vertex_tool)
+        logger.info("✅ Added org knowledge hub Vertex Search for Foreman")
 
     # Future: repo tools when ready
     # tools.append(get_repo_search_tool_stub())

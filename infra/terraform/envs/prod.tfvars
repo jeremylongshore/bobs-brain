@@ -44,3 +44,27 @@ labels = {
   team        = "platform"
   critical    = "true"
 }
+
+# Knowledge Hub Configuration (org-wide knowledge repository)
+# Production uses the actual datahub-intent project
+knowledge_hub_project_id = "datahub-intent"
+knowledge_bucket_prefix  = "datahub-intent"  # Main prod bucket
+
+# Service accounts that need knowledge hub access
+# TODO: Replace with actual production service account emails
+bobs_brain_runtime_sa = ""  # TODO: serviceAccount:bob-runtime@bobs-brain.iam.gserviceaccount.com
+bobs_brain_search_sa  = ""  # TODO: serviceAccount:vertex-search@bobs-brain.iam.gserviceaccount.com
+
+# Production consumers - add as projects onboard
+consumer_service_accounts = [
+  # DiagnosticPro (when ready)
+  # {
+  #   email  = "diagnosticpro-agent@diagnosticpro-prod.iam.gserviceaccount.com"
+  #   prefix = "diagnosticpro/"
+  # },
+  # PipelinePilot (when ready)
+  # {
+  #   email  = "pipeline-agent@pipelinepilot-prod.iam.gserviceaccount.com"
+  #   prefix = "pipelinepilot/"
+  # }
+]

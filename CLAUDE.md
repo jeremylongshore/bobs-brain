@@ -251,6 +251,43 @@ PUBLIC_URL=https://your-a2a-gateway.run.app
 - `ci/check_nodrift.sh` - Drift detection (R1-R8 enforcement)
 - `deployment/setup_vertex_search.sh` - Vertex AI Search setup
 - `adk-docs-crawler/` - ADK documentation tools
+- `check_rag_readiness.py` - RAG readiness verification (ARV gate)
+- `print_rag_config.py` - RAG configuration dry-run helper
+
+## RAG Readiness Check
+
+The repository includes RAG (Retrieval Augmented Generation) readiness verification as part of the Agent Readiness Verification (ARV) system.
+
+### Running RAG Checks
+
+```bash
+# Quick readiness check
+make check-rag-readiness
+
+# Verbose check with details
+make check-rag-readiness-verbose
+
+# Print current RAG configuration
+make print-rag-config
+
+# Run all ARV gates
+make arv-gates
+```
+
+### CI Integration
+
+The RAG readiness check runs automatically in GitHub Actions:
+- **Workflow**: `.github/workflows/ci-rag-readiness.yaml`
+- **Triggers**: PRs to main, pushes to main, manual dispatch
+- **Status**: Currently soft-blocking (can be made hard-blocking)
+
+### RAG Readiness Standard
+
+See `000-docs/6767-093-DR-STND-bob-rag-readiness-standard.md` for:
+- Complete readiness criteria
+- Configuration requirements
+- Documentation requirements
+- Enforcement timeline
 
 ## Troubleshooting
 

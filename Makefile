@@ -257,6 +257,64 @@ crawl-test: ## Test crawler configuration without uploading
 	@export $$(cat .env.crawler 2>/dev/null | grep -v '^#' | xargs) && \
 		$(PYTHON) -c "from tools.config import load_config, validate_gcp_credentials; config = load_config(); validate_gcp_credentials(); print('✅ Configuration valid')"
 
+#################################
+# RAG Readiness & ARV Gates
+#################################
+
+check-rag-readiness: ## Check RAG readiness for Bob and foreman (ARV gate)
+	@echo "$(BLUE)🔍 Checking RAG Readiness...$(NC)"
+	@$(PYTHON) scripts/check_rag_readiness.py
+	@echo ""
+
+check-rag-readiness-verbose: ## Verbose RAG readiness check with details
+	@echo "$(BLUE)🔍 Checking RAG Readiness (Verbose)...$(NC)"
+	@$(PYTHON) scripts/check_rag_readiness.py --verbose
+	@echo ""
+
+print-rag-config: ## Print current RAG configuration (dry-run)
+	@echo "$(BLUE)📋 Current RAG Configuration:$(NC)"
+	@$(PYTHON) scripts/print_rag_config.py
+	@echo ""
+
+arv-gates: check-rag-readiness ## Run all ARV gates (currently just RAG)
+	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
+	@echo "$(GREEN)✅ ARV gates passed!$(NC)"
+
+#################################
+# SWE Pipeline Testing
+#################################
+
+test-swe-pipeline: ## Run SWE pipeline tests
+	@echo "$(BLUE)🔧 Running SWE Pipeline Tests...$(NC)"
+	@$(PYTEST) tests/test_swe_pipeline.py -v --color=yes
+	@echo "$(GREEN)✅ SWE Pipeline tests passed!$(NC)"
+
+test-swe-pipeline-verbose: ## Run SWE pipeline tests with detailed output
+	@echo "$(BLUE)🔧 Running SWE Pipeline Tests (Verbose)...$(NC)"
+	@$(PYTEST) tests/test_swe_pipeline.py -vvs --color=yes --tb=short
+	@echo "$(GREEN)✅ SWE Pipeline tests passed!$(NC)"
+
+test-swe-pipeline-coverage: ## Run SWE pipeline tests with coverage
+	@echo "$(BLUE)📊 Running SWE Pipeline Tests with Coverage...$(NC)"
+	@$(PYTEST) tests/test_swe_pipeline.py --cov=agents.iam_senior_adk_devops_lead --cov=agents.shared_contracts --cov-report=term --cov-report=html
+	@echo "$(GREEN)✅ Coverage report generated in htmlcov/$(NC)"
+
+run-swe-pipeline-demo: ## Run SWE pipeline demo with synthetic repo
+	@echo "$(BLUE)🚀 Running SWE Pipeline Demo...$(NC)"
+	@$(PYTHON) scripts/run_swe_pipeline_once.py --repo-path tests/data/synthetic_repo --task "Audit ADK compliance and fix violations"
+	@echo "$(GREEN)✅ Pipeline demo completed!$(NC)"
+
+run-swe-pipeline-interactive: ## Run interactive SWE pipeline
+	@echo "$(BLUE)🎯 Starting Interactive SWE Pipeline...$(NC)"
+	@$(PYTHON) -c "from agents.iam_senior_adk_devops_lead.orchestrator import run_swe_pipeline, PipelineRequest; \
+		import json; \
+		req = PipelineRequest('tests/data/synthetic_repo', 'Interactive audit', 'dev'); \
+		result = run_swe_pipeline(req); \
+		print(f'\n📊 Pipeline Results:'); \
+		print(f'  - Issues found: {result.total_issues_found}'); \
+		print(f'  - Issues fixed: {result.issues_fixed}'); \
+		print(f'  - Duration: {result.pipeline_duration_seconds:.2f}s')"
+
 .PHONY: help setup test lint format clean docker version benchmark ci all
 .PHONY: install-hooks deps format-check type-check
 .PHONY: test-v1 test-v2 test-coverage
@@ -264,3 +322,6 @@ crawl-test: ## Test crawler configuration without uploading
 .PHONY: docker-build docker-v1 docker-v2 docker-all docker-stop docker-clean
 .PHONY: safe-commit pre-release clean-all version logs dev prod
 .PHONY: crawl-adk-docs crawl-test
+.PHONY: check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates
+.PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
+.PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
