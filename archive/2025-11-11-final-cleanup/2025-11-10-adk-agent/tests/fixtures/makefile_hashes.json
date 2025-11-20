@@ -1,0 +1,13 @@
+{
+  "adk_a2a_agent_engine": "55c02cea17b1514a737a296ee379a19bb11452f0efe7eb9c329058cff34b7482",
+  "adk_a2a_cloud_run": "c66601bc408d0cd3eb1e1e424126e8561612cebb77fa8020dc4b33753b88e834",
+  "adk_base_agent_engine_no_data": "c0d407869c19551e534de18b138007ef29e7dcf63a45969caff266361d06be2c",
+  "adk_base_cloud_run_no_data": "b63105d6122d61b85ce3d578de319133afaf1de2f37c56c56665da290e7fe375",
+  "adk_live_agent_engine": "0d759388e24fad173bd923b413eadf02af482203fa497b748aeb4f67dd954c48",
+  "adk_live_cloud_run": "b6371a9cda3cfb08baac1924b56302047e5d8f144c3992fe032dd58e36fc8c43",
+  "agent_with_agent_garden": "97197e776c0da315c5b94716ee0237dfdf6ac08497a7ff8ed40cf22d2b6b6d45",
+  "agent_with_custom_commands": "24cc6a8350391a0c8e3e9301fdb7f788fc997a63efd2ff1df65206d71a77e790",
+  "agentic_rag_cloud_run_vector_search": "f28b4e85c2ee64092e8e2da0cf59bc65d76cad4d3693302fdf2b3666852865c6",
+  "agentic_rag_cloud_run_vertex_search": "49693291418b3e840a4e9c1284ae60c9308e90294d64e64d575c07b1945a695e",
+  "langgraph_cloud_run_no_data": "10d5004e0c421710515484eaab94bf6984249ccf4cc52db0a3edf83a4d5a00a9"
+}
