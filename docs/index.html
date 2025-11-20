@@ -7,6 +7,34 @@
     <meta name="author" content="Intent Solutions">
     <title>Bob's Brain | Vertex AI Agent System</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Mermaid.js for diagrams -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#808080',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#4d4d4d',
+                lineColor: '#808080',
+                secondaryColor: '#cccccc',
+                tertiaryColor: '#f7f7f7',
+                background: '#ffffff',
+                mainBkg: '#e8e8e8',
+                secondBkg: '#f7f7f7',
+                border1: '#4d4d4d',
+                border2: '#808080',
+                note: '#f7f7f7',
+                noteBorder: '#808080',
+                noteBkg: '#e8e8e8',
+                noteTextColor: '#1a1a1a',
+                labelBackground: '#e8e8e8',
+                labelBorder: '#808080',
+                labelColor: '#1a1a1a'
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- Hero Section -->
@@ -112,6 +140,138 @@
                         <li>ARV (Agent Readiness Verification) gates ensure quality and safety</li>
                         <li>Portfolio-wide audits across multiple repositories</li>
                     </ul>
+                </div>
+            </section>
+
+            <!-- Architecture Diagrams Section -->
+            <section class="content-section">
+                <h2>Architecture Diagrams</h2>
+                <div class="section-content">
+
+                    <!-- Repository Structure -->
+                    <h3>Repository Structure (v0.9.0 Agent Factory)</h3>
+                    <p>Canonical directory structure following ADK/Vertex Agent Engine best practices:</p>
+                    <pre class="mermaid">
+graph TB
+    subgraph "bobs-brain/ (v0.9.0 Agent Factory)"
+        A[agents/] --> A1[bob/]
+        A --> A2[iam-senior-adk-devops-lead/]
+        A --> A3[iam-* specialists/]
+
+        B[service/] --> B1[a2a_gateway/]
+        B --> B2[slack_webhook/]
+
+        C[infra/terraform/] --> C1[agent_engine.tf]
+        C --> C2[storage.tf]
+        C --> C3[iam.tf]
+
+        D[000-docs/] --> D1[Plans & AARs]
+        D --> D2[Runbooks]
+        D --> D3[Architecture docs]
+
+        E[scripts/ci/] --> E1[check_nodrift.sh]
+        E --> E2[arv checks]
+
+        F[tests/] --> F1[Unit tests]
+        F --> F2[Integration tests]
+    end
+
+    style A fill:#808080,color:#fff,stroke:#4d4d4d
+    style B fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style C fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style D fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style E fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style F fill:#cccccc,color:#1a1a1a,stroke:#808080
+                    </pre>
+
+                    <!-- System Flow -->
+                    <h3>System Flow (Slack → Agent Engine)</h3>
+                    <p>How user requests flow from Slack to Bob and through the iam-* department:</p>
+                    <pre class="mermaid">
+sequenceDiagram
+    participant U as User (Slack)
+    participant S as Cloud Run Gateway
+    participant B as Bob (Orchestrator)
+    participant F as Foreman Agent
+    participant I as iam-* Specialists
+    participant V as Vertex AI / GCS
+
+    U->>S: @Bob message
+    S->>S: Validate webhook & auth
+    S->>B: POST to Agent Engine
+    B->>B: Dual memory: Session + Memory Bank
+    B->>F: Delegate to iam-senior-adk-devops-lead
+    F->>I: Coordinate iam-adk, iam-fix, iam-qa
+    I->>V: Query Vertex AI Search / write to GCS
+    V-->>I: Context & tools response
+    I-->>F: Task results
+    F-->>B: Consolidated report
+    B->>S: Format response
+    S->>U: Reply in Slack thread
+
+    Note over B,F: A2A protocol for agent coordination
+    Note over I,V: RAG with Vertex AI Search + ARV gates
+                    </pre>
+
+                    <!-- Deployment Flow -->
+                    <h3>Deployment Flow (CI/CD with Hard Mode)</h3>
+                    <p>From code push to production via GitHub Actions and Agent Engine:</p>
+                    <pre class="mermaid">
+graph LR
+    A[Git Push to main] --> B[GitHub Actions]
+    B --> C{Drift Check R8}
+    C -->|Violations| D[❌ Block CI]
+    C -->|Pass| E[Run ARV Checks]
+    E --> F{ARV Pass?}
+    F -->|No| G[❌ Report Failures]
+    F -->|Yes| H[ADK CLI Deploy]
+    H --> I[Vertex AI Agent Engine]
+    I --> J{Health Check}
+    J -->|Success| K[✅ Production Live]
+    J -->|Fail| L[🔄 Rollback]
+
+    style A fill:#808080,color:#fff,stroke:#4d4d4d
+    style K fill:#4d4d4d,color:#fff,stroke:#1a1a1a
+    style D fill:#999999,color:#fff,stroke:#4d4d4d
+    style G fill:#999999,color:#fff,stroke:#4d4d4d
+    style L fill:#b3b3b3,color:#1a1a1a,stroke:#808080
+                    </pre>
+
+                    <!-- Agent Department Model -->
+                    <h3>Agent Department Model</h3>
+                    <p>How Bob delegates work to the foreman and specialist agents:</p>
+                    <pre class="mermaid">
+graph TD
+    A[Bob - Global Orchestrator] --> B[iam-senior-adk-devops-lead]
+    B --> C[iam-adk]
+    B --> D[iam-issue]
+    B --> E[iam-fix-plan]
+    B --> F[iam-fix-impl]
+    B --> G[iam-qa]
+    B --> H[iam-doc]
+    B --> I[iam-cleanup]
+    B --> J[iam-index]
+
+    C --> C1[ADK pattern analysis]
+    D --> D1[Create GitHub issues]
+    E --> E1[Design fix strategies]
+    F --> F1[Implement fixes]
+    G --> G1[Quality validation]
+    H --> H1[Generate docs & AARs]
+    I --> I1[Code optimization]
+    J --> J1[Knowledge indexing]
+
+    style A fill:#4d4d4d,color:#fff,stroke:#1a1a1a
+    style B fill:#808080,color:#fff,stroke:#4d4d4d
+    style C fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style D fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style E fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style F fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style G fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style H fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style I fill:#cccccc,color:#1a1a1a,stroke:#808080
+    style J fill:#cccccc,color:#1a1a1a,stroke:#808080
+                    </pre>
                 </div>
             </section>
 
