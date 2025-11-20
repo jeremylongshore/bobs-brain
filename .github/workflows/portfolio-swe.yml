@@ -1,0 +1,257 @@
+name: Portfolio SWE Audit (PORT3)
+
+# PORT3: Design-only workflow for multi-repo portfolio audits
+# LIVE phases (LIVE1/LIVE2/LIVE3) will enable actual integrations
+
+on:
+  # Scheduled nightly audit
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily
+
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: 'Repo IDs to audit (comma-separated or "all")'
+        required: false
+        default: 'all'
+        type: string
+      mode:
+        description: 'Pipeline mode'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - dry-run
+          - create
+      tag:
+        description: 'Filter by tag (optional)'
+        required: false
+        type: string
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  id-token: write  # For WIF authentication (LIVE phases only)
+  issues: write     # For future GitHub issue creation (LIVE3)
+
+jobs:
+  portfolio-audit:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # PORT3: Design-only authentication (commented out for local-only operation)
+      # LIVE1+: Uncomment for actual GCP integration
+      # - name: Authenticate to GCP (Workload Identity Federation)
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      #     service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      #
+      # - name: Set up Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run ARV portfolio check
+        id: arv_check
+        run: |
+          echo "🔍 Running ARV minimum checks across portfolio..."
+          make check-arv-portfolio || echo "ARV_FAILED=true" >> $GITHUB_OUTPUT
+
+      - name: Run portfolio SWE audit
+        id: portfolio_audit
+        env:
+          REPOS: ${{ inputs.repos || 'all' }}
+          MODE: ${{ inputs.mode || 'preview' }}
+          TAG: ${{ inputs.tag || '' }}
+          ENV: ${{ inputs.environment || 'dev' }}
+        run: |
+          echo "🚀 Running portfolio SWE audit..."
+          echo "  Repos: $REPOS"
+          echo "  Mode: $MODE"
+          echo "  Tag: $TAG"
+          echo "  Environment: $ENV"
+
+          # Build command
+          CMD="python3 scripts/run_portfolio_swe.py --mode $MODE --env $ENV"
+
+          if [ "$REPOS" != "all" ]; then
+            CMD="$CMD --repos $REPOS"
+          fi
+
+          if [ -n "$TAG" ]; then
+            CMD="$CMD --tag $TAG"
+          fi
+
+          # Add output flags
+          CMD="$CMD --output portfolio-results.json --markdown portfolio-report.md"
+
+          echo "Running: $CMD"
+          $CMD
+
+          # Extract summary stats for outputs
+          TOTAL_REPOS=$(jq -r '.summary.total_repos_analyzed' portfolio-results.json)
+          TOTAL_ISSUES=$(jq -r '.summary.total_issues_found' portfolio-results.json)
+          FIX_RATE=$(jq -r '.summary.fix_rate' portfolio-results.json)
+
+          echo "TOTAL_REPOS=$TOTAL_REPOS" >> $GITHUB_OUTPUT
+          echo "TOTAL_ISSUES=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+          echo "FIX_RATE=$FIX_RATE" >> $GITHUB_OUTPUT
+
+      - name: Upload portfolio results (JSON)
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-results-json
+          path: portfolio-results.json
+          retention-days: 90
+
+      - name: Upload portfolio report (Markdown)
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-report-md
+          path: portfolio-report.md
+          retention-days: 90
+
+      # PORT3: Design-only - Store results in GCS (LIVE1+)
+      # - name: Upload results to GCS
+      #   env:
+      #     BUCKET: ${{ secrets.PORTFOLIO_RESULTS_BUCKET }}
+      #     RUN_ID: ${{ github.run_id }}
+      #     TIMESTAMP: ${{ github.event.repository.pushed_at }}
+      #   run: |
+      #     gsutil cp portfolio-results.json gs://$BUCKET/results/$RUN_ID/results.json
+      #     gsutil cp portfolio-report.md gs://$BUCKET/results/$RUN_ID/report.md
+
+      # PORT3: Design-only - Slack notification shape (LIVE3)
+      # - name: Send Slack notification (DESIGN ONLY - DO NOT ENABLE)
+      #   if: always()
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     TOTAL_REPOS: ${{ steps.portfolio_audit.outputs.TOTAL_REPOS }}
+      #     TOTAL_ISSUES: ${{ steps.portfolio_audit.outputs.TOTAL_ISSUES }}
+      #     FIX_RATE: ${{ steps.portfolio_audit.outputs.FIX_RATE }}
+      #   run: |
+      #     # Slack message shape (reference implementation)
+      #     # This shows the INTENDED structure for LIVE3
+      #     cat > slack-message.json <<EOF
+      #     {
+      #       "blocks": [
+      #         {
+      #           "type": "header",
+      #           "text": {
+      #             "type": "plain_text",
+      #             "text": "📊 Portfolio SWE Audit Complete"
+      #           }
+      #         },
+      #         {
+      #           "type": "section",
+      #           "fields": [
+      #             {
+      #               "type": "mrkdwn",
+      #               "text": "*Repos Analyzed:*\n$TOTAL_REPOS"
+      #             },
+      #             {
+      #               "type": "mrkdwn",
+      #               "text": "*Issues Found:*\n$TOTAL_ISSUES"
+      #             },
+      #             {
+      #               "type": "mrkdwn",
+      #               "text": "*Fix Rate:*\n${FIX_RATE}%"
+      #             },
+      #             {
+      #               "type": "mrkdwn",
+      #               "text": "*Environment:*\n${{ inputs.environment || 'dev' }}"
+      #             }
+      #           ]
+      #         },
+      #         {
+      #           "type": "section",
+      #           "text": {
+      #             "type": "mrkdwn",
+      #             "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+      #           }
+      #         }
+      #       ]
+      #     }
+      #     EOF
+      #
+      #     # LIVE3: Send to Slack webhook
+      #     # curl -X POST -H 'Content-type: application/json' \
+      #     #   --data @slack-message.json \
+      #     #   "$SLACK_WEBHOOK_URL"
+
+      # PORT3: Design-only - Create GitHub issues for high-severity findings (LIVE3)
+      # - name: Create GitHub issues (DESIGN ONLY - DO NOT ENABLE)
+      #   if: steps.portfolio_audit.outputs.TOTAL_ISSUES > 0
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   run: |
+      #     # Parse portfolio results and create issues for critical/high severity
+      #     # This shows the INTENDED structure for LIVE3
+      #
+      #     # Example: Extract issues from JSON
+      #     # jq -r '.repos[] | select(.status == "completed") |
+      #     #   .pipeline_result.issues[] |
+      #     #   select(.severity == "critical" or .severity == "high") |
+      #     #   @json' portfolio-results.json | while read issue; do
+      #     #
+      #     #   REPO_ID=$(echo $issue | jq -r '.repo_id')
+      #     #   TITLE=$(echo $issue | jq -r '.title')
+      #     #   DESCRIPTION=$(echo $issue | jq -r '.description')
+      #     #   SEVERITY=$(echo $issue | jq -r '.severity')
+      #     #
+      #     #   gh issue create \
+      #     #     --title "[$REPO_ID] $TITLE" \
+      #     #     --body "$DESCRIPTION\n\n**Severity:** $SEVERITY\n**Source:** Portfolio Audit" \
+      #     #     --label "portfolio-audit,$SEVERITY,automated"
+      #     # done
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Portfolio SWE Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Repos Analyzed:** ${{ steps.portfolio_audit.outputs.TOTAL_REPOS }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Issues Found:** ${{ steps.portfolio_audit.outputs.TOTAL_ISSUES }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Fix Rate:** ${{ steps.portfolio_audit.outputs.FIX_RATE }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- JSON results: portfolio-results.json" >> $GITHUB_STEP_SUMMARY
+          echo "- Markdown report: portfolio-report.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Integration Status (PORT3 - Design Only)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏸️ GCS upload: Disabled (enable in LIVE1+)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏸️ Slack notifications: Disabled (enable in LIVE3)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏸️ GitHub issue creation: Disabled (enable in LIVE3)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See [PORT3 Design Doc](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md) for details." >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if critical issues found
+        if: steps.portfolio_audit.outputs.TOTAL_ISSUES > 10
+        run: |
+          echo "❌ Portfolio audit found ${{ steps.portfolio_audit.outputs.TOTAL_ISSUES }} issues"
+          echo "This exceeds the threshold of 10 issues"
+          echo "Review the portfolio report and address critical issues"
+          exit 1
