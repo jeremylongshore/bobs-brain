@@ -37,7 +37,7 @@ These rules are ENFORCED in CI. Any violation will fail the build.
 - ❌ Custom agent frameworks
 - ❌ Flask/FastAPI agents with direct LLM calls
 
-**Required:** Agent code in `my_agent/agent.py` using `LlmAgent` from `google.adk.agents`.
+**Required:** Agent code in `agents/bob/agent.py` using `LlmAgent` from `google.adk.agents`.
 
 ### R2: Deployed Runtime
 
@@ -82,7 +82,7 @@ These rules are ENFORCED in CI. Any violation will fail the build.
 
 **Requirement:** Agent MUST use both Session Cache and Memory Bank.
 
-**Required in `my_agent/agent.py`:**
+**Required in `agents/bob/agent.py`:**
 ```python
 from google.adk.agents import LlmAgent
 from google.adk import Runner
@@ -188,11 +188,11 @@ bobs-brain/
 ├── .github/              # GitHub Actions workflows, templates
 ├── 000-docs/             # Documentation (NNN-CC-ABCD-*.md)
 ├── adk/                  # ADK agent configurations
-├── my_agent/             # Agent implementation (ADK only)
+├── agents/bob/             # Agent implementation (ADK only)
 │   ├── __init__.py
 │   ├── agent.py          # LlmAgent + dual memory wiring
 │   ├── a2a_card.py       # AgentCard for A2A protocol
-│   └── tools/            # Custom tools
+│   └── scripts/adk-docs-crawler/            # Custom tools
 ├── service/              # HTTP/A2A/Slack gateways (proxy only)
 │   ├── a2a_gateway/      # A2A protocol endpoints
 │   │   └── main.py       # FastAPI app (no Runner)
@@ -225,9 +225,9 @@ bobs-brain/
 
 ---
 
-## Agent Core (my_agent/)
+## Agent Core (agents/bob/)
 
-### my_agent/agent.py
+### agents/bob/agent.py
 
 **Purpose:** Define the LlmAgent with tools, instructions, and memory callbacks.
 
@@ -296,7 +296,7 @@ def create_runner() -> Runner:
 - ❌ No Flask/FastAPI routes in this file
 - ❌ No direct LLM API calls
 
-### my_agent/a2a_card.py
+### agents/bob/a2a_card.py
 
 **Purpose:** Minimal AgentCard for A2A protocol discovery.
 
@@ -694,7 +694,7 @@ AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/<env>/<region>/<versi
 
 ### AgentCard
 
-**Required in `my_agent/a2a_card.py`:**
+**Required in `agents/bob/a2a_card.py`:**
 ```python
 description=f"Bob's Brain AI Assistant (SPIFFE: {AGENT_SPIFFE_ID})"
 ```
@@ -734,7 +734,7 @@ Before merging any PR, verify:
 
 - [ ] Root structure matches canonical tree (only 8 directories)
 - [ ] `service/` proxies to Agent Engine (no Runner imports)
-- [ ] `my_agent/` wires Session + Memory Bank + after-save callback
+- [ ] `agents/bob/` wires Session + Memory Bank + after-save callback
 - [ ] CI passes: tests + drift scan + terraform validate
 - [ ] Deploy workflow pushes container and upserts Agent Engine (CI only)
 - [ ] Cloud Run gateway deployed via CI (not manual)
