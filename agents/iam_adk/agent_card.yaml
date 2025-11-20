@@ -1,0 +1,227 @@
+# AgentCard for iam-adk
+# ADK/Vertex Design & Static Analysis Specialist
+
+name: iam-adk
+display_name: "IAM ADK Specialist"
+description: |
+  Expert ADK/Vertex design and static analysis specialist responsible for:
+  - Reviewing ADK agent implementations for pattern compliance
+  - Analyzing Agent-to-Agent (A2A) communication patterns
+  - Validating AgentCard schemas and configurations
+  - Enforcing Hard Mode rules (R1-R8) compliance
+  - Producing structured AuditReports and IssueSpecs
+
+version: "0.8.0"
+
+# Agent identity (R7: SPIFFE ID)
+identity:
+  spiffe_id: "spiffe://intent.solutions/agent/bobs-brain/iam-adk/dev/us-central1/0.8.0"
+
+# Input schema - what this agent accepts
+input_schema:
+  type: object
+  properties:
+    task_type:
+      type: string
+      enum:
+        - "analyze_agent"           # Comprehensive agent analysis
+        - "validate_pattern"         # Validate specific ADK pattern
+        - "check_a2a"               # Check A2A protocol compliance
+        - "audit_compliance"        # Audit Hard Mode rules compliance
+      description: "Type of analysis to perform"
+
+    target:
+      type: string
+      description: |
+        Target to analyze:
+        - File path (e.g., "agents/bob/agent.py")
+        - Directory path (e.g., "agents/bob")
+        - Code snippet (inline code to validate)
+
+    pattern_name:
+      type: string
+      enum:
+        - "tool_definition"
+        - "agent_composition"
+        - "memory_wiring"
+        - "callback_implementation"
+        - "llm_agent_creation"
+      description: "Specific pattern to validate (for validate_pattern tasks)"
+
+    focus_rules:
+      type: array
+      items:
+        type: string
+        enum: ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"]
+      description: "Specific Hard Mode rules to focus on (optional)"
+
+    severity_threshold:
+      type: string
+      enum: ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+      default: "LOW"
+      description: "Only report issues at or above this severity"
+
+  required:
+    - task_type
+    - target
+
+# Output schema - what this agent produces
+output_schema:
+  oneOf:
+    - $ref: "#/definitions/AuditReport"
+    - $ref: "#/definitions/IssueSpec"
+
+definitions:
+  AuditReport:
+    type: object
+    properties:
+      compliance_status:
+        type: string
+        enum: ["COMPLIANT", "NON_COMPLIANT", "WARNING"]
+      violations:
+        type: array
+        items:
+          type: object
+          properties:
+            severity:
+              type: string
+              enum: ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+            rule:
+              type: string
+              description: "Hard Mode rule violated (R1-R8) or null"
+            message:
+              type: string
+            file:
+              type: string
+            line_number:
+              type: integer
+      recommendations:
+        type: array
+        items:
+          type: string
+      metrics:
+        type: object
+        properties:
+          has_get_agent:
+            type: boolean
+          has_root_agent:
+            type: boolean
+          has_dual_memory:
+            type: boolean
+          has_callback:
+            type: boolean
+          uses_type_hints:
+            type: boolean
+          has_spiffe_id:
+            type: boolean
+      risk_level:
+        type: string
+        enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+
+  IssueSpec:
+    type: object
+    properties:
+      title:
+        type: string
+      severity:
+        type: string
+        enum: ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+      rule_violated:
+        type: string
+        description: "Hard Mode rule (R1-R8) or null"
+      affected_files:
+        type: array
+        items:
+          type: string
+      description:
+        type: string
+      proposed_fix:
+        type: object
+        properties:
+          approach:
+            type: string
+          code_examples:
+            type: string
+          references:
+            type: string
+      impact:
+        type: string
+      effort:
+        type: string
+        enum: ["LOW", "MEDIUM", "HIGH"]
+
+# Capabilities - what this agent can do
+capabilities:
+  - name: "pattern_analysis"
+    description: "Analyze ADK agent code for pattern compliance"
+
+  - name: "compliance_checking"
+    description: "Validate Hard Mode rules (R1-R8) enforcement"
+
+  - name: "a2a_validation"
+    description: "Check Agent-to-Agent protocol compliance"
+
+  - name: "static_analysis"
+    description: "Perform AST-based Python code analysis"
+
+  - name: "best_practices"
+    description: "Recommend ADK and Google Cloud best practices"
+
+# Tools available to this agent
+tools:
+  - name: "analyze_agent_code"
+    description: "Comprehensive agent.py file analysis"
+
+  - name: "validate_adk_pattern"
+    description: "Validate specific ADK patterns in code"
+
+  - name: "check_a2a_compliance"
+    description: "Check A2A protocol implementation"
+
+# Deployment configuration
+deployment:
+  model: "gemini-2.0-flash-exp"
+  runtime: "vertex-ai-agent-engine"
+  memory:
+    session_service: "VertexAiSessionService"
+    memory_bank_service: "VertexAiMemoryBankService"
+  callbacks:
+    - "auto_save_session_to_memory"
+
+# Integration points
+integrations:
+  delegates_to: []
+  reports_to:
+    - "iam-senior-adk-devops-lead"
+  collaborates_with:
+    - "iam-issue"          # Provides IssueSpecs
+    - "iam-fix-plan"       # Pattern recommendations
+    - "iam-doc"            # Documentation standards
+    - "iam-index"          # ADK docs knowledge base
+
+# Hard Mode compliance
+hard_mode_compliance:
+  R1: "Uses google-adk LlmAgent only"
+  R2: "Deployed to Vertex AI Agent Engine"
+  R3: "Gateway separation enforced"
+  R4: "CI-only deployment via GitHub Actions"
+  R5: "Dual memory with Session + Memory Bank"
+  R6: "Documentation in 000-docs/"
+  R7: "SPIFFE ID in identity and logs"
+  R8: "Passes drift detection checks"
+
+# Documentation
+documentation:
+  readme: "agents/iam-adk/README.md"
+  system_prompt: "agents/iam-adk/system-prompt.md"
+  architecture_docs:
+    - "000-docs/001-PP-ARCH-agent-factory-structure.md"
+    - "000-docs/002-AT-FLOW-agent-interaction-patterns.md"
+
+# Metadata
+metadata:
+  created: "2025-11-19"
+  version: "0.8.0"
+  status: "active"
+  owner: "iam-senior-adk-devops-lead"
+  repository: "https://github.com/jeremylongshore/bobs-brain"

@@ -1,0 +1,209 @@
+# A2A Protocol AgentCard for iam-index
+# Knowledge Management Specialist Agent
+
+apiVersion: a2a/v1
+kind: AgentCard
+metadata:
+  name: iam-index
+  version: "0.1.0"
+  spiffe_id: spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.1.0
+
+spec:
+  description: |
+    Knowledge Management Specialist - Manages documentation indexing, knowledge base
+    queries, and Vertex AI Search integration for the ADK/Agent Engineering Department.
+
+  # A2A endpoint configuration
+  endpoint:
+    url: ${IAM_INDEX_A2A_URL:-https://iam-index.run.app}
+    protocol: https
+    auth_method: oauth2
+
+  # Agent Engine backend
+  backend:
+    type: vertex-ai-agent-engine
+    project_id: ${PROJECT_ID}
+    location: ${LOCATION:-us-central1}
+    agent_engine_id: ${AGENT_ENGINE_ID}
+
+  # Input schema
+  input:
+    type: object
+    properties:
+      task_type:
+        type: string
+        enum: ["index", "query", "sync", "analyze", "generate"]
+        description: Type of knowledge management task
+
+      target:
+        type: string
+        description: Target for the operation (doc source, query, datastore)
+
+      options:
+        type: object
+        properties:
+          max_results:
+            type: integer
+            default: 5
+          scope:
+            type: string
+            enum: ["all", "adk", "project", "agents"]
+          tags:
+            type: array
+            items:
+              type: string
+          keywords:
+            type: array
+            items:
+              type: string
+
+  # Output schema
+  output:
+    type: object
+    properties:
+      status:
+        type: string
+        enum: ["success", "error", "partial"]
+
+      result:
+        type: object
+        oneOf:
+          - $ref: "#/definitions/IndexResult"
+          - $ref: "#/definitions/QueryResult"
+          - $ref: "#/definitions/GapAnalysis"
+          - $ref: "#/definitions/IndexEntry"
+
+      metrics:
+        type: object
+        properties:
+          documents_processed:
+            type: integer
+          relevance_score:
+            type: number
+          response_time_ms:
+            type: integer
+
+  definitions:
+    IndexResult:
+      type: object
+      properties:
+        documents_indexed:
+          type: integer
+        datastore:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    QueryResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              source:
+                type: string
+              relevance:
+                type: number
+              snippet:
+                type: string
+
+    GapAnalysis:
+      type: object
+      properties:
+        gaps:
+          type: array
+          items:
+            type: object
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    IndexEntry:
+      type: object
+      properties:
+        entry_id:
+          type: string
+        title:
+          type: string
+        source:
+          type: string
+        content_type:
+          type: string
+        summary:
+          type: string
+
+  # Capabilities
+  capabilities:
+    - documentation_indexing
+    - code_pattern_cataloging
+    - knowledge_base_queries
+    - vertex_search_integration
+    - gap_analysis
+    - relevance_optimization
+
+  # Required tools
+  tools:
+    - index_adk_docs
+    - index_project_docs
+    - query_knowledge_base
+    - sync_vertex_search
+    - generate_index_entry
+    - analyze_knowledge_gaps
+
+  # Integration points
+  provides_to:
+    - iam-adk      # Pattern references
+    - iam-fix-plan # Solution examples
+    - iam-qa       # Test patterns
+    - iam-doc      # Gap reports
+    - all-agents   # Knowledge queries
+
+  # Quality standards
+  sla:
+    query_response_time_ms: 1000
+    min_relevance_score: 0.9
+    index_freshness_hours: 24
+    coverage_target: 1.0
+
+  # Metadata
+  tags:
+    - knowledge-management
+    - indexing
+    - search
+    - vertex-ai-search
+    - documentation
+
+  # Health check
+  health:
+    path: /health
+    interval: 60
+
+  # Monitoring
+  metrics:
+    enabled: true
+    path: /metrics
+    dimensions:
+      - query_type
+      - datastore
+      - response_time
+
+  logging:
+    level: INFO
+    include_spiffe: true
+
+  # Compliance
+  hard_mode_rules:
+    R1: true  # ADK-only
+    R2: true  # Agent Engine runtime
+    R3: true  # Gateway separation
+    R4: true  # CI-only deployments
+    R5: true  # Dual memory wiring
+    R6: true  # Single docs folder
+    R7: true  # SPIFFE ID propagation
+    R8: true  # Drift detection

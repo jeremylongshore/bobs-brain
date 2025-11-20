@@ -1,0 +1,312 @@
+# iam-fix-plan Agent Card
+# Agent-to-Agent (A2A) Protocol Definition
+
+name: iam-fix-plan
+display_name: Fix Planning & Implementation Strategy Specialist
+version: "0.8.0"
+
+# Agent Identity (R7: SPIFFE ID)
+spiffe_id: spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0
+
+# Description and capabilities
+description: |
+  Fix Planning and Implementation Strategy Specialist.
+
+  Converts IssueSpec specifications into detailed, actionable FixPlan implementations.
+  Specializes in:
+  - Fix plan design and implementation strategy
+  - Risk assessment and mitigation planning
+  - Testing strategy definition
+  - Effort estimation and resource planning
+  - Rollout and rollback procedure design
+
+# Agent capabilities and what it can do
+capabilities:
+  - create_fix_plans: Convert IssueSpec to FixPlan with implementation guidance
+  - assess_risk: Evaluate risk levels and impact analysis
+  - design_tests: Define comprehensive testing strategies
+  - estimate_effort: Provide realistic effort and timeline estimates
+  - plan_rollout: Design safe deployment and rollback procedures
+
+# Input schema - What this agent accepts
+input_schema:
+  type: object
+  title: FixPlanRequest
+  description: Request for creating a fix plan from an issue
+  properties:
+    issue_spec:
+      type: object
+      title: IssueSpec
+      description: Issue specification to plan fix for
+      required:
+        - title
+        - description
+        - component
+        - severity
+        - type
+      properties:
+        id:
+          type: string
+          description: Unique issue identifier
+        title:
+          type: string
+          description: Issue title
+          minLength: 10
+        description:
+          type: string
+          description: Detailed issue description
+          minLength: 20
+        component:
+          type: string
+          enum:
+            - agents
+            - service
+            - infra
+            - ci
+            - docs
+            - general
+          description: Affected component
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+          description: Issue severity level
+        type:
+          type: string
+          enum:
+            - bug
+            - tech_debt
+            - improvement
+            - task
+            - violation
+          description: Issue type
+        repro_steps:
+          type: array
+          items:
+            type: string
+          description: Steps to reproduce (for bugs)
+        acceptance_criteria:
+          type: array
+          items:
+            type: string
+          description: Acceptance criteria for fix
+        labels:
+          type: array
+          items:
+            type: string
+          description: Issue labels
+        links:
+          type: array
+          items:
+            type: string
+          description: Related links and references
+
+# Output schema - What this agent produces
+output_schema:
+  type: object
+  title: FixPlanResponse
+  description: Detailed fix implementation plan
+  properties:
+    fix_plan:
+      type: object
+      title: FixPlan
+      description: Implementation plan for the fix
+      required:
+        - summary
+        - impacted_areas
+        - steps
+        - risk_level
+        - testing_strategy
+      properties:
+        issue_id:
+          type: string
+          description: Reference to original issue
+        summary:
+          type: string
+          description: High-level fix strategy summary
+        impacted_areas:
+          type: array
+          items:
+            type: string
+          description: Files and modules affected by fix
+        steps:
+          type: array
+          items:
+            type: string
+          description: Numbered implementation steps
+          minItems: 2
+        risk_level:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          description: Risk level assessment
+        testing_strategy:
+          type: array
+          items:
+            type: string
+          description: Testing approaches (unit, integration, e2e)
+          minItems: 1
+        estimated_effort:
+          type: string
+          description: Estimated effort (e.g., "2 hours", "1 day")
+        rollout_notes:
+          type: string
+          description: Deployment strategy and notes
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: Blocking dependencies
+        rollback_plan:
+          type: string
+          description: Procedure for rolling back if needed
+        success_metrics:
+          type: array
+          items:
+            type: string
+          description: How to verify the fix works
+          minItems: 1
+
+# Tools this agent provides
+tools:
+  - name: create_fix_plan
+    description: Create detailed FixPlan from IssueSpec
+    input_type: string
+    output_type: json
+
+  - name: validate_fix_plan
+    description: Validate FixPlan completeness and quality
+    input_type: string
+    output_type: json
+
+  - name: assess_risk_level
+    description: Evaluate risk level and impact analysis
+    input_type: object
+    properties:
+      issue_spec: object
+      fix_plan: object
+    output_type: json
+
+  - name: define_testing_strategy
+    description: Design comprehensive testing strategy
+    input_type: object
+    properties:
+      component: string
+      issue_type: string
+      impacted_areas: array
+    output_type: json
+
+  - name: estimate_effort
+    description: Estimate implementation effort and timeline
+    input_type: string
+    output_type: json
+
+# Agent communication patterns
+communication:
+  protocol: A2A
+  direction: bidirectional
+
+  # How to invoke this agent
+  invoke_pattern: |
+    Call iam-fix-plan when:
+    - IssueSpec is finalized by iam-adk
+    - Need detailed implementation plan
+    - Risk assessment is required
+    - Testing strategy needs definition
+
+  # Response expectations
+  response_pattern: |
+    Returns FixPlan with:
+    - Implementation steps
+    - Risk assessment
+    - Testing strategy
+    - Effort estimates
+    - Rollout plan
+
+# Hard Mode Rules Compliance (R1-R8)
+compliance:
+  R1_ADK_ONLY: "Uses google-adk LlmAgent exclusively"
+  R2_VERTEX_RUNTIME: "Designed for Vertex AI Agent Engine deployment"
+  R3_GATEWAY_SEPARATION: "No Runner imports; pure planning logic"
+  R4_CI_ONLY: "Deployments via GitHub Actions with WIF"
+  R5_DUAL_MEMORY: "Configured with Session + Memory Bank services"
+  R6_DOCUMENTATION: "All docs in 000-docs/ with NNN-CC-ABCD naming"
+  R7_SPIFFE_ID: "Propagates SPIFFE ID in logs and context"
+  R8_DRIFT_DETECTION: "Subject to R1-R8 enforcement in CI"
+
+# Operating constraints
+constraints:
+  max_plan_complexity: "High (multiple steps, cross-cutting changes allowed)"
+  memory_requirement: "Dual memory (Session + Memory Bank)"
+  deployment_model: Vertex AI Agent Engine
+  ci_required: true
+  auto_scaling: enabled
+
+# Hard Mode Rule Enforcement
+hard_mode:
+  enforced: true
+  rules:
+    - R1: ADK-only (no LangChain, CrewAI, AutoGen)
+    - R2: Vertex AI Agent Engine runtime required
+    - R3: No Runner in gateway separation
+    - R4: CI-only deployments via GitHub Actions
+    - R5: Dual memory wiring mandatory
+    - R6: Single 000-docs folder with NNN-CC-ABCD naming
+    - R7: SPIFFE ID in all logs and telemetry
+    - R8: Drift detection enforcement in CI (blocks on violation)
+
+# Related agents in the iam-* team
+team_members:
+  - name: iam-adk
+    role: Auditor - Detects issues via pattern analysis
+    produces: IssueSpec
+
+  - name: iam-issue
+    role: Author - Formats issues for GitHub
+    consumes: IssueSpec
+    produces: GitHub issue bodies
+
+  - name: iam-fix-plan
+    role: Planner - Plans fix implementations
+    consumes: IssueSpec
+    produces: FixPlan
+
+  - name: iam-fix-impl
+    role: Implementer - Executes the fix plan
+    consumes: FixPlan
+    produces: Code changes, pull requests
+
+  - name: iam-qa
+    role: Validator - Tests implementations
+    consumes: FixPlan + Code changes
+    produces: QAVerdict
+
+  - name: iam-doc
+    role: Documenter - Writes AARs and docs
+    consumes: IssueSpec, FixPlan, QAVerdict
+    produces: AAR, documentation updates
+
+  - name: iam-cleanup
+    role: Hygienist - Maintains code quality
+    produces: CleanupTask
+
+  - name: iam-index
+    role: Librarian - Manages knowledge base
+    consumes: All outputs
+    produces: IndexEntry
+
+# Metadata
+metadata:
+  created_at: "2025-11-19"
+  updated_at: "2025-11-19"
+  version: "0.8.0"
+  status: "active"
+  team: "iam-agents"
+  department: "ADK Engineering Department"
+  organization: "Intent Solutions"
+  project: "bobs-brain"

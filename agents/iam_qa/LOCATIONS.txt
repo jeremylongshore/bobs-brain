@@ -1,0 +1,36 @@
+IAM-QA AGENT FILE LOCATIONS
+===========================
+
+Base Directory:
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/
+
+Agent Implementation Files:
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/agent.py
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/__init__.py
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/tools/__init__.py
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/tools/qa_tools.py
+
+Configuration Files:
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/agent_card.yaml
+
+Documentation Files:
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/README.md
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/system-prompt.md
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/IMPLEMENTATION-SUMMARY.md
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/USAGE-EXAMPLES.md
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_qa/LOCATIONS.txt
+
+Related Files (Shared Contracts):
+  /home/jeremy/000-projects/iams/bobs-brain/agents/iam_contracts.py
+  - Contains: IssueSpec, FixPlan, QAVerdict, AuditReport, DocumentationUpdate, CleanupTask, IndexEntry
+
+Import Statements:
+  from agents.iam_qa import get_agent, create_runner, root_agent
+  from agents.iam_qa.tools import generate_test_suite, validate_test_coverage, run_smoke_tests, assess_fix_completeness, produce_qa_verdict
+  from agents.iam_contracts import QAVerdict, FixPlan
+
+ADK CLI Deployment:
+  Command: adk deploy agents.iam_qa
+  Container: iam-qa:0.8.0
+  Region: us-central1
+  Model: gemini-2.0-flash-exp

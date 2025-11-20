@@ -1,0 +1,280 @@
+# Agent Card: iam-fix-impl Implementation Specialist
+# =================================================
+# Metadata and configuration for iam-fix-impl agent in the ADK Agent Department
+
+metadata:
+  id: iam-fix-impl
+  name: "iam-fix-impl Implementation Specialist"
+  version: "0.8.0"
+  status: "active"
+  department: "ADK Agent Department"
+  role: "Implementation Specialist"
+
+identity:
+  spiffe_id: "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0"
+  display_name: "Implementation Bot"
+  description: "Converts FixPlan into working, tested, production-ready code"
+
+model_config:
+  model: "gemini-2.0-flash-exp"
+  temperature: 0.2  # More deterministic for code generation
+  max_tokens: 8192
+  top_p: 0.95
+  timeout_seconds: 600
+
+capabilities:
+  - name: "Fix Implementation"
+    description: "Convert FixPlan steps into working code changes"
+    domain: "coding"
+    risk_level: "medium"
+
+  - name: "Test Generation"
+    description: "Create comprehensive unit tests for all code changes"
+    domain: "testing"
+    risk_level: "low"
+
+  - name: "Compliance Enforcement"
+    description: "Ensure all changes comply with Hard Mode rules (R1-R8)"
+    domain: "governance"
+    risk_level: "high"
+
+  - name: "Code Review"
+    description: "Self-validate implementation against FixPlan requirements"
+    domain: "quality"
+    risk_level: "low"
+
+  - name: "Documentation"
+    description: "Document implementation decisions and provide evidence"
+    domain: "documentation"
+    risk_level: "low"
+
+inputs:
+  - name: "FixPlan"
+    type: "object"
+    description: "Implementation plan from iam-fix-plan"
+    schema:
+      required:
+        - summary
+        - impacted_areas
+        - steps
+        - risk_level
+        - testing_strategy
+      optional:
+        - issue_id
+        - estimated_effort
+        - rollout_notes
+        - dependencies
+        - rollback_plan
+        - success_metrics
+
+  - name: "Codebase Context"
+    type: "object"
+    description: "Current repository state and patterns"
+    schema:
+      optional:
+        - existing_patterns
+        - agent_templates
+        - tool_examples
+        - compliance_rules
+        - architecture_docs
+
+outputs:
+  - name: "Implementation Evidence"
+    type: "object"
+    description: "Complete implementation artifacts"
+    schema:
+      required:
+        - files_modified
+        - files_created
+        - tests_added
+        - compliance_checklist
+      optional:
+        - implementation_notes
+        - known_limitations
+        - qa_recommendations
+        - coverage_estimate
+
+memory_config:
+  session_service: "VertexAiSessionService"
+  memory_bank_service: "VertexAiMemoryBankService"
+  memory_capacity: "unlimited"
+  session_ttl_seconds: 3600
+  persistence: "enabled"
+
+tools:
+  - name: "implement_fix_step"
+    description: "Implement a single step from FixPlan"
+    input_schema:
+      step_data:
+        type: "string"
+        description: "JSON string with step details"
+
+  - name: "validate_implementation"
+    description: "Validate implementation against FixPlan requirements"
+    input_schema:
+      validation_data:
+        type: "string"
+        description: "JSON string with implementation details"
+
+  - name: "generate_unit_tests"
+    description: "Create unit tests for code changes"
+    input_schema:
+      code_data:
+        type: "string"
+        description: "JSON string with code details"
+
+  - name: "check_compliance"
+    description: "Verify Hard Mode compliance (R1-R8)"
+    input_schema:
+      compliance_data:
+        type: "string"
+        description: "JSON string with implementation details"
+
+  - name: "document_implementation"
+    description: "Document implementation decisions"
+    input_schema:
+      doc_data:
+        type: "string"
+        description: "JSON string with documentation details"
+
+integration:
+  upstream_agents:
+    - name: "iam-fix-plan"
+      produces: ["FixPlan"]
+      relationship: "consumer"
+
+  downstream_agents:
+    - name: "iam-qa"
+      consumes: ["implementation evidence", "test suite"]
+      relationship: "producer"
+    - name: "iam-senior-adk-devops-lead"
+      consumes: ["implementation status"]
+      relationship: "producer"
+
+  shared_contracts:
+    - "FixPlan"
+    - "QAVerdict"
+    - "IssueSpec"
+
+quality_standards:
+  code_style: "black + flake8"
+  test_coverage_minimum: 85.0
+  compliance_required: true
+  documentation_required: true
+  no_todos_allowed: true
+  working_code_only: true
+
+hard_mode_rules:
+  R1: "Use google-adk LlmAgent (no LangChain, CrewAI, AutoGen)"
+  R2: "Design for Vertex AI Agent Engine runtime"
+  R3: "Keep gateways as REST proxies (no Runner imports in service/)"
+  R4: "CI-only deployments (no manual gcloud commands)"
+  R5: "Dual memory wiring (Session + Memory Bank with callbacks)"
+  R6: "Single documentation folder (000-docs/ with NNN-CC-ABCD naming)"
+  R7: "SPIFFE ID propagation in logs and telemetry"
+  R8: "Drift detection compatibility"
+
+implementation_patterns:
+  agent_creation:
+    - "LlmAgent with model, name, tools, instruction"
+    - "get_agent() function returning LlmAgent"
+    - "create_runner() with dual memory"
+    - "auto_save_session_to_memory callback"
+    - "root_agent export for ADK CLI"
+    - "__init__.py with proper exports"
+
+  tool_creation:
+    - "Python functions with type hints"
+    - "Comprehensive docstrings (Args, Returns)"
+    - "Error handling with try/except"
+    - "Logging with SPIFFE ID extras"
+
+  gateway_pattern:
+    - "REST proxies only (NO Runner imports)"
+    - "OAuth token for Agent Engine API"
+    - "Pydantic request/response models"
+
+  infrastructure:
+    - "Terraform modules in infra/terraform/"
+    - "Environment-specific tfvars"
+    - "Resource naming and tagging"
+
+  ci_cd:
+    - "GitHub Actions workflows"
+    - "Workload Identity Federation"
+    - "ADK CLI deployment commands"
+    - "Drift detection integration"
+
+deployment:
+  target: "Vertex AI Agent Engine"
+  container: "iam-fix-impl:0.8.0"
+  region: "us-central1"
+  memory_gb: 4
+  cpu_cores: 2
+  timeout_seconds: 600
+  replicas_min: 1
+  replicas_max: 3
+
+monitoring:
+  metrics:
+    - "implementations_completed_total"
+    - "implementation_latency_seconds"
+    - "tests_generated_total"
+    - "compliance_violations_found"
+    - "qa_pass_rate"
+
+  logs:
+    - "implementation_status"
+    - "files_modified"
+    - "compliance_check_results"
+    - "test_generation_results"
+
+  alerts:
+    - condition: "implementation_latency > 600 seconds"
+      severity: "warning"
+    - condition: "compliance_violations_found > 0"
+      severity: "critical"
+    - condition: "qa_pass_rate < 90%"
+      severity: "warning"
+
+governance:
+  authority:
+    - can_modify_code: true
+    - can_create_tests: true
+    - must_follow_patterns: true
+  accountability:
+    - owns_implementation_quality: true
+    - responsible_for_compliance: true
+  compliance:
+    - requires_hard_mode: true
+    - requires_tests: true
+    - requires_documentation: true
+
+communication:
+  evidence_format: "structured_json"
+  file_listing: "absolute_paths"
+  code_format: "complete_working_code"
+  decision_format: "clear_rationale"
+
+success_metrics:
+  - metric: "First-time QA pass rate"
+    target: "> 90%"
+  - metric: "Compliance violations"
+    target: "0"
+  - metric: "Test coverage achieved"
+    target: "> 85%"
+  - metric: "Implementation time"
+    target: "< 600 seconds"
+  - metric: "Rework required"
+    target: "< 10%"
+
+documentation:
+  system_prompt: "system-prompt.md"
+  readme: "README.md"
+  examples: "examples/"
+  patterns: "patterns/"
+
+links:
+  github_workflow: ".github/workflows/deploy-agent-engine.yml"
+  runbook: "000-docs/RUN-IMPLEMENTATION.md"
+  patterns_doc: "000-docs/ADK-IMPLEMENTATION-PATTERNS.md"

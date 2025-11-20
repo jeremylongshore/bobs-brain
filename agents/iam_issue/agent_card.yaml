@@ -1,0 +1,357 @@
+# Agent Card for iam-issue
+# Defines the Agent-to-Agent (A2A) protocol contract for issue formatting
+
+apiVersion: "1.0"
+kind: AgentCard
+metadata:
+  name: iam_issue
+  version: "0.8.0"
+  description: "Issue Author & GitHub issue formatter specialist"
+  author: "bobs-brain/iam-* team"
+  created: "2025-11-19"
+  spiffe_id: "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0"
+
+spec:
+  # Agent Identity
+  agent:
+    id: "iam_issue"
+    display_name: "Issue Author"
+    description: "Transforms findings and audit reports into high-quality GitHub issues"
+    role: "GitHub issue formatter and author"
+    department: "bobs-brain/iam-*"
+
+  # Capabilities
+  capabilities:
+    - id: "validate_issues"
+      name: "Validate Issue Specifications"
+      description: "Validates IssueSpec objects for completeness and correctness"
+      input_type: "IssueSpec"
+      output_type: "ValidationReport"
+
+    - id: "format_issues"
+      name: "Format Issues to Markdown"
+      description: "Converts IssueSpec objects to GitHub-compatible markdown"
+      input_type: "IssueSpec"
+      output_type: "GitHub Issue Body"
+
+    - id: "generate_labels"
+      name: "Generate GitHub Labels"
+      description: "Creates appropriate labels based on issue metadata"
+      input_type: "IssueSpec"
+      output_type: "Label List"
+
+    - id: "create_issue_body"
+      name: "Create Complete Issue Body"
+      description: "Creates complete GitHub issue with formatting and metadata"
+      input_type: "IssueSpec"
+      output_type: "GitHub Issue Body"
+
+  # Input Schemas
+  input_schemas:
+    IssueSpec:
+      type: object
+      description: "GitHub issue specification from upstream agents"
+      required:
+        - title
+        - description
+        - component
+        - severity
+        - type
+      properties:
+        id:
+          type: string
+          description: "Unique identifier for the issue"
+        title:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: "Issue title"
+        description:
+          type: string
+          minLength: 20
+          description: "Detailed issue description"
+        component:
+          type: string
+          enum: ["agents", "service", "infra", "ci", "docs", "general"]
+          description: "Component affected by this issue"
+        severity:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+          description: "Issue severity level"
+        type:
+          type: string
+          enum: ["bug", "tech_debt", "improvement", "task", "violation"]
+          description: "Type of issue"
+        repro_steps:
+          type: array
+          items:
+            type: string
+          description: "Steps to reproduce (for bugs)"
+        acceptance_criteria:
+          type: array
+          items:
+            type: string
+          description: "Acceptance criteria for completion"
+        links:
+          type: array
+          items:
+            type: string
+          description: "Related links and references"
+        labels:
+          type: array
+          items:
+            type: string
+          description: "Custom labels to add"
+        assignees:
+          type: array
+          items:
+            type: string
+          description: "GitHub usernames to assign"
+        milestone:
+          type: string
+          description: "GitHub milestone"
+        notes:
+          type: string
+          description: "Additional notes"
+        created_at:
+          type: string
+          format: date-time
+          description: "Issue creation timestamp"
+
+    AuditReport:
+      type: object
+      description: "Audit findings from iam-adk (converted to multiple IssueSpecs)"
+      properties:
+        summary:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              severity:
+                type: string
+              message:
+                type: string
+
+    CleanupTask:
+      type: object
+      description: "Cleanup task from iam-cleanup (converted to IssueSpec)"
+      properties:
+        type:
+          type: string
+          enum: ["dead_code", "unused_deps", "naming", "structure", "duplication"]
+        description:
+          type: string
+        affected_files:
+          type: array
+          items:
+            type: string
+        proposed_action:
+          type: string
+        priority:
+          type: string
+          enum: ["low", "medium", "high"]
+
+  # Output Schemas
+  output_schemas:
+    GitHubIssueBody:
+      type: object
+      description: "Complete GitHub issue ready for posting"
+      properties:
+        title:
+          type: string
+          description: "Issue title"
+        body:
+          type: string
+          description: "Issue markdown body"
+        labels:
+          type: array
+          items:
+            type: string
+          description: "Labels to apply"
+        component:
+          type: string
+          description: "Component classification"
+        severity:
+          type: string
+          description: "Severity level"
+        metadata:
+          type: object
+          description: "Tracking metadata"
+
+    ValidationReport:
+      type: object
+      description: "IssueSpec validation results"
+      properties:
+        is_valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    LabelList:
+      type: object
+      description: "Generated GitHub labels"
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+        suggested:
+          type: boolean
+        count:
+          type: integer
+
+  # Communication Patterns
+  communication:
+    # Incoming communication
+    receives_from:
+      - agent: "iam-adk"
+        type: "AuditReport"
+        description: "Audit findings converted to IssueSpecs"
+        pattern: "sequential"
+
+      - agent: "iam-cleanup"
+        type: "CleanupTask"
+        description: "Cleanup tasks converted to IssueSpecs"
+        pattern: "sequential"
+
+      - agent: "iam-senior-adk-devops-lead"
+        type: "IssueCreationRequest"
+        description: "Delegated issue creation tasks"
+        pattern: "request-reply"
+
+    # Outgoing communication
+    sends_to:
+      - agent: "iam-senior-adk-devops-lead"
+        type: "GitHubIssueBody"
+        description: "Formatted issue for posting to GitHub"
+        pattern: "reply"
+
+      - agent: "iam-fix-plan"
+        type: "IssueWithLinks"
+        description: "Issue with references to fix plans"
+        pattern: "async"
+
+  # Constraints & Limits
+  constraints:
+    memory:
+      max_sessions: 100
+      description: "Limit number of concurrent issue formatting sessions"
+
+    latency:
+      max_response_time_ms: 5000
+      description: "Issue formatting should complete within 5 seconds"
+
+    throughput:
+      max_issues_per_hour: 1000
+      description: "Maximum issue formatting rate"
+
+  # Dependencies
+  dependencies:
+    - name: "iam_contracts"
+      type: "internal"
+      version: "0.8.0"
+      usage: "IssueSpec, AuditReport, CleanupTask data classes"
+
+    - name: "google-adk"
+      type: "external"
+      version: ">=0.1.0"
+      usage: "LlmAgent, Runner, memory services"
+
+    - name: "google-cloud-vertexai"
+      type: "external"
+      version: ">=1.0.0"
+      usage: "Agent Engine runtime, memory bank"
+
+  # Metrics & Monitoring
+  metrics:
+    - name: "issues_created"
+      type: "counter"
+      description: "Total issues created"
+
+    - name: "issues_validated"
+      type: "counter"
+      description: "Total issues validated"
+
+    - name: "validation_quality_score"
+      type: "gauge"
+      description: "Average validation quality score (0-1)"
+
+    - name: "issue_formatting_latency_ms"
+      type: "histogram"
+      description: "Issue formatting latency in milliseconds"
+
+    - name: "labels_generated"
+      type: "counter"
+      description: "Total label sets generated"
+
+    - name: "memory_bank_saves"
+      type: "counter"
+      description: "Sessions saved to Memory Bank"
+
+  # Health Checks
+  health:
+    - id: "agent_creation"
+      name: "Agent Creation"
+      description: "Verify agent can be created successfully"
+      interval_seconds: 300
+
+    - id: "memory_connectivity"
+      name: "Memory Bank Connectivity"
+      description: "Verify connection to Memory Bank service"
+      interval_seconds: 60
+
+    - id: "tools_availability"
+      name: "Tool Availability"
+      description: "Verify all formatting tools are callable"
+      interval_seconds: 120
+
+  # Compliance
+  compliance:
+    hard_mode_rules:
+      - rule: "R1"
+        status: "enforced"
+        description: "Uses google-adk LlmAgent (no alternative frameworks)"
+
+      - rule: "R2"
+        status: "enforced"
+        description: "Designed for Vertex AI Agent Engine runtime"
+
+      - rule: "R5"
+        status: "enforced"
+        description: "Dual memory wiring (Session + Memory Bank)"
+
+      - rule: "R7"
+        status: "enforced"
+        description: "SPIFFE ID propagation in logs"
+
+    standards:
+      - standard: "ADK Agent Development Kit"
+        version: "latest"
+        compliance: "full"
+
+      - standard: "A2A Agent Communication Protocol"
+        version: "1.0"
+        compliance: "full"
+
+      - standard: "Document Filing System v2.0"
+        version: "2.0"
+        compliance: "full"

@@ -1,0 +1,267 @@
+# Agent Card: iam-qa Testing & QA Specialist
+# ============================================
+# Metadata and configuration for iam-qa agent in the ADK Agent Department
+
+metadata:
+  id: iam-qa
+  name: "iam-qa Testing & Quality Assurance Specialist"
+  version: "0.8.0"
+  status: "active"
+  department: "ADK Agent Department"
+  role: "QA & Testing Specialist"
+
+identity:
+  spiffe_id: "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0"
+  display_name: "QA Bot"
+  description: "Ensures quality and correctness through comprehensive testing"
+
+model_config:
+  model: "gemini-2.0-flash-exp"
+  temperature: 0.3  # More deterministic for QA verdicts
+  max_tokens: 4096
+  top_p: 0.95
+  timeout_seconds: 300
+
+capabilities:
+  - name: "Test Suite Generation"
+    description: "Design comprehensive test plans from FixPlan implementations"
+    domain: "testing"
+    risk_level: "low"
+
+  - name: "Coverage Validation"
+    description: "Validate test coverage meets quality standards (85% minimum)"
+    domain: "metrics"
+    risk_level: "low"
+
+  - name: "Smoke Testing"
+    description: "Run basic functionality checks on implementations"
+    domain: "testing"
+    risk_level: "low"
+
+  - name: "Completeness Assessment"
+    description: "Verify fix implementations are complete and correct"
+    domain: "assessment"
+    risk_level: "low"
+
+  - name: "QA Verdict Production"
+    description: "Generate structured QAVerdict for deployment decisions"
+    domain: "decision"
+    risk_level: "medium"
+
+  - name: "Blocking Issue Identification"
+    description: "Identify and block deployment on critical issues"
+    domain: "governance"
+    risk_level: "high"
+
+inputs:
+  - name: "FixPlan"
+    type: "object"
+    description: "Implementation plan from iam-fix-plan"
+    schema:
+      required:
+        - summary
+        - impacted_areas
+        - steps
+        - risk_level
+        - testing_strategy
+      optional:
+        - issue_id
+        - estimated_effort
+        - rollout_notes
+        - dependencies
+        - rollback_plan
+        - success_metrics
+
+  - name: "Implementation Details"
+    type: "object"
+    description: "Code changes and test results"
+    schema:
+      optional:
+        - files_changed
+        - test_results
+        - coverage_percent
+        - smoke_test_passed
+        - key_functions
+        - entry_points
+        - config_files
+
+  - name: "Assessment Data"
+    type: "object"
+    description: "Results from all QA activities"
+    schema:
+      optional:
+        - test_results
+        - coverage_report
+        - smoke_tests_passed
+        - completeness_percent
+        - performance_impact
+        - security_review
+        - blocking_issues
+        - issue_id
+        - fix_id
+
+outputs:
+  - name: "QAVerdict"
+    type: "object"
+    description: "Testing verdict and deployment recommendation"
+    schema:
+      required:
+        - status
+        - notes
+        - test_evidence
+      optional:
+        - issue_id
+        - fix_id
+        - test_types
+        - coverage_report
+        - performance_impact
+        - security_review
+        - recommendations
+        - blocking_issues
+
+memory_config:
+  session_service: "VertexAiSessionService"
+  memory_bank_service: "VertexAiMemoryBankService"
+  memory_capacity: "unlimited"
+  session_ttl_seconds: 3600
+  persistence: "enabled"
+
+tools:
+  - name: "generate_test_suite"
+    description: "Design comprehensive test plan from FixPlan"
+    input_schema:
+      fix_data:
+        type: "string"
+        description: "JSON string with FixPlan data"
+
+  - name: "validate_test_coverage"
+    description: "Validate test coverage meets standards (85%+ minimum)"
+    input_schema:
+      test_results:
+        type: "string"
+        description: "JSON string with coverage metrics"
+
+  - name: "run_smoke_tests"
+    description: "Run basic functionality smoke tests"
+    input_schema:
+      implementation_data:
+        type: "string"
+        description: "JSON string with implementation details"
+
+  - name: "assess_fix_completeness"
+    description: "Assess whether fix implementation is complete"
+    input_schema:
+      implementation_data:
+        type: "string"
+        description: "JSON string with implementation details"
+
+  - name: "produce_qa_verdict"
+    description: "Synthesize all QA findings into final verdict"
+    input_schema:
+      assessment_data:
+        type: "string"
+        description: "JSON string with all assessment results"
+
+integration:
+  upstream_agents:
+    - name: "iam-fix-impl"
+      produces: ["implementation with tests", "coverage metrics"]
+      relationship: "consumer"
+
+  downstream_agents:
+    - name: "iam-doc"
+      consumes: ["QAVerdict"]
+      relationship: "producer"
+    - name: "iam-senior-adk-devops-lead"
+      consumes: ["QAVerdict"]
+      relationship: "producer"
+
+  shared_contracts:
+    - "FixPlan"
+    - "QAVerdict"
+    - "IssueSpec"
+
+quality_standards:
+  test_coverage_minimum: 85.0
+  test_coverage_critical: 95.0
+  verdict_consensus: true
+  evidence_required: true
+  blocking_authority: true
+
+deployment:
+  target: "Vertex AI Agent Engine"
+  container: "iam-qa:0.8.0"
+  region: "us-central1"
+  memory_gb: 2
+  cpu_cores: 1
+  timeout_seconds: 300
+  replicas_min: 1
+  replicas_max: 3
+
+monitoring:
+  metrics:
+    - "verdicts_produced_total"
+    - "verdicts_pass_rate"
+    - "verdict_latency_seconds"
+    - "coverage_average_percent"
+    - "tests_run_total"
+    - "tests_failed_total"
+    - "blocking_issues_found_total"
+
+  logs:
+    - "verdict_status"
+    - "coverage_report"
+    - "blocking_issues"
+    - "recommendations"
+
+  alerts:
+    - condition: "verdict_latency > 300 seconds"
+      severity: "warning"
+    - condition: "blocking_issues_found_total > threshold"
+      severity: "critical"
+    - condition: "pass_rate < 70%"
+      severity: "warning"
+
+governance:
+  authority:
+    - can_block_deployment: true
+    - can_request_fixes: true
+    - can_escalate_issues: true
+  accountability:
+    - owns_test_quality: true
+    - responsible_for_coverage: true
+  compliance:
+    - requires_evidence: true
+    - requires_reasoning: true
+    - requires_documentation: true
+
+communication:
+  verdict_format: "structured_json"
+  evidence_format: "detailed_list"
+  blocking_communication: "clear_and_specific"
+  recommendation_format: "actionable_steps"
+
+success_metrics:
+  - metric: "Quality issues caught pre-deployment"
+    target: "100% of critical issues"
+  - metric: "False positive rate"
+    target: "< 5%"
+  - metric: "False negative rate"
+    target: "0%"
+  - metric: "Production incidents related to QA"
+    target: "0%"
+  - metric: "Team trust in verdicts"
+    target: "> 95%"
+  - metric: "Average coverage achieved"
+    target: "> 85%"
+
+documentation:
+  system_prompt: "system-prompt.md"
+  readme: "README.md"
+  examples: "examples/"
+  api_spec: "api.yaml"
+
+links:
+  github_issue_template: ".github/ISSUE_TEMPLATE/qa-findings.md"
+  runbook: "000-docs/RUN-QA-EVALUATION.md"
+  playbook: "000-docs/QA-DECISION-PLAYBOOK.md"
