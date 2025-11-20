@@ -281,6 +281,16 @@ check-arv-minimum-verbose: ## Verbose ARV minimum check with details
 	@$(PYTHON) scripts/check_arv_minimum.py --verbose
 	@echo ""
 
+check-arv-engine-flags: ## Check ARV engine flags safety (Phase AE3)
+	@echo "$(BLUE)🚦 Checking ARV Engine Flags...$(NC)"
+	@$(PYTHON) scripts/check_arv_engine_flags.py
+	@echo ""
+
+check-arv-engine-flags-verbose: ## Verbose ARV engine flags check with details
+	@echo "$(BLUE)🚦 Checking ARV Engine Flags (Verbose)...$(NC)"
+	@$(PYTHON) scripts/check_arv_engine_flags.py --verbose
+	@echo ""
+
 print-rag-config: ## Print current RAG configuration (dry-run)
 	@echo "$(BLUE)📋 Current RAG Configuration:$(NC)"
 	@$(PYTHON) scripts/print_rag_config.py
@@ -296,7 +306,7 @@ print-agent-engine-config-verbose: ## Verbose Agent Engine config with full deta
 	@$(PYTHON) scripts/print_agent_engine_config.py --verbose
 	@echo ""
 
-arv-gates: check-rag-readiness check-arv-minimum ## Run all ARV gates (RAG + minimum requirements)
+arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags ## Run all ARV gates (RAG + minimum + engine flags)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
 	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
 
