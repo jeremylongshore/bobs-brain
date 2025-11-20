@@ -29,6 +29,10 @@ from config.repos import list_repos, get_repo_by_id, RepoConfig
 # Import single-repo orchestrator (relative import to avoid module path issues)
 from .orchestrator import run_swe_pipeline_for_repo
 
+# Import org storage writer (LIVE1-GCS)
+from .storage_writer import write_portfolio_result_to_gcs
+from config.storage import is_org_storage_write_enabled, get_org_storage_bucket
+
 
 def run_portfolio_swe(
     repo_ids: Optional[List[str]] = None,
@@ -166,6 +170,21 @@ def run_portfolio_swe(
 
     # Step 4: Print portfolio summary
     _print_portfolio_summary(portfolio_result)
+
+    # Step 5: Write to org-wide knowledge hub (LIVE1-GCS)
+    if is_org_storage_write_enabled() and get_org_storage_bucket():
+        print(f"\n{'=' * 70}")
+        print("WRITING TO ORG KNOWLEDGE HUB")
+        print(f"{'=' * 70}")
+        print(f"Bucket: {get_org_storage_bucket()}")
+        print(f"Run ID: {portfolio_run_id}")
+        write_portfolio_result_to_gcs(portfolio_result, env=env)
+        print(f"{'=' * 70}\n")
+    else:
+        if not is_org_storage_write_enabled():
+            print("\n📊 Org storage write disabled (set ORG_STORAGE_WRITE_ENABLED=true to enable)")
+        elif not get_org_storage_bucket():
+            print("\n⚠️  Org storage write enabled but ORG_STORAGE_BUCKET not set")
 
     return portfolio_result
 
