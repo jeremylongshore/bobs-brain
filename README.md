@@ -352,7 +352,7 @@ Repos skipped: 4
 - ✅ Automated portfolio audits
 - ✅ JSON/Markdown export
 - ✅ GitHub Actions artifact storage (90 days)
-- 📐 GCS result storage (LIVE1+ design)
+- ✅ GCS result storage (LIVE1-GCS, v0.9.0)
 - 📐 Slack notifications (LIVE3 design)
 - 📐 GitHub issue creation (LIVE3 design)
 
@@ -366,10 +366,11 @@ gh workflow run portfolio-swe.yml \
 ```
 
 **Integration Status:**
-- **PORT3 (Current):** Design-only, local-only operation
-- **LIVE1:** Enable GCS storage, BigQuery integration
-- **LIVE2:** Enable Vertex AI Search, Agent Engine calls
-- **LIVE3:** Enable Slack notifications, GitHub issues
+- **PORT3 (Current):** ✅ Complete - Portfolio orchestration with local operation
+- **LIVE1-GCS (v0.9.0):** ✅ Complete - GCS org-wide storage enabled
+- **LIVE-BQ (Future):** BigQuery analytics integration
+- **LIVE2 (Planned):** Vertex AI Search RAG, Agent Engine calls (dev-only)
+- **LIVE3 (Planned):** Slack notifications, GitHub issue creation
 
 **See:** [CI/Slack Integration Design](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md)
 
@@ -422,6 +423,96 @@ gh workflow run portfolio-swe.yml \
 - [Multi-Repo Portfolio Scope](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md) - PORT1/PORT2/PORT3 plan
 - [Portfolio Orchestrator Implementation](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md) - PORT2 AAR
 - [CI/Slack Integration Design](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md) - PORT3 design
+
+---
+
+## 🗄️ Org-Wide Storage (LIVE1-GCS)
+
+**v0.9.0+** - Centralized knowledge hub for portfolio/SWE audit results across all repositories.
+
+### Purpose
+
+The **Org-Wide Knowledge Hub** provides a single source of truth for:
+- Portfolio audit results (summary + per-repo details)
+- Cross-repository analytics and metrics
+- Historical audit data with lifecycle management
+- Future BigQuery integration (LIVE-BQ)
+- Future Vertex AI Search RAG (LIVE2)
+
+### Architecture
+
+**GCS Bucket Structure:**
+```
+gs://intent-org-knowledge-hub-{env}/
+├── portfolio/runs/{run_id}/summary.json        # Portfolio summaries
+├── portfolio/runs/{run_id}/per-repo/*.json     # Per-repo details (90-day retention)
+├── swe/agents/{agent}/runs/{run_id}.json       # Single-repo runs (future)
+├── docs/                                        # Org docs (future)
+└── vertex-search/                               # RAG snapshots (LIVE2+)
+```
+
+### Configuration
+
+**Environment Variables:**
+```bash
+# Enable org storage writes (default: disabled)
+export ORG_STORAGE_WRITE_ENABLED=true
+export ORG_STORAGE_BUCKET=intent-org-knowledge-hub-dev
+```
+
+**Terraform (Infrastructure):**
+```hcl
+# infra/terraform/envs/dev.tfvars
+org_storage_enabled     = true
+org_storage_bucket_name = "intent-org-knowledge-hub-dev"
+```
+
+### Usage
+
+**Check Readiness:**
+```bash
+# Validate configuration and access
+python3 scripts/check_org_storage_readiness.py
+
+# Test write permissions
+python3 scripts/check_org_storage_readiness.py --write-test
+```
+
+**Run Portfolio with Org Storage:**
+```bash
+# Enable org storage writes
+export ORG_STORAGE_WRITE_ENABLED=true
+export ORG_STORAGE_BUCKET=intent-org-knowledge-hub-dev
+
+# Run portfolio audit (writes to GCS when enabled)
+python3 scripts/run_portfolio_swe.py
+
+# Verify written files
+gsutil ls gs://intent-org-knowledge-hub-dev/portfolio/runs/
+```
+
+**Disable Org Storage:**
+```bash
+# Unset or set to false
+unset ORG_STORAGE_WRITE_ENABLED
+# OR
+export ORG_STORAGE_WRITE_ENABLED=false
+
+# Pipeline runs normally, skips GCS writes silently
+```
+
+### Features
+
+- ✅ **Opt-in by default** - All writes disabled unless explicitly enabled
+- ✅ **Graceful error handling** - Write failures never crash pipelines
+- ✅ **Environment-aware** - Separate buckets for dev/staging/prod
+- ✅ **Lifecycle management** - 90-day retention for per-repo details
+- ✅ **IAM-secured** - Service account-based access control
+- ✅ **Fully tested** - 36 tests with 100% pass rate
+
+**See Documentation:**
+- [Org Storage Architecture](000-docs/6767-112-AT-ARCH-org-storage-architecture.md) - Complete architecture guide
+- [LIVE1-GCS Implementation AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md) - Implementation details
 
 ---
 
@@ -605,6 +696,20 @@ Includes:
 - **[000-docs/6767-068-OD-CONF-github-secrets-configuration.md](000-docs/6767-068-OD-CONF-github-secrets-configuration.md)** - GitHub secrets setup guide (WIF)
 - **[000-docs/6767-069-OD-TELE-observability-telemetry-guide.md](000-docs/6767-069-OD-TELE-observability-telemetry-guide.md)** - Cloud Trace, Logging, Monitoring
 - **[000-docs/6767-070-OD-RBOK-deployment-runbook.md](000-docs/6767-070-OD-RBOK-deployment-runbook.md)** - Step-by-step deployment runbook
+
+**Portfolio & Org Storage (v0.9.0):**
+- **[000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md)** - Multi-repo portfolio scope (PORT1/PORT2/PORT3)
+- **[000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md)** - Portfolio orchestrator AAR
+- **[000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md)** - CI/Slack integration design
+- **[000-docs/6767-112-AT-ARCH-org-storage-architecture.md](000-docs/6767-112-AT-ARCH-org-storage-architecture.md)** - Org-wide storage architecture
+- **[000-docs/6767-113-AA-REPT-live1-gcs-implementation.md](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md)** - LIVE1-GCS implementation AAR
+
+**IAM Department Templates (v0.9.0):**
+- **[000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md](000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md)** - Template standards
+- **[000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md](000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md)** - Porting guide
+- **[000-docs/6767-106-DR-STND-iam-department-integration-checklist.md](000-docs/6767-106-DR-STND-iam-department-integration-checklist.md)** - Integration checklist
+- **[000-docs/6767-107-RB-OPS-adk-department-operations-runbook.md](000-docs/6767-107-RB-OPS-adk-department-operations-runbook.md)** - Operations runbook
+- **[000-docs/6767-108-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md](000-docs/6767-108-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md)** - User guide
 
 **Configuration:**
 - **[.env.example](.env.example)** - Configuration template with all required variables
