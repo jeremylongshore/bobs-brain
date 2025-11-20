@@ -7,6 +7,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-11-20
+
+### Added - Portfolio Orchestration & Org-Wide Storage
+
+- **Org-Wide Knowledge Hub (LIVE1-GCS)**
+  - Terraform infrastructure for centralized GCS storage (`intent-org-knowledge-hub-{env}`)
+  - Conditional bucket creation with feature flags (disabled by default)
+  - Python storage configuration module (`agents/config/storage.py`)
+    - `get_org_storage_bucket()` - Bucket name from environment
+    - `is_org_storage_write_enabled()` - Feature flag check
+    - Path generators for portfolio runs and per-repo results
+  - GCS writer with graceful error handling (`agents/iam_senior_adk_devops_lead/storage_writer.py`)
+    - Writes portfolio summaries + per-repo JSON
+    - Never crashes pipeline on failure
+    - Application Default Credentials (ADC) authentication
+  - 90-day lifecycle rule for per-repo details, indefinite retention for summaries
+  - IAM bindings for runtime SA + extensible writer list
+  - Comprehensive test suite (36 tests, 100% pass rate)
+    - `tests/unit/test_storage_config.py` - 22 config tests
+    - `tests/unit/test_storage_writer.py` - 14 writer tests
+  - Readiness check script (`scripts/check_org_storage_readiness.py`)
+    - Validates env vars, GCS library, credentials, bucket access
+    - Optional write test with cleanup
+  - Complete documentation
+    - `000-docs/6767-112-AT-ARCH-org-storage-architecture.md` - Architecture guide
+    - `000-docs/6767-113-AA-REPT-live1-gcs-implementation.md` - Implementation AAR
+
+- **Multi-Repo Portfolio Orchestration (PORT1-3)**
+  - Portfolio orchestrator for cross-repository SWE audits (`agents/iam_senior_adk_devops_lead/portfolio_orchestrator.py`)
+    - Runs SWE pipeline across multiple repos
+    - Aggregates metrics (issues found/fixed, compliance scores)
+    - Per-repo and portfolio-level results
+  - Portfolio CLI with rich export capabilities (`scripts/run_portfolio_swe.py`)
+    - JSON export for automation integration
+    - Markdown export for human-readable reports
+    - Filter by repo IDs or tags
+    - Multiple modes (preview/dry-run/create)
+  - Enhanced repo registry with metadata (`agents/config/repos.py`)
+    - Repo tags for classification
+    - Display names and descriptions
+    - Local vs. remote repo tracking
+  - GitHub Actions workflow for automated portfolio audits (`.github/workflows/portfolio-swe.yml`)
+    - Scheduled and manual triggers
+    - Artifact upload for reports
+  - ARV integration with portfolio mode validation
+  - Complete documentation
+    - `000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md` - Planning
+    - `000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md` - AAR
+    - `000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md` - CI design
+
+- **IAM Department Templates**
+  - Multi-agent department template structure (`templates/iam-department/`)
+    - Foreman orchestrator template
+    - Specialist agent templates
+    - A2A interaction patterns
+  - Comprehensive documentation for template adoption
+    - `000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md` - Standards
+    - `000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md` - Porting guide
+    - `000-docs/6767-106-DR-STND-iam-department-integration-checklist.md` - Checklist
+    - `000-docs/6767-107-RB-OPS-adk-department-operations-runbook.md` - Operations
+    - `000-docs/6767-108-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md` - User guide
+
+- **Documentation Expansion**
+  - 20+ new documents in `000-docs/` with proper filing system
+  - AARs for all major implementations (GCS1-3, PORT1-3)
+  - Architecture documents for new subsystems
+  - Integration guides and checklists
+
+### Changed
+
+- **Portfolio Integration**
+  - `agents/iam_senior_adk_devops_lead/portfolio_orchestrator.py` - Integrated org storage writes
+  - Orchestrator now writes to GCS when enabled
+  - Clear logging for storage write status (enabled/disabled/failed)
+
+- **CI/CD Workflows**
+  - `.github/workflows/ci.yml` - Enhanced with portfolio support
+  - ARV checks now validate portfolio mode
+
+- **Import Paths**
+  - Test suite updated for portfolio compatibility
+
+### Technical Details
+
+- **GCS Storage Layout:**
+  ```
+  gs://{bucket}/portfolio/runs/{run_id}/summary.json
+  gs://{bucket}/portfolio/runs/{run_id}/per-repo/{repo_id}.json
+  gs://{bucket}/swe/agents/{agent_name}/runs/{run_id}.json (future)
+  gs://{bucket}/docs/ (future)
+  gs://{bucket}/vertex-search/ (LIVE2+)
+  ```
+
+- **Feature Flags (Opt-In by Default):**
+  - `ORG_STORAGE_ENABLED` (Terraform) - Create GCS bucket
+  - `ORG_STORAGE_WRITE_ENABLED` (Runtime) - Enable writes
+  - `ORG_STORAGE_BUCKET` (Runtime) - Bucket name
+
+- **New Commands:**
+  ```bash
+  # Portfolio audits
+  python3 scripts/run_portfolio_swe.py
+  python3 scripts/run_portfolio_swe.py --repos bobs-brain,diagnosticpro
+  python3 scripts/run_portfolio_swe.py --output report.json --markdown report.md
+
+  # Org storage readiness
+  python3 scripts/check_org_storage_readiness.py
+  python3 scripts/check_org_storage_readiness.py --write-test
+  ```
+
+### Impact
+
+- **Commits**: 20 since v0.8.0
+- **Files Changed**: 226 files
+- **Tests Added**: 36 (org storage)
+- **Documentation**: 20+ comprehensive documents
+- **Backward Compatibility**: 100% maintained (all new features opt-in)
+- **Production Ready**: All features tested with graceful error handling
+
+### Future Work
+
+- **LIVE-BQ Phase**: BigQuery integration for SQL analytics
+- **LIVE2 Phase**: Dev-only RAG (Vertex AI Search) + Agent Engine wiring
+- **Multi-Repo Rollout**: DiagnosticPro, PipelinePilot integration
+
 ## [0.8.0] - 2025-11-19
 
 ### Changed - Agent Factory Structure
