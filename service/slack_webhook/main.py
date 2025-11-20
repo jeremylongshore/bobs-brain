@@ -17,6 +17,8 @@ Environment Variables:
 - LOCATION: GCP region
 - AGENT_ENGINE_ID: Agent Engine instance ID
 - PORT: Service port (default 8080)
+- SLACK_SWE_PIPELINE_MODE: Routing mode (local|engine) - Phase AE2
+- A2A_GATEWAY_URL: A2A gateway URL (for engine mode) - Phase AE2
 """
 
 import os
@@ -47,6 +49,19 @@ PORT = int(os.getenv("PORT", "8080"))
 AGENT_ENGINE_URL = os.getenv(
     "AGENT_ENGINE_URL",
     f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
+)
+
+# Phase AE2: SWE Pipeline Mode Configuration
+# Controls how SWE pipeline commands are routed
+SLACK_SWE_PIPELINE_MODE = os.getenv("SLACK_SWE_PIPELINE_MODE", "local").lower()
+# Options:
+#   - "local" (default): Forward directly to Agent Engine (current behavior)
+#   - "engine": Call a2a_gateway for SWE pipeline orchestration (Phase AE3)
+
+# A2A Gateway URL (for future Option B in Phase AE3)
+A2A_GATEWAY_URL = os.getenv(
+    "A2A_GATEWAY_URL",
+    "https://a2a-gateway-SERVICE_HASH-uc.a.run.app"  # Placeholder
 )
 
 # Validate required environment variables
@@ -206,6 +221,10 @@ async def query_agent_engine(query: str, session_id: str) -> str:
 
     R3 Compliance: Proxies to Agent Engine, does not run locally.
 
+    Phase AE2: Added Option B path (commented) for future SWE pipeline mode.
+    When SLACK_SWE_PIPELINE_MODE=engine, queries will route through a2a_gateway
+    instead of directly to Agent Engine.
+
     Args:
         query: User query text
         session_id: Session identifier for memory
@@ -214,6 +233,46 @@ async def query_agent_engine(query: str, session_id: str) -> str:
         str: Agent response text
     """
     try:
+        # ===========================================================================
+        # PHASE AE2: OPTION B PATH (COMMENTED - NOT YET ENABLED)
+        # ===========================================================================
+        # Phase AE3 will enable this path for SWE pipeline commands
+        #
+        # if SLACK_SWE_PIPELINE_MODE == "engine":
+        #     # Option B: Route through a2a_gateway for multi-agent orchestration
+        #     logger.info(
+        #         "Routing to a2a_gateway (Option B - SWE Pipeline Mode)",
+        #         extra={"query_length": len(query), "session_id": session_id}
+        #     )
+        #
+        #     # Build A2A call payload
+        #     a2a_payload = {
+        #         "agent_role": "foreman",  # Route to iam-senior-adk-devops-lead
+        #         "prompt": query,
+        #         "session_id": session_id,
+        #         "caller_spiffe_id": "spiffe://intent.solutions/slack/webhook",
+        #         "env": os.getenv("DEPLOYMENT_ENV", "prod"),
+        #     }
+        #
+        #     async with httpx.AsyncClient(timeout=60.0) as client:
+        #         response = await client.post(
+        #             f"{A2A_GATEWAY_URL}/a2a/run",
+        #             json=a2a_payload,
+        #             headers={"Content-Type": "application/json"}
+        #         )
+        #         response.raise_for_status()
+        #         result = response.json()
+        #
+        #     return result.get("response", "No response from A2A gateway")
+        # else:
+        #     # Option A (default): Direct Agent Engine proxy (current behavior)
+        #     logger.info(
+        #         "Routing directly to Agent Engine (Option A - current)",
+        #         extra={"query_length": len(query), "session_id": session_id}
+        #     )
+        # ===========================================================================
+
+        # CURRENT BEHAVIOR (Option A): Direct Agent Engine proxy
         payload = {"query": query, "session_id": session_id}
 
         logger.info(

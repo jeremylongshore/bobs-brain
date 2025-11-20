@@ -19,7 +19,9 @@ Environment Variables:
 
 import os
 import logging
-from typing import Dict, Any
+import uuid
+from typing import Dict, Any, Optional
+from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import httpx
@@ -58,6 +60,68 @@ app = FastAPI(
 
 # R3 Compliance: No agent code imports
 # AgentCard logic is inlined here to avoid importing from agents/bob/
+
+# ==============================================================================
+# A2A PROTOCOL DATA MODELS (Phase AE2)
+# ==============================================================================
+
+
+class A2AAgentCall(BaseModel):
+    """
+    Request payload for A2A agent-to-agent calls.
+
+    This is the standard shape for internal agent calls via the A2A protocol.
+    Phase AE2: Initial definition (stub implementation).
+    """
+
+    agent_role: str
+    """Target agent role (bob, foreman, iam-adk, iam-issue, etc.)"""
+
+    prompt: str
+    """User prompt or task description to send to the agent"""
+
+    context: Optional[Dict[str, Any]] = None
+    """Optional additional context (tool outputs, prior results, etc.)"""
+
+    correlation_id: Optional[str] = None
+    """Optional correlation ID for tracing (pipeline_run_id)"""
+
+    caller_spiffe_id: Optional[str] = None
+    """SPIFFE ID of the calling agent (for authentication and logging)"""
+
+    session_id: Optional[str] = None
+    """Optional session ID for conversation continuity"""
+
+    env: Optional[str] = None
+    """Target environment (dev, staging, prod). Defaults to current."""
+
+
+class A2AAgentResult(BaseModel):
+    """
+    Response payload for A2A agent-to-agent calls.
+
+    This is the standard shape returned from agent calls via the A2A protocol.
+    Phase AE2: Initial definition (stub implementation).
+    """
+
+    response: str
+    """Agent's response text"""
+
+    session_id: Optional[str] = None
+    """Session ID if session persistence enabled"""
+
+    metadata: Optional[Dict[str, Any]] = None
+    """Additional metadata (tokens used, latency, etc.)"""
+
+    error: Optional[str] = None
+    """Error message if call failed"""
+
+    correlation_id: Optional[str] = None
+    """Correlation ID from request (for tracing)"""
+
+    target_spiffe_id: Optional[str] = None
+    """SPIFFE ID of the target agent that handled the request"""
+
 
 # Additional environment variables for AgentCard
 APP_NAME = os.getenv("APP_NAME", "bobs-brain")
@@ -208,6 +272,99 @@ async def query(request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@app.post("/a2a/run")
+async def a2a_run(call: A2AAgentCall) -> A2AAgentResult:
+    """
+    A2A Protocol: Agent-to-Agent call endpoint (Phase AE2).
+
+    This endpoint is the future shape for internal agent-to-agent calls.
+    Currently STUBBED - returns placeholder response.
+    Real Agent Engine integration will be added when feature flags enable it.
+
+    Body:
+        A2AAgentCall with:
+        - agent_role: Target agent (bob, foreman, iam-adk, etc.)
+        - prompt: Task for the agent
+        - context: Optional additional context
+        - correlation_id: Optional tracing ID
+        - caller_spiffe_id: Optional calling agent identity
+        - session_id: Optional session for continuity
+        - env: Optional target environment
+
+    Returns:
+        A2AAgentResult: Agent response (currently stubbed)
+
+    Phase AE2: Stubbed implementation.
+    Phase AE3: Real implementation behind feature flags.
+    """
+    try:
+        logger.info(
+            "A2A call received (STUB)",
+            extra={
+                "agent_role": call.agent_role,
+                "caller_spiffe_id": call.caller_spiffe_id,
+                "correlation_id": call.correlation_id,
+                "prompt_length": len(call.prompt),
+                "env": call.env or "current",
+            },
+        )
+
+        # Generate IDs if not provided
+        correlation_id = call.correlation_id or str(uuid.uuid4())
+        session_id = call.session_id or str(uuid.uuid4())
+
+        # STUBBED: Return placeholder response (Phase AE2)
+        # Real implementation in Phase AE3 with feature flags:
+        # - Check feature flag for agent_role + env
+        # - If enabled: Use agents.utils.a2a_adapter to call Agent Engine
+        # - If disabled: Return this stub or error
+
+        stub_response = (
+            f"[STUB - Phase AE2] A2A call to {call.agent_role}\n\n"
+            f"This endpoint is ready for A2A protocol but not yet wired to Agent Engine.\n"
+            f"Phase AE3 will enable real Agent Engine calls behind feature flags.\n\n"
+            f"Request Details:\n"
+            f"  - Agent Role: {call.agent_role}\n"
+            f"  - Environment: {call.env or 'current (detected)'}\n"
+            f"  - Caller: {call.caller_spiffe_id or 'unknown'}\n"
+            f"  - Correlation ID: {correlation_id}\n"
+            f"  - Prompt: {call.prompt[:100]}{'...' if len(call.prompt) > 100 else ''}\n"
+        )
+
+        result = A2AAgentResult(
+            response=stub_response,
+            session_id=session_id,
+            correlation_id=correlation_id,
+            target_spiffe_id=f"spiffe://intent.solutions/agent/bobs-brain-{call.agent_role}/stub/us-central1/0.9.0",
+            metadata={
+                "stub": True,
+                "phase": "AE2",
+                "agent_role": call.agent_role,
+                "env": call.env or "current",
+            },
+        )
+
+        logger.info(
+            "A2A call completed (STUB)",
+            extra={
+                "correlation_id": correlation_id,
+                "agent_role": call.agent_role,
+                "stub": True,
+            },
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"A2A call failed: {e}", exc_info=True)
+        return A2AAgentResult(
+            response="",
+            error=f"A2A call failed: {str(e)}",
+            correlation_id=call.correlation_id,
+            metadata={"stub": True, "phase": "AE2", "error": True},
+        )
+
+
 @app.get("/health")
 async def health() -> Dict[str, str]:
     """
@@ -239,7 +396,13 @@ async def root() -> Dict[str, str]:
         "endpoints": {
             "agent_card": "/.well-known/agent.json",
             "query": "/query",
+            "a2a_run": "/a2a/run",  # Phase AE2: A2A protocol endpoint (stubbed)
             "health": "/health",
+        },
+        "phase": "AE2",
+        "features": {
+            "a2a_protocol": "stubbed",  # Real implementation in Phase AE3
+            "agent_engine_proxy": "enabled",
         },
     }
 
