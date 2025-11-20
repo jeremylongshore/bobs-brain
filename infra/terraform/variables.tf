@@ -129,3 +129,37 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+# ==============================================================================
+# Org-Wide Knowledge Hub (LIVE1-GCS)
+# ==============================================================================
+# Central GCS bucket for org-wide agent audit data, portfolio results, and
+# knowledge artifacts. Shared across all repos/products.
+#
+# Feature flags control whether the bucket is created and whether writes are enabled.
+# Default: disabled (must opt-in per environment)
+# ==============================================================================
+
+variable "org_storage_enabled" {
+  description = "Enable org-wide knowledge hub bucket (LIVE1-GCS)"
+  type        = bool
+  default     = false
+}
+
+variable "org_storage_bucket_name" {
+  description = "Org-wide knowledge hub bucket name (intent-org-knowledge-hub-{env})"
+  type        = string
+  default     = ""
+}
+
+variable "org_storage_location" {
+  description = "GCS location for org storage bucket"
+  type        = string
+  default     = "US"
+}
+
+variable "org_storage_writer_service_accounts" {
+  description = "Additional service accounts that can write to org storage (future repos)"
+  type        = list(string)
+  default     = []
+}

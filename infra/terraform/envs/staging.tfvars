@@ -42,3 +42,21 @@ labels = {
   cost_center = "staging"
   team        = "platform"
 }
+
+# ==============================================================================
+# Org-Wide Knowledge Hub (LIVE1-GCS)
+# ==============================================================================
+# Central GCS bucket for org-wide SWE/portfolio audit data
+# Disabled by default; enable explicitly to test GCS integration
+# ==============================================================================
+
+org_storage_enabled     = false  # Set to true to enable org storage bucket
+org_storage_bucket_name = "intent-org-knowledge-hub-staging"
+org_storage_location    = "US"
+
+# Additional service accounts that can write (future repos)
+org_storage_writer_service_accounts = [
+  # Will add when other repos integrate:
+  # "diagnosticpro-agent@diagnosticpro-staging.iam.gserviceaccount.com",
+  # "pipelinepilot-agent@pipelinepilot-staging.iam.gserviceaccount.com",
+]

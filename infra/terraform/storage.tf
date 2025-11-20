@@ -118,3 +118,107 @@ output "adk_docs_bucket_name" {
   description = "GCS bucket name for ADK documentation"
   value       = google_storage_bucket.adk_docs.name
 }
+
+# ==============================================================================
+# ORG-WIDE KNOWLEDGE HUB (LIVE1-GCS)
+# ==============================================================================
+# Central storage bucket for org-wide agent/SWE audit data, portfolio results,
+# and knowledge artifacts. Shared across all repos/products in the organization.
+#
+# Naming: intent-org-knowledge-hub-{env}
+# Examples:
+#   - intent-org-knowledge-hub-dev
+#   - intent-org-knowledge-hub-staging
+#   - intent-org-knowledge-hub-prod
+#
+# Directory Layout:
+#   portfolio/runs/{run_id}/summary.json          - Portfolio audit summaries
+#   portfolio/runs/{run_id}/per-repo/{repo_id}.json - Per-repo results
+#   swe/agents/{agent_name}/runs/{run_id}.json    - Single-repo SWE runs (future)
+#   docs/                                          - Org-wide documentation (future)
+#   vertex-search/                                 - RAG snapshots (LIVE2+)
+#
+# Feature flags:
+#   - ORG_STORAGE_WRITE_ENABLED (default: false)
+#   - Writes are opt-in per environment
+#
+# BigQuery integration:
+#   - Deferred to future LIVE-BQ phase
+#   - This phase focuses only on GCS JSON writes
+# ==============================================================================
+
+resource "google_storage_bucket" "org_knowledge_hub" {
+  # Only create if org_storage_enabled is true (default: false)
+  count = var.org_storage_enabled ? 1 : 0
+
+  name          = var.org_storage_bucket_name
+  location      = var.org_storage_location
+  project       = var.project_id
+  force_destroy = false  # Protect org-wide knowledge
+
+  # Security: Block public access
+  uniform_bucket_level_access = true
+
+  # Lifecycle: Retain portfolio runs for 90 days, keep summaries indefinitely
+  lifecycle_rule {
+    # Delete per-repo detailed results after 90 days
+    condition {
+      age                        = 90
+      matches_prefix             = ["portfolio/runs/*/per-repo/"]
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  # Versioning: Track changes to audit data
+  versioning {
+    enabled = true
+  }
+
+  # Labels for resource management
+  labels = merge(
+    var.labels,
+    {
+      component = "org-knowledge-hub"
+      purpose   = "org-wide-audit-data"
+      phase     = "live1-gcs"
+    }
+  )
+}
+
+# Grant read/write access to Bob's Brain runtime service account
+resource "google_storage_bucket_iam_member" "org_knowledge_hub_bobs_brain" {
+  count  = var.org_storage_enabled ? 1 : 0
+  bucket = google_storage_bucket.org_knowledge_hub[0].name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.agent_engine.email}"
+}
+
+# Grant read/write access to additional service accounts (future repos)
+resource "google_storage_bucket_iam_member" "org_knowledge_hub_writers" {
+  for_each = var.org_storage_enabled ? toset(var.org_storage_writer_service_accounts) : toset([])
+  bucket   = google_storage_bucket.org_knowledge_hub[0].name
+  role     = "roles/storage.objectAdmin"
+  member   = "serviceAccount:${each.value}"
+}
+
+# Output for deployment workflows and app configuration
+output "org_storage_bucket_url" {
+  description = "GCS org storage bucket URL (if enabled)"
+  value       = var.org_storage_enabled ? "gs://${google_storage_bucket.org_knowledge_hub[0].name}" : "NOT_ENABLED"
+}
+
+output "org_storage_bucket_name" {
+  description = "GCS org storage bucket name (if enabled)"
+  value       = var.org_storage_enabled ? google_storage_bucket.org_knowledge_hub[0].name : "NOT_ENABLED"
+}
+
+# ==============================================================================
+# IMPORTANT NOTES FOR TERRAFORM APPLY:
+# ==============================================================================
+# 1. Do NOT run `terraform apply` from local; deployment is CI-controlled
+# 2. BigQuery is NOT enabled in LIVE1-GCS; future LIVE-BQ phase will add it
+# 3. Default org_storage_enabled = false; must explicitly enable per environment
+# 4. Bucket naming uses environment variable to avoid hard-coded project IDs
+# ==============================================================================
