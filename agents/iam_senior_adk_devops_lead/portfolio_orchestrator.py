@@ -33,6 +33,10 @@ from .orchestrator import run_swe_pipeline_for_repo
 from .storage_writer import write_portfolio_result_to_gcs
 from config.storage import is_org_storage_write_enabled, get_org_storage_bucket
 
+# Import notifications (LIVE3A)
+from notifications import send_portfolio_notification
+from config.notifications import should_send_slack_notifications
+
 
 def run_portfolio_swe(
     repo_ids: Optional[List[str]] = None,
@@ -185,6 +189,20 @@ def run_portfolio_swe(
             print("\n📊 Org storage write disabled (set ORG_STORAGE_WRITE_ENABLED=true to enable)")
         elif not get_org_storage_bucket():
             print("\n⚠️  Org storage write enabled but ORG_STORAGE_BUCKET not set")
+
+    # Step 6: Send Slack notifications (LIVE3A)
+    if should_send_slack_notifications():
+        print(f"\n{'=' * 70}")
+        print("SENDING SLACK NOTIFICATION")
+        print(f"{'=' * 70}")
+        success = send_portfolio_notification(portfolio_result, env=env)
+        if success:
+            print("✅ Slack notification sent successfully")
+        else:
+            print("⚠️  Slack notification failed (see logs)")
+        print(f"{'=' * 70}\n")
+    else:
+        print("\n💬 Slack notifications disabled (set SLACK_NOTIFICATIONS_ENABLED=true to enable)")
 
     return portfolio_result
 
