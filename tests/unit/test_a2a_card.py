@@ -28,7 +28,7 @@ def mock_env():
 
 def test_get_agent_card(mock_env):
     """Test AgentCard creation"""
-    from my_agent.a2a_card import get_agent_card
+    from agents.bob.a2a_card import get_agent_card
 
     card = get_agent_card()
 
@@ -41,7 +41,7 @@ def test_get_agent_card(mock_env):
 
 def test_agent_card_spiffe_id(mock_env):
     """Test SPIFFE ID is included in AgentCard description (R7)"""
-    from my_agent.a2a_card import get_agent_card
+    from agents.bob.a2a_card import get_agent_card
 
     card = get_agent_card()
 
@@ -51,7 +51,7 @@ def test_agent_card_spiffe_id(mock_env):
 
 def test_get_agent_card_dict(mock_env):
     """Test AgentCard dict serialization"""
-    from my_agent.a2a_card import get_agent_card_dict
+    from agents.bob.a2a_card import get_agent_card_dict
 
     card_dict = get_agent_card_dict()
 
@@ -66,7 +66,7 @@ def test_get_agent_card_dict(mock_env):
 
 def test_agent_card_dict_spiffe_field(mock_env):
     """Test SPIFFE ID is in dict (R7)"""
-    from my_agent.a2a_card import get_agent_card_dict
+    from agents.bob.a2a_card import get_agent_card_dict
 
     card_dict = get_agent_card_dict()
 
@@ -75,7 +75,7 @@ def test_agent_card_dict_spiffe_field(mock_env):
 
 def test_agent_card_skills_array(mock_env):
     """Test AgentCard has skills array"""
-    from my_agent.a2a_card import get_agent_card
+    from agents.bob.a2a_card import get_agent_card
 
     card = get_agent_card()
 
@@ -94,7 +94,7 @@ def test_agent_card_required_fields():
         "APP_VERSION": "1.0.0",
         "PUBLIC_URL": "https://test.com"
     }):
-        from my_agent.a2a_card import get_agent_card
+        from agents.bob.a2a_card import get_agent_card
 
         card = get_agent_card()
 

@@ -57,7 +57,7 @@ app = FastAPI(
 )
 
 # R3 Compliance: No agent code imports
-# AgentCard logic is inlined here to avoid importing from my_agent/
+# AgentCard logic is inlined here to avoid importing from agents/bob/
 
 # Additional environment variables for AgentCard
 APP_NAME = os.getenv("APP_NAME", "bobs-brain")
@@ -74,7 +74,7 @@ def get_agent_card_dict() -> Dict[str, Any]:
     Generate AgentCard as dictionary (inlined for R3 compliance).
 
     R3 Compliance: This logic is inlined here instead of importing
-    from my_agent/ to avoid gateway importing agent code.
+    from agents/bob/ to avoid gateway importing agent code.
 
     R7 Compliance: Includes SPIFFE ID in description and explicit field.
 
