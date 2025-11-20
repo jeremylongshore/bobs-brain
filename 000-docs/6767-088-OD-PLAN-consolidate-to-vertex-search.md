@@ -26,6 +26,7 @@ Consolidate all scattered GCS buckets into the existing Vertex AI Search datasto
 | bobs-brain-knowledge | 0 B | Empty | Delete |
 | bobs-brain-adk-staging | 0 B | Empty | Delete |
 | bobs-brain-bob-vertex-agent-logs | 0 B | Empty | Delete |
+| *Unknown large bucket* | 77,000+ items | Has massive data | **HANDLE LAST** - Needs investigation |
 
 ### Issues Found
 - 326 files across buckets with some duplicates
