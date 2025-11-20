@@ -32,20 +32,37 @@ Bob's Brain is a **production Slack AI assistant** built with Google's Agent Dev
 ✅ **Gateway Separation** - Cloud Run proxies only (no embedded runners)
 ✅ **Single Docs Folder** - All documentation in `000-docs/`
 
-### Built from Template
+### Bob's Brain as Template
 
-Bob's Brain is built from the **Intent Agent Model (IAM1)** template:
+Bob's Brain serves **two roles:**
 
-**Template Repository:** [iam1-intent-agent-model-vertex-ai](https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai)
+1. **Specific Implementation** - Production Slack AI assistant for this organization
+2. **Canonical Template** - Reference implementation for IAM department pattern that can be ported to other products
 
-The template provides:
-- Hard Mode architecture (R1-R8 rules)
+**Original Template:** [iam1-intent-agent-model-vertex-ai](https://github.com/jeremylongshore/iam1-intent-agent-model-vertex-ai)
+- Provided the foundational Hard Mode architecture (R1-R8 rules)
 - ADK + Agent Engine foundation
-- Terraform infrastructure boilerplate
-- CI/CD workflows with drift detection
-- Complete documentation structure
+- Initial Terraform and CI/CD patterns
 
-Bob's Brain is a **specific implementation** of this template for Slack integration.
+**Bob's Brain as Template:**
+
+Bob's Brain extends the IAM1 foundation into a **complete multi-agent software engineering department** that other repos can adopt:
+
+- **Porting Guide:** [000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md](000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md)
+- **Integration Checklist:** [000-docs/6767-106-DR-STND-iam-department-integration-checklist.md](000-docs/6767-106-DR-STND-iam-department-integration-checklist.md)
+- **Template Scope:** [000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md](000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md)
+- **Template Files:** [templates/iam-department/README.md](templates/iam-department/README.md)
+
+**Reusable Components:**
+- Multi-agent department (bob → foreman → iam-* specialists)
+- SWE pipeline (audit → issues → fixes → QA → docs)
+- Shared contracts and A2A communication
+- ARV checks and CI/CD patterns
+- Gateway services (A2A, Slack)
+
+**Minimal Port Time:** 1-2 days for basic setup, 1 week for full integration
+
+See the porting guide to adopt this pattern in your product repo (DiagnosticPro, PipelinePilot, etc.).
 
 ---
 

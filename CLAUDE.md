@@ -110,6 +110,95 @@ mkdir agents/iam-adk
 bash scripts/ci/check_nodrift.sh
 ```
 
+## Using Bob's Brain as a Reusable Template
+
+Bob's Brain serves as the **canonical reference implementation** for the IAM department pattern. It can be ported to other product repositories (DiagnosticPro, PipelinePilot, Hustle, etc.) as a complete multi-agent software engineering department.
+
+### Template Documentation
+
+- **Template Scope & Rules:** `000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md`
+  - Defines what's reusable vs product-specific
+  - Lists all 30+ parameterization points
+  - Explains minimal viable port (foreman + 3 specialists)
+
+- **Porting Guide:** `000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md`
+  - Step-by-step instructions for copying template to new repo
+  - Parameter replacement automation (bash script)
+  - Configuration, testing, and CI integration
+  - Time estimate: 1-2 days minimal, 1 week full integration
+
+- **Integration Checklist:** `000-docs/6767-106-DR-STND-iam-department-integration-checklist.md`
+  - Comprehensive checklist for tracking integration progress
+  - Pre-flight requirements, core setup, optional features
+  - Success criteria and validation steps
+
+- **Template Files:** `templates/iam-department/README.md`
+  - Quick start guide for using template
+  - All template files with {{PARAMETER}} placeholders
+  - Agent templates (bob, foreman, iam-* specialists)
+  - Service templates (gateways), scripts (ARV checks)
+
+### What Gets Ported
+
+The IAM department template includes:
+
+**Core Components (Required):**
+- Multi-agent architecture (orchestrator → foreman → specialists)
+- SWE pipeline orchestration (audit → issues → fixes → QA → docs)
+- Shared contracts (PipelineRequest, IssueSpec, FixPlan, QAVerdict)
+- A2A agent-to-agent communication layer
+- Configuration modules (repos.yaml, RAG, Agent Engine)
+- ARV (Agent Readiness Verification) checks
+- Service gateways (A2A, Slack)
+
+**Minimal Viable Port:**
+- iam-foreman (orchestrator)
+- iam-adk (ADK design/audit specialist)
+- iam-issue (issue specification specialist)
+- iam-qa (quality assurance specialist)
+- Can be set up in < 1 day
+
+**Optional Extensions:**
+- Top-level bob orchestrator
+- Fix agents (iam-fix-plan, iam-fix-impl)
+- Documentation agents (iam-doc, iam-cleanup, iam-index)
+- RAG integration with Vertex AI Search
+- Slack webhook integration
+- Agent Engine deployment
+
+### Quick Porting Overview
+
+1. **Copy template:**
+   ```bash
+   cp -r templates/iam-department/* /path/to/new-repo/
+   ```
+
+2. **Replace parameters:**
+   ```bash
+   # Use provided script in porting guide
+   find . -type f | xargs sed -i 's/{{PRODUCT_NAME}}/yourproduct/g'
+   ```
+
+3. **Configure repos.yaml:**
+   - Add your product's repositories
+   - Define key directories and frameworks
+
+4. **Customize agent prompts:**
+   - Add product-specific context to system prompts
+   - Implement product-specific tools
+
+5. **Test locally:**
+   ```bash
+   make check-arv-minimum  # Verify agent structure
+   make test-swe-pipeline  # Test pipeline flow
+   ```
+
+6. **Integrate with CI:**
+   - Add ARV checks to GitHub Actions
+   - Deploy via CI/CD
+
+See the porting guide for complete step-by-step instructions with troubleshooting.
+
 ## Hard Mode Rules (R1-R8)
 
 These rules are **enforced in CI** and violations will fail the build:
