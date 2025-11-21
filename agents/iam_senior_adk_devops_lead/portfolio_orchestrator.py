@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared_contracts import (
     PortfolioResult, PerRepoResult, PipelineResult,
-    Severity, IssueType
+    Severity, IssueType, IssueSpec
 )
 
 # Import repo registry
@@ -36,6 +36,18 @@ from config.storage import is_org_storage_write_enabled, get_org_storage_bucket
 # Import notifications (LIVE3A)
 from notifications import send_portfolio_notification
 from config.notifications import should_send_slack_notifications
+
+# Import GitHub issue creation (LIVE3B/LIVE3C-GITHUB-ISSUES)
+from iam_issue.github_issue_adapter import (
+    create_github_issue,
+    batch_create_github_issues,
+    IssueCreationResult
+)
+from config.github_features import (
+    can_create_issues_for_repo,
+    get_github_mode,
+    GitHubMode
+)
 
 
 def run_portfolio_swe(
@@ -175,7 +187,57 @@ def run_portfolio_swe(
     # Step 4: Print portfolio summary
     _print_portfolio_summary(portfolio_result)
 
-    # Step 5: Write to org-wide knowledge hub (LIVE1-GCS)
+    # Step 5: Create GitHub issues from findings (LIVE3B/LIVE3C-GITHUB-ISSUES)
+    github_owner = "jeremylongshore"  # TODO: Make configurable
+    issue_specs = _convert_findings_to_issue_specs(portfolio_result, github_owner)
+
+    if issue_specs:
+        portfolio_result.issues_planned = len(issue_specs)
+
+        print(f"\n{'=' * 70}")
+        print("CREATING GITHUB ISSUES FROM FINDINGS")
+        print(f"{'=' * 70}")
+        print(f"Issues planned: {portfolio_result.issues_planned}")
+
+        # Group by repo for batch creation
+        issues_by_repo: Dict[Tuple[str, str], List[IssueSpec]] = {}
+        for repo_id, github_repo, issue_spec in issue_specs:
+            key = (repo_id, github_repo)
+            if key not in issues_by_repo:
+                issues_by_repo[key] = []
+            issues_by_repo[key].append(issue_spec)
+
+        # Create issues for each repo
+        for (repo_id, github_repo), issues in issues_by_repo.items():
+            mode = get_github_mode(repo_id)
+            print(f"\n  Repo: {github_owner}/{github_repo} (mode: {mode.value})")
+
+            results = batch_create_github_issues(
+                issues=issues,
+                repo_id=repo_id,
+                github_owner=github_owner,
+                github_repo=github_repo
+            )
+
+            # Count successes
+            for result in results:
+                if result.success and result.mode == "real":
+                    portfolio_result.issues_created += 1
+                    print(f"    ✅ Created issue #{result.issue_number}: {result.issue_url}")
+                elif result.success and result.mode == "dry_run":
+                    print(f"    📝 DRY-RUN: Would create issue")
+                elif result.mode == "disabled":
+                    print(f"    ⏭️  DISABLED: Skipped issue creation")
+                else:
+                    print(f"    ❌ FAILED: {result.error}")
+
+        print(f"\nSummary: {portfolio_result.issues_created} issues created "
+              f"(out of {portfolio_result.issues_planned} planned)")
+        print(f"{'=' * 70}\n")
+    else:
+        print("\n📋 No GitHub issues planned (all repos disabled or no findings)\n")
+
+    # Step 6: Write to org-wide knowledge hub (LIVE1-GCS)
     if is_org_storage_write_enabled() and get_org_storage_bucket():
         print(f"\n{'=' * 70}")
         print("WRITING TO ORG KNOWLEDGE HUB")
@@ -190,7 +252,7 @@ def run_portfolio_swe(
         elif not get_org_storage_bucket():
             print("\n⚠️  Org storage write enabled but ORG_STORAGE_BUCKET not set")
 
-    # Step 6: Send Slack notifications (LIVE3A)
+    # Step 7: Send Slack notifications (LIVE3A)
     if should_send_slack_notifications():
         print(f"\n{'=' * 70}")
         print("SENDING SLACK NOTIFICATION")
@@ -367,6 +429,50 @@ def get_portfolio_repos_by_tag(tag: str) -> List[str]:
         List of repo IDs with the specified tag
     """
     return [r.id for r in list_repos(tag=tag)]
+
+
+def _convert_findings_to_issue_specs(
+    portfolio_result: PortfolioResult,
+    github_owner: str,
+    max_issues_per_repo: int = 10
+) -> List[Tuple[str, str, IssueSpec]]:
+    """
+    Convert portfolio findings to GitHub IssueSpecs.
+
+    Args:
+        portfolio_result: Portfolio result with findings
+        github_owner: GitHub owner/org name
+        max_issues_per_repo: Maximum issues to create per repo (default 10)
+
+    Returns:
+        List of tuples: (repo_id, github_repo_name, IssueSpec)
+    """
+    issue_specs = []
+
+    for repo_result in portfolio_result.repos:
+        if repo_result.status != "completed" or not repo_result.pipeline_result:
+            continue
+
+        repo_config = get_repo_by_id(repo_result.repo_id)
+        if not repo_config:
+            continue
+
+        # Check if we can create issues for this repo
+        if not can_create_issues_for_repo(repo_result.repo_id):
+            continue
+
+        # Get issues from pipeline result (limit per repo)
+        issues = repo_result.pipeline_result.issues[:max_issues_per_repo]
+
+        for issue in issues:
+            # Convert to IssueSpec format (issue is already an IssueSpec from pipeline)
+            issue_specs.append((
+                repo_result.repo_id,
+                repo_config.display_name,  # Use as GitHub repo name
+                issue
+            ))
+
+    return issue_specs
 
 
 if __name__ == "__main__":

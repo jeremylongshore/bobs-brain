@@ -1,19 +1,46 @@
 """
-GitHub Issue Adapter for iam-issue Agent
+GitHub Issue Adapter for iam-issue Agent (Phase LIVE3B/LIVE3C)
 
-Maps IssueSpec contracts to GitHub issue payloads for future
-creation via API. Currently generates drafts only (no creation).
+Maps IssueSpec contracts to GitHub issue payloads and handles creation
+via GitHub REST API with safety gates:
+- DRY_RUN mode by default (logs only, no API calls)
+- Repo allowlist enforcement
+- Environment-aware behavior (dev/staging/prod)
+
+Phase: LIVE3B/LIVE3C-GITHUB-ISSUES (G2)
 """
 
 import sys
+import os
+import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
+from dataclasses import dataclass
 
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared_contracts import IssueSpec, Severity, IssueType
+from config.github_features import (
+    get_github_mode,
+    GitHubMode,
+    load_github_feature_config,
+    can_create_issues_for_repo
+)
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class IssueCreationResult:
+    """Result of attempting to create a GitHub issue."""
+    success: bool
+    mode: str  # "disabled", "dry_run", or "real"
+    issue_number: Optional[int] = None
+    issue_url: Optional[str] = None
+    error: Optional[str] = None
+    dry_run_payload: Optional[Dict[str, Any]] = None
 
 
 def get_severity_labels(severity: Severity) -> List[str]:
@@ -207,6 +234,239 @@ def preview_issue_payload(payload: Dict[str, Any]) -> str:
     lines.append("=" * 60)
 
     return "\n".join(lines)
+
+
+def create_github_issue(
+    issue: IssueSpec,
+    repo_id: str,
+    github_owner: str,
+    github_repo: str,
+    assignees: Optional[List[str]] = None,
+    milestone: Optional[int] = None
+) -> IssueCreationResult:
+    """
+    Create a GitHub issue from IssueSpec with safety gates.
+
+    Behavior based on environment and flags:
+    - DISABLED: Returns failure, no action taken
+    - DRY_RUN: Logs what would be created, no API call
+    - REAL: Creates actual GitHub issue via API
+
+    Args:
+        issue: IssueSpec to convert to GitHub issue
+        repo_id: Repository ID (for allowlist check)
+        github_owner: GitHub owner/org name
+        github_repo: GitHub repository name
+        assignees: Optional list of GitHub usernames
+        milestone: Optional milestone number
+
+    Returns:
+        IssueCreationResult with success/failure and details
+
+    Example:
+        >>> result = create_github_issue(
+        ...     issue=my_issue_spec,
+        ...     repo_id="bobs-brain",
+        ...     github_owner="jeremylongshore",
+        ...     github_repo="bobs-brain"
+        ... )
+        >>> if result.success:
+        ...     print(f"Created issue: {result.issue_url}")
+    """
+    # Check GitHub mode for this repo
+    mode = get_github_mode(repo_id)
+
+    logger.info(
+        f"GitHub issue creation attempt",
+        extra={
+            "repo_id": repo_id,
+            "github_repo": f"{github_owner}/{github_repo}",
+            "issue_id": issue.id,
+            "mode": mode.value
+        }
+    )
+
+    # Generate GitHub payload
+    payload = issue_spec_to_github_payload(issue, assignees, milestone)
+
+    # MODE: DISABLED
+    if mode == GitHubMode.DISABLED:
+        logger.info(
+            f"GitHub issue creation DISABLED",
+            extra={
+                "repo_id": repo_id,
+                "reason": "Feature flag off or repo not in allowlist"
+            }
+        )
+        return IssueCreationResult(
+            success=False,
+            mode="disabled",
+            error="GitHub issue creation is disabled for this repository"
+        )
+
+    # MODE: DRY_RUN
+    if mode == GitHubMode.DRY_RUN:
+        logger.info(
+            f"📝 DRY-RUN: Would create GitHub issue",
+            extra={
+                "repo": f"{github_owner}/{github_repo}",
+                "title": issue.title,
+                "labels": payload["labels"],
+                "issue_id": issue.id
+            }
+        )
+
+        # Log the full payload for inspection
+        logger.debug(
+            f"DRY-RUN payload:\n{preview_issue_payload(payload)}",
+            extra={"repo_id": repo_id}
+        )
+
+        return IssueCreationResult(
+            success=True,
+            mode="dry_run",
+            dry_run_payload=payload
+        )
+
+    # MODE: REAL - Create actual GitHub issue
+    try:
+        import requests  # Import only when needed for real creation
+
+        # Get GitHub token
+        github_token = os.getenv("GITHUB_TOKEN")
+        if not github_token:
+            logger.error("GITHUB_TOKEN not set, cannot create real issue")
+            return IssueCreationResult(
+                success=False,
+                mode="real",
+                error="GITHUB_TOKEN environment variable not set"
+            )
+
+        # GitHub API endpoint
+        api_url = f"https://api.github.com/repos/{github_owner}/{github_repo}/issues"
+
+        # Make API request
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+
+        logger.warning(
+            f"🚨 Creating REAL GitHub issue",
+            extra={
+                "repo": f"{github_owner}/{github_repo}",
+                "title": issue.title,
+                "api_url": api_url
+            }
+        )
+
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=payload,
+            timeout=30.0
+        )
+
+        # Check response
+        if response.status_code == 201:
+            # Success!
+            issue_data = response.json()
+            issue_number = issue_data.get("number")
+            issue_url = issue_data.get("html_url")
+
+            logger.info(
+                f"✅ Created GitHub issue #{issue_number}",
+                extra={
+                    "repo": f"{github_owner}/{github_repo}",
+                    "issue_number": issue_number,
+                    "issue_url": issue_url,
+                    "issue_id": issue.id
+                }
+            )
+
+            return IssueCreationResult(
+                success=True,
+                mode="real",
+                issue_number=issue_number,
+                issue_url=issue_url
+            )
+        else:
+            # API error
+            error_msg = f"GitHub API returned {response.status_code}: {response.text}"
+            logger.error(
+                f"Failed to create GitHub issue",
+                extra={
+                    "repo": f"{github_owner}/{github_repo}",
+                    "status_code": response.status_code,
+                    "error": response.text
+                }
+            )
+
+            return IssueCreationResult(
+                success=False,
+                mode="real",
+                error=error_msg
+            )
+
+    except ImportError:
+        logger.error("requests library not installed (required for real GitHub API calls)")
+        return IssueCreationResult(
+            success=False,
+            mode="real",
+            error="requests library not installed"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Exception during GitHub issue creation: {e}",
+            exc_info=True,
+            extra={"repo": f"{github_owner}/{github_repo}"}
+        )
+
+        return IssueCreationResult(
+            success=False,
+            mode="real",
+            error=str(e)
+        )
+
+
+def batch_create_github_issues(
+    issues: List[IssueSpec],
+    repo_id: str,
+    github_owner: str,
+    github_repo: str,
+    assignees: Optional[List[str]] = None,
+    milestone: Optional[int] = None
+) -> List[IssueCreationResult]:
+    """
+    Create multiple GitHub issues with safety gates.
+
+    Args:
+        issues: List of IssueSpecs to create
+        repo_id: Repository ID (for allowlist check)
+        github_owner: GitHub owner/org name
+        github_repo: GitHub repository name
+        assignees: Optional assignees for all issues
+        milestone: Optional milestone for all issues
+
+    Returns:
+        List of IssueCreationResults (one per issue)
+    """
+    results = []
+
+    for issue in issues:
+        result = create_github_issue(
+            issue=issue,
+            repo_id=repo_id,
+            github_owner=github_owner,
+            github_repo=github_repo,
+            assignees=assignees,
+            milestone=milestone
+        )
+        results.append(result)
+
+    return results
 
 
 # Example usage

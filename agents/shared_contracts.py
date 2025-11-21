@@ -154,6 +154,10 @@ class PortfolioResult:
     total_issues_found: int = 0
     total_issues_fixed: int = 0
 
+    # GitHub issue creation (LIVE3B/LIVE3C-GITHUB-ISSUES)
+    issues_planned: int = 0
+    issues_created: int = 0
+
     # Issue breakdown
     issues_by_severity: Dict[str, int] = field(default_factory=dict)
     issues_by_type: Dict[str, int] = field(default_factory=dict)
