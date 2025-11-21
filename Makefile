@@ -261,6 +261,10 @@ crawl-test: ## Test crawler configuration without uploading
 # RAG Readiness & ARV Gates
 #################################
 
+check-config: ## Validate environment configuration for current DEPLOYMENT_ENV
+	@echo "$(BLUE)🔍 Validating config for DEPLOYMENT_ENV=$${DEPLOYMENT_ENV:-dev}...$(NC)"
+	@$(PYTHON) scripts/check_config_all.py
+
 check-rag-readiness: ## Check RAG readiness for Bob and foreman (ARV gate)
 	@echo "$(BLUE)🔍 Checking RAG Readiness...$(NC)"
 	@$(PYTHON) scripts/check_rag_readiness.py
@@ -311,6 +315,27 @@ print-agent-engine-config-verbose: ## Verbose Agent Engine config with full deta
 	@$(PYTHON) scripts/print_agent_engine_config.py --verbose
 	@echo ""
 
+agent-engine-dev-smoke: ## Run dev smoke test for Agent Engine wiring (AE3)
+	@echo "$(BLUE)🧪 Running Agent Engine Dev Smoke Test (AE3)...$(NC)"
+	@$(PYTHON) scripts/run_agent_engine_dev_smoke.py
+	@echo ""
+
+agent-engine-dev-smoke-verbose: ## Run dev smoke test with detailed output
+	@echo "$(BLUE)🧪 Running Agent Engine Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_agent_engine_dev_smoke.py --verbose
+	@echo ""
+
+arv-department: ## Run comprehensive ARV for IAM/ADK department (ARIV-DEPT)
+	@echo "$(BLUE)🚦 Running ARV for IAM/ADK department (DEPLOYMENT_ENV=$${DEPLOYMENT_ENV:-dev})...$(NC)"
+	@$(PYTHON) scripts/run_arv_department.py --env "$${DEPLOYMENT_ENV:-dev}"
+
+arv-department-verbose: ## Run ARV with detailed output
+	@echo "$(BLUE)🚦 Running ARV for IAM/ADK department (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_arv_department.py --env "$${DEPLOYMENT_ENV:-dev}" --verbose
+
+arv-department-list: ## List all ARV checks
+	@$(PYTHON) scripts/run_arv_department.py --list
+
 arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags ## Run all ARV gates (RAG + minimum + engine flags)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
 	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
@@ -350,6 +375,116 @@ run-swe-pipeline-interactive: ## Run interactive SWE pipeline
 		print(f'  - Issues fixed: {result.issues_fixed}'); \
 		print(f'  - Duration: {result.pipeline_duration_seconds:.2f}s')"
 
+#################################
+# LIVE3 End-to-End Testing (E2E)
+#################################
+
+live3-dev-smoke: ## Run LIVE3 dev smoke test (E2E validation of LIVE3 features)
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test...$(NC)"
+	@echo "$(YELLOW)Testing: Portfolio audit + GCS + Slack + GitHub$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo bobs-brain
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+live3-dev-smoke-verbose: ## Run LIVE3 smoke test with detailed output
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo bobs-brain --verbose
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+live3-dev-smoke-all: ## Run LIVE3 smoke test on all local repos
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test (All Repos)...$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo all --verbose
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+#################################
+# Deployment Operations (CICD-DEPT)
+#################################
+
+deploy-dev: ## Trigger dev deployment via GitHub Actions
+	@echo "$(BLUE)🚀 Triggering deployment to dev environment...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "⚠️  This will deploy to dev. Continue? [y/N] " && read ans && [ $${ans:-N} = y ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-dev.yml
+	@echo "$(GREEN)✅ Deployment triggered! Check status with: make deploy-status$(NC)"
+
+deploy-staging: ## Trigger staging deployment via GitHub Actions
+	@echo "$(BLUE)🚀 Triggering deployment to staging environment...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "⚠️  This will deploy to STAGING. Continue? [y/N] " && read ans && [ $${ans:-N} = y ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-staging.yml
+	@echo "$(GREEN)✅ Deployment triggered! Check status with: make deploy-status$(NC)"
+
+deploy-prod: ## Trigger production deployment via GitHub Actions (CAUTION!)
+	@echo "$(RED)⚠️ WARNING: PRODUCTION DEPLOYMENT$(NC)"
+	@echo "$(RED)This will deploy to PRODUCTION and requires multiple approvals.$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "$(RED)Are you ABSOLUTELY SURE? Type 'DEPLOY_TO_PRODUCTION' to confirm: $(NC)" && read ans && [ "$$ans" = "DEPLOY_TO_PRODUCTION" ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-prod.yml
+	@echo "$(GREEN)✅ Production deployment triggered!$(NC)"
+	@echo "$(YELLOW)⚠️ Remember: Multiple approvals required before deployment proceeds.$(NC)"
+
+deploy-status: ## Check deployment workflow status
+	@echo "$(BLUE)📊 Checking deployment workflow status...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@gh run list --workflow=deploy-dev.yml --limit=3
+	@echo ""
+	@gh run list --workflow=deploy-staging.yml --limit=3
+	@echo ""
+	@gh run list --workflow=deploy-prod.yml --limit=3
+
+deploy-logs: ## View logs from latest deployment (specify ENV=dev|staging|prod)
+	@echo "$(BLUE)📜 Viewing deployment logs for $(ENV:-dev)...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@gh run view --workflow=deploy-$(ENV:-dev).yml --log
+
+deploy-list: ## List all deployment workflows
+	@echo "$(BLUE)📋 Available deployment workflows:$(NC)"
+	@echo ""
+	@echo "  $(GREEN)deploy-dev.yml$(NC)      - Deploy to dev environment"
+	@echo "  $(GREEN)deploy-staging.yml$(NC)  - Deploy to staging (requires approval)"
+	@echo "  $(GREEN)deploy-prod.yml$(NC)     - Deploy to production (multiple approvals)"
+	@echo ""
+	@echo "$(YELLOW)Trigger deployments with:$(NC)"
+	@echo "  make deploy-dev"
+	@echo "  make deploy-staging"
+	@echo "  make deploy-prod"
+	@echo ""
+	@echo "$(YELLOW)Check status with:$(NC)"
+	@echo "  make deploy-status"
+
+deploy-help: ## Show deployment help and requirements
+	@echo "$(BLUE)🚀 Deployment Help$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Prerequisites:$(NC)"
+	@echo "  1. GitHub CLI (gh) installed"
+	@echo "  2. Authenticated to GitHub (gh auth login)"
+	@echo "  3. CI checks passing (make ci or check GitHub Actions)"
+	@echo "  4. ARV checks passing (make arv-department)"
+	@echo ""
+	@echo "$(YELLOW)Deployment Flow:$(NC)"
+	@echo "  1. Code changes pushed to main/develop"
+	@echo "  2. CI workflow runs (ci.yml)"
+	@echo "  3. All checks pass (drift, ARV, tests, security)"
+	@echo "  4. Trigger deployment: make deploy-dev"
+	@echo "  5. ARV gate runs in deployment workflow"
+	@echo "  6. Deployment proceeds if ARV passes"
+	@echo "  7. Check status: make deploy-status"
+	@echo ""
+	@echo "$(YELLOW)Environment Requirements:$(NC)"
+	@echo "  $(GREEN)dev$(NC)      - Automatic after ARV gate"
+	@echo "  $(GREEN)staging$(NC)  - Manual approval + ARV gate"
+	@echo "  $(GREEN)prod$(NC)     - Multiple approvals + strict ARV"
+	@echo ""
+	@echo "$(YELLOW)GitHub Environment Variables Required:$(NC)"
+	@echo "  DEV_PROJECT_ID, DEV_REGION, DEV_STAGING_BUCKET"
+	@echo "  STAGING_PROJECT_ID, STAGING_REGION, STAGING_STAGING_BUCKET"
+	@echo "  PROD_PROJECT_ID, PROD_REGION, PROD_STAGING_BUCKET"
+	@echo ""
+	@echo "$(YELLOW)GitHub Secrets Required:$(NC)"
+	@echo "  GCP_WORKLOAD_IDENTITY_PROVIDER"
+	@echo "  GCP_SERVICE_ACCOUNT"
+	@echo "  SLACK_SIGNING_SECRET"
+	@echo "  SLACK_BOT_TOKEN"
+
 .PHONY: help setup test lint format clean docker version benchmark ci all
 .PHONY: install-hooks deps format-check type-check
 .PHONY: test-v1 test-v2 test-coverage
@@ -357,7 +492,9 @@ run-swe-pipeline-interactive: ## Run interactive SWE pipeline
 .PHONY: docker-build docker-v1 docker-v2 docker-all docker-stop docker-clean
 .PHONY: safe-commit pre-release clean-all version logs dev prod
 .PHONY: crawl-adk-docs crawl-test
-.PHONY: check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates
+.PHONY: check-config check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates arv-department arv-department-verbose arv-department-list
 .PHONY: print-agent-engine-config print-agent-engine-config-verbose
 .PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
 .PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
+.PHONY: live3-dev-smoke live3-dev-smoke-verbose live3-dev-smoke-all
+.PHONY: deploy-dev deploy-staging deploy-prod deploy-status deploy-logs deploy-list deploy-help

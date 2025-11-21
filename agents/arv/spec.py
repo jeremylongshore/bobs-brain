@@ -170,6 +170,19 @@ ALL_CHECKS: List[ArvCheck] = [
         required_when="ANY LIVE3 FEATURE ENABLED (SLACK/GITHUB/ORG_STORAGE)",
         envs=["dev"],  # Only runs in dev for now
     ),
+
+    # ========================================
+    # AGENT ENGINE E2E CATEGORY (Optional, AE3)
+    # ========================================
+    ArvCheck(
+        id="agent-engine-dev-smoke",
+        description="Agent Engine dev smoke test (config + a2a gateway + Agent Engine)",
+        category="engine",
+        required=False,  # Optional - doesn't block deployments
+        command="python3 scripts/run_agent_engine_dev_smoke.py",
+        required_when="Agent Engine IDs configured for dev (AGENT_ENGINE_*_ID_DEV)",
+        envs=["dev"],  # Only runs in dev for now
+    ),
 ]
 
 
