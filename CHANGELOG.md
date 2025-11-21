@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-11-21
+
+### Added - Contract-First Prompt Design & AgentCard Alignment
+
+- **Canonical Prompt Design Standard (6767-115)**
+  - Created `000-docs/6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md`
+  - Token budget targets: ≤1,500 tokens (foreman), ≤1,000 tokens (specialist)
+  - 5-part system prompt structure template (Role & Identity, Boundaries, Input/Output Contract, Behavior, Guardrails)
+  - Contract-first philosophy: schemas in code/AgentCards, not duplicated in prompts
+  - Migration checklist with before/after examples showing 60% token reduction
+  - AgentCard integration patterns and security mindset guidelines
+
+- **AgentCard Validation Tests**
+  - Created `tests/unit/test_agentcard_json.py` with 18 comprehensive tests
+  - Validates JSON-based AgentCards for foreman and specialist agents
+  - Checks: JSON syntax, required A2A fields, SPIFFE ID format, skill structure
+  - Verifies contract references ($comment fields) present
+  - Cross-agent consistency tests (authentication, framework, authorization)
+  - All 18 tests passing (100% success rate)
+
+### Changed
+
+- **Foreman System Prompt (iam-senior-adk-devops-lead)**
+  - Refactored `agents/iam-senior-adk-devops-lead/system-prompt.md`
+  - Reduced from 219 → 123 lines (44% reduction, ~1,640 tokens)
+  - Follows 6767-115 template with 6 sections
+  - References PipelineRequest → PipelineResult contracts by name only
+  - Removed ~90 lines of JSON workflow examples (moved to future tests/docs)
+  - Added explicit Boundaries and Guardrails sections
+
+- **Specialist System Prompt (iam-adk)**
+  - Refactored `agents/iam_adk/system-prompt.md`
+  - Reduced from 271 → 120 lines (56% reduction, ~1,280 tokens)
+  - Pure worker/executor pattern emphasized
+  - References AnalysisRequest → AnalysisReport/IssueSpec contracts by name only
+  - Removed ~150 lines of schema duplication and example interactions
+  - Added explicit "No planning, no reflection, no autonomous exploration" directive
+
+- **AgentCard Contract Alignment**
+  - Updated `agents/iam-senior-adk-devops-lead/.well-known/agent-card.json`
+    - Added $comment fields referencing PipelineRequest (line 73) and PipelineResult (line 106) from shared_contracts.py
+  - Updated `agents/iam_adk/.well-known/agent-card.json`
+    - Added $comment fields referencing AnalysisReport (line 198) and IssueSpec (line 213) from shared_contracts.py
+    - Documented gap: no formal AnalysisRequest contract exists yet
+
+### Technical Details
+
+- **Prompt Token Reduction:**
+  - Foreman: 219 lines → 123 lines (44% reduction)
+  - Specialist: 271 lines → 120 lines (56% reduction)
+  - Achieved through schema deduplication and contract-first references
+
+- **Contract References:**
+  - All prompts now reference dataclasses in `agents/shared_contracts.py` by name
+  - AgentCards include explicit $comment fields linking to contract line numbers
+  - Establishes clear single source of truth for schemas
+
 ## [0.9.0] - 2025-11-20
 
 ### Added - Portfolio Orchestration & Org-Wide Storage
