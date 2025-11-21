@@ -265,19 +265,40 @@ python scripts/run_swe_pipeline_once.py \
 
 ### Step 8: Run ARV Checks
 
-**Verify agent structure:**
+**IMPORTANT:** Every IAM department MUST define an ARV (Agent Readiness Verification) checklist and runner.
+See `117-AA-REPT-iam-department-arv-implementation.md` in bobs-brain for the reference implementation.
+
+**Run comprehensive ARV check:**
 ```bash
 # Add to Makefile (copy from templates/iam-department/Makefile.snippet)
-make check-arv-minimum
+make arv-department
 ```
 
 **Expected output:**
 ```
-✅ ARV MINIMUM MET
-- iam-foreman: agent structure valid
-- iam-adk: agent structure valid
-- iam-issue: agent structure valid
-- iam-qa: agent structure valid
+======================================================================
+ARV – IAM/ADK Department Readiness Verification
+======================================================================
+Environment: DEV
+
+[CONFIG]
+  ✅ config-basic – PASSED
+[TESTS]
+  ✅ tests-unit – PASSED
+  ✅ tests-swe-pipeline – PASSED
+[ENGINE]
+  ✅ engine-flags-safety – PASSED
+  ✅ arv-minimum-requirements – PASSED
+
+RESULT: PASSED (4/4 required checks passed)
+======================================================================
+```
+
+**Individual checks** (for debugging):
+```bash
+make check-arv-minimum        # Structure only
+make check-config             # Config only
+make check-rag-readiness      # RAG only (if enabled)
 ```
 
 ### Step 9: Integrate with CI
@@ -285,7 +306,7 @@ make check-arv-minimum
 **Add to `.github/workflows/ci.yml` (or equivalent):**
 ```yaml
 jobs:
-  arv-check:
+  arv-department:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -298,13 +319,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install pytest
 
-      - name: Run ARV minimum check
-        run: make check-arv-minimum
-
-      - name: Test SWE pipeline
-        run: make test-swe-pipeline
+      - name: Run ARV Department Check (ARV-DEPT)
+        run: make arv-department
+        env:
+          DEPLOYMENT_ENV: dev
 ```
+
+**Note:** This replaces individual ARV checks with a comprehensive readiness gate. See `117-AA-REPT-iam-department-arv-implementation.md` for details.
 
 ---
 
@@ -582,3 +605,5 @@ Your port is successful when:
 - 6767-DR-STND-iam-department-template-scope-and-rules-DR-STND-iam-department-template-scope-and-rules.md (scope)
 - 6767-DR-STND-iam-department-integration-checklist-DR-STND-iam-department-integration-checklist.md (checklist)
 - templates/iam-department/README.md (template README)
+- **118-DR-STND-cicd-pipeline-for-iam-department.md** (CI/CD pipeline standard - CICD-DEPT)
+- **119-RB-OPS-deployment-operator-runbook.md** (deployment operations - CICD-DEPT)

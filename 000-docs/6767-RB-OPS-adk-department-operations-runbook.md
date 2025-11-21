@@ -111,6 +111,9 @@ grep "QAVerdict" logs/pipeline.log | grep "verdict: pass"
 **3. Monitor Agent Health**
 
 ```bash
+# Validate configuration (CONF2)
+make check-config  # See 116-DR-STND-config-and-feature-flags-standard-v1.md
+
 # Check agent availability
 make check-arv-minimum
 
@@ -119,6 +122,7 @@ python scripts/test_foreman_health.py
 ```
 
 **Expected:**
+- Configuration validation passes (all required vars set)
 - All ARV checks pass
 - Foreman responds within 2 seconds
 
@@ -793,3 +797,5 @@ github:
 - 6767-DR-GUIDE-porting-iam-department-to-new-repo-DR-GUIDE-porting-iam-department-to-new-repo.md (porting guide)
 - 6767-DR-STND-iam-department-integration-checklist-DR-STND-iam-department-integration-checklist.md (integration checklist)
 - 6767-DR-GUIDE-iam-department-user-guide-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md (usage guide)
+- **118-DR-STND-cicd-pipeline-for-iam-department.md** (CI/CD pipeline standard - CICD-DEPT)
+- **119-RB-OPS-deployment-operator-runbook.md** (deployment operations runbook - CICD-DEPT)

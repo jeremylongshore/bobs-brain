@@ -11,7 +11,7 @@ Enforces:
 - R5: Dual memory (Session + Memory Bank) with auto-save callback
 - R7: SPIFFE ID propagation in logs
 
-LAZY-LOADING PATTERN (6774):
+LAZY-LOADING PATTERN (6767-LAZY):
 - Uses create_agent() for lazy agent instantiation
 - Uses create_app() to wrap in App for Agent Engine
 - Exposes module-level `app` (not agent!)
@@ -93,7 +93,7 @@ def auto_save_session_to_memory(ctx):
 
 
 # ============================================================================
-# LAZY AGENT CREATION (6774 Pattern)
+# LAZY AGENT CREATION (6767-LAZY Pattern)
 # ============================================================================
 
 def create_agent() -> LlmAgent:
@@ -397,7 +397,7 @@ def create_runner() -> Runner:
 
 
 # ============================================================================
-# AGENT ENGINE ENTRYPOINT (6774 Pattern)
+# AGENT ENGINE ENTRYPOINT (6767-LAZY Pattern)
 # ============================================================================
 
 # ✅ Module-level App (lazy initialization)

@@ -108,6 +108,11 @@ check-a2a-single: ## Validate a single AgentCard (usage: make check-a2a-single C
 	@echo "$(BLUE)🔍 Validating AgentCard: $(CARD)$(NC)"
 	$(PYTHON) scripts/check_a2a_contracts.py $(CARD)
 
+smoke-agents: ## Smoke test all agents for lazy-loading App pattern (6774)
+	@echo "$(BLUE)🧪 Running agent lazy-loading smoke test...$(NC)"
+	$(PYTHON) scripts/smoke_check_agents.py
+	@echo "$(GREEN)✅ All agents follow lazy-loading pattern!$(NC)"
+
 #################################
 # Testing
 #################################

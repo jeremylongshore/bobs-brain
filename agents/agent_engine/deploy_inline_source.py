@@ -35,7 +35,7 @@ Or with environment variables:
 
 - Tutorial notebook: agents/agent_engine/tutorial_deploy_your_first_adk_agent_on_agent_engine.ipynb
 - Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
-- Standard: 000-docs/6775-DR-STND-inline-source-deployment-for-vertex-agent-engine.md
+- Standard: 000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md
 
 """
 

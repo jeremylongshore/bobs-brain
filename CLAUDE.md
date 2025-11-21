@@ -74,7 +74,7 @@ When working in this repo, Claude should:
 ### Coding Style
 
 **Python (agents/):**
-- Follow lazy-loading App pattern (see 6774 standard)
+- Follow lazy-loading App pattern (see 6767-LAZY standard)
 - Use `google-adk` imports exclusively
 - Implement `after_agent_callback` for R5 compliance
 - Module-level `app`, not `agent`
@@ -153,8 +153,8 @@ Use conventional commits format:
 All **6767-prefixed docs act as Standard Operating Procedures (SOPs)** - these are canonical standards:
 
 - **6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md** - Hard Mode rules (R1-R8)
-- **6774-DR-STND-adk-lazy-loading-app-pattern.md** - Lazy-loading App pattern
-- **6775-DR-STND-inline-source-deployment-for-vertex-agent-engine.md** - Inline source deployment
+- **6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md** - Lazy-loading App pattern
+- **6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md** - Inline source deployment
 - **6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md** - Prompt design contracts
 
 ### Other Key References

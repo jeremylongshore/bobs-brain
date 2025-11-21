@@ -1,0 +1,305 @@
+name: Deploy to Production
+
+# ========================================
+# PRODUCTION ENVIRONMENT DEPLOYMENT (SKELETON)
+# ========================================
+# This is a SKELETON workflow for production deployments.
+# It follows the same pattern as staging but with:
+# - STRICTEST ARV requirements (zero tolerance for failures)
+# - Multiple manual approvals required
+# - Comprehensive pre-deployment and post-deployment tests
+# - Automated rollback on failure
+# - Production-specific configurations and safeguards
+#
+# TODO (CICD-DEPT Phase): Fully implement production deployment logic
+# TODO: Add comprehensive test suites
+# TODO: Implement automated rollback
+# TODO: Configure production protection rules with multiple approvers
+#
+# ⚠️ PRODUCTION DEPLOYMENTS REQUIRE EXTREME CAUTION ⚠️
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_arv:
+        description: 'Skip ARV checks (NEVER SKIP IN PRODUCTION)'
+        required: false
+        default: false
+        type: boolean
+      run_full_test_suite:
+        description: 'Run full test suite after deployment'
+        required: false
+        default: true
+        type: boolean
+      enable_rollback:
+        description: 'Enable automated rollback on failure'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation (R4)
+
+env:
+  DEPLOYMENT_ENV: prod
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Pre-deployment validation
+  pre-deployment-checks:
+    name: Pre-Deployment Validation (Prod)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify production readiness
+        run: |
+          echo "🔍 Verifying production readiness..."
+          echo ""
+          echo "Checking:"
+          echo "- Latest commit is tagged with version"
+          echo "- CHANGELOG.md is updated"
+          echo "- No open critical issues"
+          echo "- Recent staging deployment succeeded"
+          echo ""
+          echo "## ⚠️ Pre-Deployment Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚧 SKELETON: Full validation logic not yet implemented" >> $GITHUB_STEP_SUMMARY
+
+      # TODO: Implement pre-deployment checks
+      # - Verify git tag exists
+      # - Check CHANGELOG.md updated
+      # - Query GitHub API for open critical issues
+      # - Verify staging deployment status
+      # - Check for any production alerts/incidents
+
+  # ARV Gate: STRICTEST checks for production
+  arv-gate:
+    name: ARV Readiness Gate (Production)
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: github.event.inputs.skip_arv != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run ARV Department Check (Production)
+        run: |
+          echo "🚦 Running ARV for production environment..."
+          echo "⚠️ Production has ZERO TOLERANCE for failures"
+          echo ""
+          make arv-department
+        env:
+          DEPLOYMENT_ENV: prod
+
+      # TODO: Add production-specific checks
+      # - name: Run comprehensive test suite
+      # - name: Security scan (additional)
+      # - name: Performance benchmarks
+      # - name: Verify zero critical/high vulnerabilities
+
+      - name: ARV Gate Summary
+        run: |
+          echo "## ✅ ARV Gate Passed (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**All production-grade readiness checks passed.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Zero tolerance policy enforced - no warnings or failures accepted." >> $GITHUB_STEP_SUMMARY
+
+  # First manual approval (Engineer/Lead)
+  approval-gate-1:
+    name: Approval 1/2 - Engineering Lead
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, arv-gate]
+    environment: prod-approval-1  # Requires engineering lead approval
+
+    steps:
+      - name: First approval checkpoint
+        run: |
+          echo "✅ Engineering Lead approval granted"
+          echo ""
+          echo "## ✅ Engineering Lead Approval" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "First level approval granted by Engineering Lead." >> $GITHUB_STEP_SUMMARY
+
+  # Second manual approval (Manager/Director)
+  approval-gate-2:
+    name: Approval 2/2 - Manager/Director
+    runs-on: ubuntu-latest
+    needs: [approval-gate-1]
+    environment: prod-approval-2  # Requires manager/director approval
+
+    steps:
+      - name: Second approval checkpoint
+        run: |
+          echo "✅ Manager/Director approval granted"
+          echo ""
+          echo "## ✅ Manager/Director Approval" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Second level approval granted by Manager/Director." >> $GITHUB_STEP_SUMMARY
+          echo "Production deployment is now authorized." >> $GITHUB_STEP_SUMMARY
+
+  # Deploy Agent Engine (Bob agent) - Production
+  deploy-agent-engine:
+    name: Deploy Agent Engine (Production)
+    runs-on: ubuntu-latest
+    needs: [arv-gate, approval-gate-1, approval-gate-2]
+    if: always() && (needs.arv-gate.result == 'success' || needs.arv-gate.result == 'skipped') && needs.approval-gate-1.result == 'success' && needs.approval-gate-2.result == 'success'
+    environment: prod
+
+    steps:
+      - name: Production deployment placeholder
+        run: |
+          echo "🚧 SKELETON: Production Agent Engine deployment"
+          echo ""
+          echo "TODO: Implement full production deployment logic"
+          echo "See deploy-dev.yml and deploy-staging.yml for reference"
+          echo ""
+          echo "Required:"
+          echo "- WIF authentication"
+          echo "- ADK CLI deployment to production project"
+          echo "- Blue/green or canary deployment strategy"
+          echo "- Automated health checks"
+          echo "- Rollback capability"
+          echo ""
+          echo "## 🚧 Production Deployment (Skeleton)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This is a SKELETON workflow. Full implementation pending." >> $GITHUB_STEP_SUMMARY
+
+      # TODO: Implement production deployment
+      # - Authenticate to GCP (WIF)
+      # - Deploy with adk deploy agent_engine
+      # - Use PROD_PROJECT_ID, PROD_REGION, etc.
+      # - Implement blue/green or canary strategy
+      # - Monitor deployment health
+
+  # Deploy Cloud Run Gateways - Production
+  deploy-gateways:
+    name: Deploy Cloud Run Gateways (Production)
+    runs-on: ubuntu-latest
+    needs: [arv-gate, approval-gate-1, approval-gate-2, deploy-agent-engine]
+    if: always() && (needs.arv-gate.result == 'success' || needs.arv-gate.result == 'skipped') && needs.approval-gate-1.result == 'success' && needs.approval-gate-2.result == 'success' && needs.deploy-agent-engine.result == 'success'
+    environment: prod
+
+    steps:
+      - name: Production gateways placeholder
+        run: |
+          echo "🚧 SKELETON: Production gateway deployment"
+          echo ""
+          echo "TODO: Implement production gateway deployment"
+          echo "See deploy-dev.yml for reference"
+          echo ""
+          echo "Required:"
+          echo "- Deploy Slack webhook with production configs"
+          echo "- Deploy A2A gateway with production configs"
+          echo "- Implement gradual traffic shift"
+          echo "- Monitor error rates"
+
+      # TODO: Implement gateway deployment
+      # - Deploy with traffic splitting (0% initially)
+      # - Gradually shift traffic (10%, 25%, 50%, 100%)
+      # - Monitor error rates at each step
+      # - Rollback if error rate exceeds threshold
+
+  # Post-deployment tests
+  post-deployment-tests:
+    name: Post-Deployment Tests (Production)
+    runs-on: ubuntu-latest
+    needs: [deploy-agent-engine, deploy-gateways]
+    if: github.event.inputs.run_full_test_suite == 'true' && needs.deploy-agent-engine.result == 'success' && needs.deploy-gateways.result == 'success'
+    environment: prod
+
+    steps:
+      - name: Post-deployment test placeholder
+        run: |
+          echo "🚧 SKELETON: Post-deployment tests for production"
+          echo ""
+          echo "TODO: Implement comprehensive test suite"
+          echo "- Smoke tests (critical paths)"
+          echo "- Integration tests (end-to-end)"
+          echo "- Performance tests (latency, throughput)"
+          echo "- Security tests (auth, authorization)"
+
+      # TODO: Implement test suite
+      # - Run smoke tests
+      # - Run integration tests
+      # - Verify SLAs
+      # - Check for regressions
+
+  # Rollback on failure
+  rollback:
+    name: Automated Rollback (Production)
+    runs-on: ubuntu-latest
+    needs: [deploy-agent-engine, deploy-gateways, post-deployment-tests]
+    if: always() && github.event.inputs.enable_rollback == 'true' && (needs.deploy-agent-engine.result == 'failure' || needs.deploy-gateways.result == 'failure' || needs.post-deployment-tests.result == 'failure')
+    environment: prod
+
+    steps:
+      - name: Rollback placeholder
+        run: |
+          echo "🚧 SKELETON: Automated rollback for production"
+          echo ""
+          echo "⚠️ ROLLBACK TRIGGERED - Deployment failed"
+          echo ""
+          echo "TODO: Implement rollback logic"
+          echo "- Revert Agent Engine to previous version"
+          echo "- Revert gateways to previous version"
+          echo "- Verify rollback succeeded"
+          echo "- Send alerts to team"
+
+      # TODO: Implement rollback
+      # - Get previous successful deployment version
+      # - Deploy previous version
+      # - Verify health
+      # - Send notifications
+
+  # Deployment summary
+  deployment-success:
+    name: Deployment Summary (Production)
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, arv-gate, approval-gate-1, approval-gate-2, deploy-agent-engine, deploy-gateways, post-deployment-tests]
+    if: always()
+
+    steps:
+      - name: Production deployment summary
+        run: |
+          echo "## 📊 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚧 **This is a SKELETON workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Full production deployment logic will be implemented in CICD-DEPT phase." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Required for Full Implementation" >> $GITHUB_STEP_SUMMARY
+          echo "1. Production GCP project setup" >> $GITHUB_STEP_SUMMARY
+          echo "2. GitHub Environment variables (\`PROD_*\`)" >> $GITHUB_STEP_SUMMARY
+          echo "3. Multiple manual approval gates configured" >> $GITHUB_STEP_SUMMARY
+          echo "4. Comprehensive test suite" >> $GITHUB_STEP_SUMMARY
+          echo "5. Blue/green or canary deployment strategy" >> $GITHUB_STEP_SUMMARY
+          echo "6. Automated rollback procedures" >> $GITHUB_STEP_SUMMARY
+          echo "7. Production monitoring and alerting" >> $GITHUB_STEP_SUMMARY
+          echo "8. Incident response runbook" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Production Safety Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Pre-deployment validation complete" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] ARV checks passed (zero tolerance)" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Multiple approvals obtained" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Deployment health verified" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Post-deployment tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Rollback capability tested and ready" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Team notified of deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Documentation updated" >> $GITHUB_STEP_SUMMARY

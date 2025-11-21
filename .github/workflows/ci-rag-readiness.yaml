@@ -1,5 +1,12 @@
-name: RAG Readiness Check
+name: RAG Readiness Check (DEPRECATED)
 
+# ⚠️ DEPRECATION NOTICE:
+# This workflow is REDUNDANT with ARV-DEPT (arv-department job in ci.yml).
+# The `rag-readiness` check is now part of comprehensive ARV framework.
+# This workflow will be REMOVED in a future update.
+#
+# Use `make arv-department` or the `arv-department` job in ci.yml instead.
+#
 # Part of Agent Readiness Verification (ARV) gates
 # Validates Bob and foreman are structurally ready for RAG
 
