@@ -363,6 +363,46 @@ agent-engine-dev-smoke-verbose: ## Run dev smoke test with detailed output
 	@$(PYTHON) scripts/run_agent_engine_dev_smoke.py --verbose
 	@echo ""
 
+## ============================================================================
+## Inline Source Deployment (Phase 3) - Safe dry-run validation by default
+## ============================================================================
+
+deploy-inline-dry-run: ## Dry-run validation for inline source deploy (DEFAULT, safe)
+	@echo "$(BLUE)🔍 Inline Source Deploy - DRY RUN (Validation Only)...$(NC)"
+	@echo "$(YELLOW)ℹ️  This validates config without deploying. Use deploy-inline-dev-execute for actual deploy.$(NC)"
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env dev
+	@echo ""
+
+deploy-inline-dev-execute: ## MANUAL ONLY: Execute inline deploy to dev (requires --execute flag)
+	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO DEV - This will create real Agent Engine resources!$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
+	@sleep 5
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env dev \
+		--execute
+	@echo ""
+
+deploy-inline-staging-execute: ## MANUAL ONLY: Execute inline deploy to staging
+	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO STAGING$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
+	@sleep 5
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env staging \
+		--execute
+	@echo ""
+
+## ============================================================================
+
 arv-department: ## Run comprehensive ARV for IAM/ADK department (ARIV-DEPT)
 	@echo "$(BLUE)🚦 Running ARV for IAM/ADK department (DEPLOYMENT_ENV=$${DEPLOYMENT_ENV:-dev})...$(NC)"
 	@$(PYTHON) scripts/run_arv_department.py --env "$${DEPLOYMENT_ENV:-dev}"
@@ -622,7 +662,7 @@ deploy-help: ## Show deployment help and requirements
 .PHONY: safe-commit pre-release clean-all version logs dev prod
 .PHONY: crawl-adk-docs crawl-test
 .PHONY: check-config check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates arv-department arv-department-verbose arv-department-list
-.PHONY: print-agent-engine-config print-agent-engine-config-verbose
+.PHONY: print-agent-engine-config print-agent-engine-config-verbose deploy-inline-dry-run deploy-inline-dev-execute deploy-inline-staging-execute
 .PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
 .PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
 .PHONY: live3-dev-smoke live3-dev-smoke-verbose live3-dev-smoke-all
