@@ -1,0 +1,124 @@
+name: Agent Engine Inline Deploy - Dev (Manual)
+
+# Phase 4: Manual dev deployment with ARV gates
+# This workflow performs REAL deployment to dev environment with safety checks
+#
+# IMPORTANT:
+# - This is workflow_dispatch ONLY (manual trigger required)
+# - ARV checks run first and must pass
+# - Dry-run validation runs before actual deployment
+# - Only deploys to DEV environment (not staging/prod)
+#
+# References:
+# - Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
+# - Tutorial: 000-docs/001-usermanual/tutorial_get_started_with_agent_engine_terraform_deployment.ipynb
+# - Standard: 000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent_name:
+        description: 'Agent to deploy (bob, iam-senior-adk-devops-lead, iam-adk)'
+        required: true
+        type: choice
+        default: 'bob'
+        options:
+          - bob
+          - iam-senior-adk-devops-lead
+          - iam-adk
+
+      gcp_project_id:
+        description: 'GCP Project ID for deployment'
+        required: true
+        type: string
+
+      gcp_location:
+        description: 'GCP region for deployment'
+        required: false
+        type: string
+        default: 'us-central1'
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation
+
+jobs:
+  deploy-to-dev:
+    name: Deploy ${{ inputs.agent_name }} to Dev
+    runs-on: ubuntu-latest
+    environment: dev  # GitHub environment protection (optional)
+
+    env:
+      AGENT_NAME: ${{ inputs.agent_name }}
+      GCP_PROJECT_ID: ${{ inputs.gcp_project_id }}
+      GCP_LOCATION: ${{ inputs.gcp_location }}
+      ENV: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          # Install full dependencies for deployment
+          pip install google-cloud-aiplatform google-auth
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run ARV checks (Phase 4 - MUST PASS)
+        run: |
+          echo "🔍 Running ARV checks before deployment..."
+          make check-inline-deploy-ready
+          echo "✅ ARV checks passed"
+
+      - name: Run dry-run validation (Pre-flight check)
+        run: |
+          echo "🔍 Running dry-run validation..."
+          make deploy-inline-dry-run
+          echo "✅ Dry-run validation passed"
+
+      - name: Deploy agent to dev (REAL DEPLOYMENT)
+        run: |
+          echo "🚀 Deploying agent to dev environment..."
+          echo "   Agent: $AGENT_NAME"
+          echo "   Project: $GCP_PROJECT_ID"
+          echo "   Location: $GCP_LOCATION"
+          echo ""
+          python -m agents.agent_engine.deploy_inline_source \
+            --agent-name $AGENT_NAME \
+            --project $GCP_PROJECT_ID \
+            --location $GCP_LOCATION \
+            --env dev \
+            --execute
+
+      - name: Report deployment status
+        if: always()
+        run: |
+          echo "📊 Deployment Summary:"
+          echo "  Agent: $AGENT_NAME"
+          echo "  Project: $GCP_PROJECT_ID"
+          echo "  Location: $GCP_LOCATION"
+          echo "  Environment: dev"
+          echo ""
+          echo "ℹ️  This was a REAL DEPLOYMENT to dev environment."
+          echo "ℹ️  Verify deployment in Google Cloud Console:"
+          echo "     https://console.cloud.google.com/vertex-ai/agent-engine"
+          echo ""
+          echo "References:"
+          echo "  - ARV script: scripts/check_inline_deploy_ready.py"
+          echo "  - Deploy script: agents/agent_engine/deploy_inline_source.py"
+          echo "  - Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935"

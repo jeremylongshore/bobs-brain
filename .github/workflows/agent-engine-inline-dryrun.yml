@@ -1,7 +1,9 @@
 name: Agent Engine Inline Deploy - Dry Run Validation
 
-# Phase 3: CI wiring for inline source deployment
+# Phase 3+4: CI wiring for inline source deployment with ARV gates
 # This workflow validates inline source deployment configuration WITHOUT executing real deploys
+#
+# Phase 4 adds ARV (Agent Readiness Verification) checks before validation
 #
 # References:
 # - Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
@@ -60,6 +62,11 @@ jobs:
           # Install only what's needed for validation (not full agent dependencies)
           pip install google-cloud-aiplatform
 
+      - name: Run ARV check (Phase 4)
+        run: |
+          echo "🔍 Running ARV check for $AGENT_NAME..."
+          make check-inline-deploy-ready
+
       - name: Run dry-run validation via Makefile
         run: |
           echo "🔍 Running dry-run validation for $AGENT_NAME..."
@@ -78,10 +85,15 @@ jobs:
           echo "  Project: $GCP_PROJECT_ID (placeholder)"
           echo "  Location: $GCP_LOCATION"
           echo ""
+          echo "✅ ARV checks passed (Phase 4)"
+          echo "✅ Dry-run validation passed (Phase 3)"
+          echo ""
           echo "ℹ️  This was a DRY RUN - no actual deployment was performed."
           echo "ℹ️  To execute real deployment, use deploy-inline-dev-execute target manually."
+          echo "ℹ️  Real deployment will run ARV checks automatically before execution."
           echo ""
           echo "References:"
-          echo "  - Script: agents/agent_engine/deploy_inline_source.py"
-          echo "  - Makefile: make deploy-inline-dry-run"
+          echo "  - ARV script: scripts/check_inline_deploy_ready.py"
+          echo "  - Deploy script: agents/agent_engine/deploy_inline_source.py"
+          echo "  - Makefile: make check-inline-deploy-ready && make deploy-inline-dry-run"
           echo "  - Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935"
