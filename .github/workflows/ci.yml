@@ -85,6 +85,29 @@ jobs:
           DEPLOYMENT_ENV: dev
         # Note: Includes LIVE3 config readiness check (non-blocking)
 
+  # EXPERIMENTAL: A2A Contract Validation (INSPECTOR-2)
+  # Validates AgentCard JSON files for A2A protocol compliance
+  # TODO: Once stable, this becomes part of ARV gate for contracts
+  a2a-contracts:
+    runs-on: ubuntu-latest
+    needs: drift-check  # Only run if drift check passes
+    continue-on-error: true  # Non-blocking until proven stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate A2A AgentCards (Experimental)
+        run: make check-a2a-contracts
+        # TODO: When ready for ARV integration:
+        # 1. Remove continue-on-error flag
+        # 2. Add to needs: list in downstream jobs
+        # 3. Document in 6767 AAR (INSPECTOR-3)
+        # 4. Update arv-department to include a2a-contracts check
+
   lint:
     runs-on: ubuntu-latest
     needs: [drift-check, arv-check, arv-department]  # Only run if drift and ARV checks pass
