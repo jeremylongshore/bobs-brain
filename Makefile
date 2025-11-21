@@ -396,6 +396,38 @@ live3-dev-smoke-all: ## Run LIVE3 smoke test on all local repos
 	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
 
 #################################
+# Slack Integration Testing (SLACK-ENDTOEND-DEV)
+#################################
+
+slack-dev-smoke: ## Run Slack webhook dev smoke test (SLACK-ENDTOEND-DEV S3)
+	@echo "$(BLUE)🧪 Running Slack Webhook Dev Smoke Test...$(NC)"
+	@echo "$(YELLOW)Testing: Slack webhook → A2A gateway → Agent Engine$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py
+	@echo "$(GREEN)✅ Slack smoke test completed!$(NC)"
+
+slack-dev-smoke-verbose: ## Run Slack smoke test with detailed output
+	@echo "$(BLUE)🧪 Running Slack Webhook Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py --verbose
+	@echo "$(GREEN)✅ Slack smoke test completed!$(NC)"
+
+slack-dev-smoke-health: ## Run Slack smoke test (health check only)
+	@echo "$(BLUE)🩺 Checking Slack Webhook Health...$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py --health-only
+	@echo "$(GREEN)✅ Health check completed!$(NC)"
+
+slack-dev-smoke-cloud: ## Run Slack smoke test against Cloud Run deployment
+	@echo "$(BLUE)🧪 Running Slack Webhook Smoke Test (Cloud Run)...$(NC)"
+	@command -v gcloud >/dev/null 2>&1 || { echo "$(RED)❌ gcloud CLI not installed$(NC)"; exit 1; }
+	@SERVICE_URL=$$(gcloud run services describe slack-webhook --region=us-central1 --format='value(status.url)' 2>/dev/null); \
+	if [ -z "$$SERVICE_URL" ]; then \
+		echo "$(RED)❌ Slack webhook service not found in Cloud Run$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(YELLOW)Testing Cloud Run service: $$SERVICE_URL$(NC)"; \
+	$(PYTHON) scripts/run_slack_dev_smoke.py --url $$SERVICE_URL --verbose
+	@echo "$(GREEN)✅ Cloud Run smoke test completed!$(NC)"
+
+#################################
 # Deployment Operations (CICD-DEPT)
 #################################
 
@@ -497,4 +529,5 @@ deploy-help: ## Show deployment help and requirements
 .PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
 .PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
 .PHONY: live3-dev-smoke live3-dev-smoke-verbose live3-dev-smoke-all
+.PHONY: slack-dev-smoke slack-dev-smoke-verbose slack-dev-smoke-health slack-dev-smoke-cloud
 .PHONY: deploy-dev deploy-staging deploy-prod deploy-status deploy-logs deploy-list deploy-help
