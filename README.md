@@ -214,7 +214,7 @@ bobs-brain/
 
 ## ⚡️ Hard Mode Explained
 
-"Hard Mode" means we enforce strict rules that keep this agent system maintainable as it scales. Here's what that looks like:
+"Hard Mode" means we enforce strict rules that keep this agent system maintainable as it scales. This repository follows the **[6767 ADK/Agent Engine Specification](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md)** as its guiding architectural standard. Here's what that looks like:
 
 ### The 8 Rules (R1-R8)
 

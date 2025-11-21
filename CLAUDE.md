@@ -377,6 +377,45 @@ These rules are **enforced in CI** and violations will fail the build:
 - ✅ Required: `scripts/ci/check_nodrift.sh` runs first in CI
 - ❌ Blocks: Alternative frameworks, Runner in gateways, local credentials
 
+## ADK/Agent Engine Specification Compliance
+
+**Canonical Specification:** `000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md`
+
+This repository follows the 6767 ADK/Agent Engine Specification as its guiding architectural standard. All agent development, infrastructure changes, and CI/CD workflows must align with this spec.
+
+### For Future Claude Sessions
+
+When adding new agents or services to this repository:
+
+1. **Ensure compliance with the spec:**
+   - Read `000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` for current rules
+   - Follow R1-R8 Hard Mode rules strictly
+   - Implement department conventions (feature flags, safety defaults, etc.)
+
+2. **Update implementation mapping:**
+   - Add new implementation locations to `000-docs/121-DR-MAP-adk-spec-to-implementation-and-arv.md`
+   - Document file paths, line numbers, and ARV coverage
+   - Identify gaps in automated checks
+
+3. **Extend ARV checks if needed:**
+   - Update `scripts/check_arv_agents.py` for new agent patterns
+   - Update `scripts/check_arv_services.py` for new gateway services
+   - Update `scripts/check_arv_config.py` for new configuration defaults
+   - Add new ARV scripts if required (see mapping doc for planned scripts)
+
+4. **Run verification:**
+   ```bash
+   make check-arv-spec     # All spec compliance checks
+   make arv-gates          # Complete ARV verification
+   ```
+
+5. **Document changes:**
+   - Update AARs with alignment decisions
+   - Note any intentional deviations with justification
+   - Keep spec and mapping docs synchronized
+
+**Key Principle:** The spec, mapping, and ARV checks form a living system. When you change one (e.g., add a new agent), update all three to maintain alignment.
+
 ## Key Code Patterns
 
 ### Agent Implementation (agents/bob/agent.py)
