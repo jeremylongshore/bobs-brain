@@ -658,6 +658,24 @@ SLACK_BOT_VARS = [
         category="slack_bot",
         envs=["staging", "prod"],
     ),
+    # SLACK-ENDTOEND-DEV: Feature flag for Slack bot interaction
+    EnvVarSpec(
+        name="SLACK_BOB_ENABLED",
+        required=False,
+        default="false",
+        description="Enable Slack bot interaction (talk to Bob via @mentions) - S1",
+        category="slack_bot",
+        envs=["dev", "staging", "prod"],
+    ),
+    EnvVarSpec(
+        name="A2A_GATEWAY_URL",
+        required=False,
+        default=None,
+        description="A2A gateway URL for Slack → Agent Engine routing - S2",
+        category="slack_bot",
+        envs=["dev", "staging", "prod"],
+        required_when="SLACK_BOB_ENABLED=true",
+    ),
     EnvVarSpec(
         name="SLACK_WEBHOOK_URL",
         required=False,
