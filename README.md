@@ -792,6 +792,27 @@ PUBLIC_URL=https://your-a2a-gateway.run.app
 
 See [.env.example](.env.example) for full template.
 
+### Slack Integration (Dev)
+
+Talk to Bob via @mentions in Slack (dev environment only):
+
+```bash
+# Enable Slack bot
+SLACK_BOB_ENABLED=true
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_SIGNING_SECRET=your-signing-secret
+A2A_GATEWAY_URL=https://a2a-gateway-xxx.run.app  # Preferred routing
+```
+
+**Quick Start:**
+1. Get credentials from [Slack API Apps](https://api.slack.com/apps) → bobs_brain (`A099YKLCM1N`)
+2. Set env vars in `.env` or GitHub Secrets
+3. Deploy: `gh workflow run deploy-slack-webhook.yml`
+4. Test: `make slack-dev-smoke`
+5. Mention in Slack: `@bobs_brain Hello!`
+
+**Full Guide:** See [000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md](000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md)
+
 ### Terraform Variables
 
 In `infra/terraform/envs/{env}.tfvars`:
