@@ -300,6 +300,26 @@ check-arv-engine-flags-verbose: ## Verbose ARV engine flags check with details
 	@$(PYTHON) scripts/check_arv_engine_flags.py --verbose
 	@echo ""
 
+check-arv-agents: ## Check agent structure and ADK compliance (R1 - SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)🤖 Checking Agent Structure and ADK Compliance (R1)...$(NC)"
+	@$(PYTHON) scripts/check_arv_agents.py
+	@echo ""
+
+check-arv-services: ## Check gateway separation and service compliance (R3 - SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)🚪 Checking Gateway Separation and Service Compliance (R3)...$(NC)"
+	@$(PYTHON) scripts/check_arv_services.py
+	@echo ""
+
+check-arv-config: ## Check configuration and feature flag defaults (SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)⚙️  Checking Configuration and Feature Flag Defaults...$(NC)"
+	@$(PYTHON) scripts/check_arv_config.py
+	@echo ""
+
+check-arv-spec: check-arv-agents check-arv-services check-arv-config ## Run all ADK spec compliance checks (R1, R3, config)
+	@echo "$(BLUE)📋 Running ADK Spec Compliance Checks...$(NC)"
+	@echo "$(GREEN)✅ All ADK spec checks passed!$(NC)"
+	@echo ""
+
 print-rag-config: ## Print current RAG configuration (dry-run)
 	@echo "$(BLUE)📋 Current RAG Configuration:$(NC)"
 	@$(PYTHON) scripts/print_rag_config.py
@@ -336,7 +356,7 @@ arv-department-verbose: ## Run ARV with detailed output
 arv-department-list: ## List all ARV checks
 	@$(PYTHON) scripts/run_arv_department.py --list
 
-arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags ## Run all ARV gates (RAG + minimum + engine flags)
+arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags check-arv-spec ## Run all ARV gates (RAG + minimum + engine flags + spec)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
 	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
 
