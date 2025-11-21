@@ -494,10 +494,207 @@ Phase 4 adds safety rails without blocking development:
 - Makefile targets enforce ARV before execution
 
 **What's Next** (Phase 5+):
-- Staging deployment workflow with stricter gates
-- Production deployment workflow with approval requirements
-- Automatic dev deploy on merge (with comprehensive ARV)
-- Integration with Agent Engine deployment status checks
+- ~~Staging deployment workflow with stricter gates~~ (Phase 6)
+- ~~Production deployment workflow with approval requirements~~ (Phase 6)
+- ~~Automatic dev deploy on merge (with comprehensive ARV)~~ (Phase 6)
+- ~~Integration with Agent Engine deployment status checks~~ ✅ **Phase 5 - Smoke Test**
+
+---
+
+## First Dev Deploy + Smoke Test (Phase 5)
+
+Phase 5 establishes the **smoke test validation** for deployed Agent Engine instances and prepares for the first real dev deployment.
+
+### Smoke Test Script
+
+**Location**: `scripts/smoke_test_bob_agent_engine_dev.py`
+
+**Purpose**: Validates that the inline-deployed Bob agent on Vertex AI Agent Engine is responding correctly to basic health check queries.
+
+**Requirements**:
+- Run AFTER a successful dev deployment via inline source
+- Requires `BOB_AGENT_ENGINE_NAME_DEV` environment variable set to full Agent Engine resource name
+- Uses Vertex AI Agent Engine SDK for connectivity
+
+**Environment Variables**:
+```bash
+export GCP_PROJECT_ID=your-project-id
+export GCP_LOCATION=us-central1  # Optional, defaults to us-central1
+export BOB_AGENT_ENGINE_NAME_DEV=projects/YOUR_PROJECT/locations/us-central1/reasoningEngines/YOUR_AGENT_ID
+```
+
+**Smoke Test Flow**:
+1. **Connect** to Agent Engine instance using resource name
+2. **Send** simple health check query:
+   ```
+   Health check: respond with a short JSON object {"status":"ok","agent":"bob"}.
+   ```
+3. **Validate** response contains expected markers ("status", "ok")
+4. **Report** PASS or FAIL with troubleshooting hints
+
+**Exit Codes**:
+- `0` - Smoke test passed (agent responding correctly)
+- `1` - Smoke test failed (connection error, unexpected response, or exception)
+
+**Usage**:
+```bash
+# Direct execution
+python scripts/smoke_test_bob_agent_engine_dev.py
+
+# Via Makefile (recommended)
+make smoke-bob-agent-engine-dev
+```
+
+**Expected Output** (Success):
+```
+[SMOKE] Starting Bob Agent Engine dev smoke test...
+[SMOKE] Configuration:
+[SMOKE]   Project: your-project-id
+[SMOKE]   Location: us-central1
+[SMOKE]   Agent: projects/.../reasoningEngines/...
+[SMOKE] Connecting to Agent Engine instance...
+[SMOKE] Sending test query...
+[SMOKE] Response received:
+[SMOKE]   {"status":"ok","agent":"bob"}...
+[SMOKE] ✅ Health check markers found in response
+[SMOKE] RESULT: PASS
+```
+
+### Dev Deployment Flow
+
+**Two Options for Dev Deployment**:
+
+#### Option A: GitHub Actions (Recommended)
+
+**Workflow**: `.github/workflows/agent-engine-inline-dev-deploy.yml`
+
+**Trigger**: Manual `workflow_dispatch`
+
+**Steps**:
+1. Navigate to Actions tab in GitHub
+2. Select "Agent Engine Inline Deploy - Dev (Manual)" workflow
+3. Click "Run workflow"
+4. Provide inputs:
+   - `agent_name`: bob (or other agent)
+   - `gcp_project_id`: Your GCP project ID (e.g., `205354194989`)
+   - `gcp_location`: us-central1 (default)
+5. Monitor workflow execution
+6. Copy Agent Engine resource name from workflow output
+7. Set `BOB_AGENT_ENGINE_NAME_DEV` environment variable
+8. Run smoke test: `make smoke-bob-agent-engine-dev`
+
+**Workflow Guards**:
+- ARV check runs first (must pass)
+- Dry-run validation as pre-flight check
+- Uses Workload Identity Federation for authentication
+- Dev environment only (not staging/prod)
+
+#### Option B: Local Execution
+
+**Prerequisites**:
+- GCP credentials configured (`gcloud auth application-default login`)
+- Environment variables set (GCP_PROJECT_ID, GCP_LOCATION)
+- Full Python dependencies installed (`pip install -r requirements.txt`)
+
+**Commands**:
+```bash
+# Run ARV check first
+make check-inline-deploy-ready
+
+# Run dry-run validation
+make deploy-inline-dry-run
+
+# Execute dev deployment (5-second warning)
+make deploy-inline-dev-execute
+```
+
+**After Deployment**:
+1. Copy Agent Engine resource name from deployment output
+2. Set environment variable:
+   ```bash
+   export BOB_AGENT_ENGINE_NAME_DEV=projects/.../locations/.../reasoningEngines/...
+   ```
+3. Run smoke test:
+   ```bash
+   make smoke-bob-agent-engine-dev
+   ```
+
+### Post-Deployment Validation
+
+**Checklist**:
+- [ ] Deployment succeeded (Agent Engine resource created)
+- [ ] Agent resource name captured
+- [ ] `BOB_AGENT_ENGINE_NAME_DEV` environment variable set
+- [ ] Smoke test executed: `make smoke-bob-agent-engine-dev`
+- [ ] Smoke test result: PASS
+- [ ] Agent Engine console shows agent as active
+- [ ] Logs in Cloud Logging show no errors
+
+**Google Cloud Console Verification**:
+1. Navigate to Vertex AI Agent Engine:
+   ```
+   https://console.cloud.google.com/vertex-ai/agent-engine
+   ```
+2. Verify Bob agent appears in list
+3. Check agent status is "Active"
+4. Review recent logs for errors
+
+### Troubleshooting
+
+**Smoke Test Failures**:
+
+1. **"Missing required environment variable: BOB_AGENT_ENGINE_NAME_DEV"**
+   - Cause: Environment variable not set
+   - Fix: Export variable with full Agent Engine resource name
+
+2. **"Failed to connect to agent"**
+   - Cause: Invalid resource name or agent not deployed
+   - Fix: Verify agent exists in Agent Engine console, check resource name format
+
+3. **"Expected markers not found in response"**
+   - Cause: Agent deployed but not responding correctly
+   - Fix: Check agent logs, verify entrypoint configuration, test with simpler prompt
+
+4. **"Permission denied"**
+   - Cause: GCP credentials missing or insufficient permissions
+   - Fix: Run `gcloud auth application-default login`, verify IAM roles
+
+### Phase 5 Deliverables
+
+Phase 5 adds smoke test validation and dev deployment documentation:
+
+- ✅ **Smoke Test Script**: Validates deployed Agent Engine instances
+- ✅ **Makefile Integration**: `smoke-bob-agent-engine-dev` target
+- ✅ **Dev Deployment Docs**: Two-path deployment guide (GitHub Actions + local)
+- ✅ **Post-Deployment Checklist**: Validation steps after deployment
+- ✅ **Troubleshooting Guide**: Common issues and fixes
+
+**What Changed**:
+- Smoke test available for post-deployment validation
+- Clear documentation for both deployment paths
+- Integration with existing ARV and dry-run workflows
+
+**What's Next** (Phase 6):
+- Execute first real dev deployment
+- Run smoke test and validate
+- Complete AAR with actual deployment results
+- Prepare for merge to main
+
+### References
+
+**Scripts**:
+- Smoke Test: `scripts/smoke_test_bob_agent_engine_dev.py`
+- Deploy: `agents/agent_engine/deploy_inline_source.py`
+- ARV Check: `scripts/check_inline_deploy_ready.py`
+
+**Workflows**:
+- Manual Dev Deploy: `.github/workflows/agent-engine-inline-dev-deploy.yml`
+- Dry-Run Validation: `.github/workflows/agent-engine-inline-dryrun.yml`
+
+**External References**:
+- Tutorial: `000-docs/001-usermanual/tutorial_get_started_with_agent_engine_terraform_deployment.ipynb`
+- Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
+- Vertex AI Agent Engine Docs: https://cloud.google.com/vertex-ai/docs/agent-engine
 
 ---
 
