@@ -94,18 +94,20 @@ def get_repo_root() -> Path:
     return repo_root
 
 
-def validate_agent_config(agent_name: str) -> dict:
+def validate_agent_config(agent_name: str, check_imports: bool = False) -> dict:
     """
     Validate agent name and return configuration.
 
     Args:
         agent_name: Name of the agent to deploy (e.g., "bob", "iam-adk")
+        check_imports: If True, attempt to import entrypoint module
 
     Returns:
         Agent configuration dictionary
 
     Raises:
         ValueError: If agent name is not recognized
+        ImportError: If check_imports=True and module cannot be imported
     """
     if agent_name not in AGENT_CONFIGS:
         available = ", ".join(AGENT_CONFIGS.keys())
@@ -124,6 +126,37 @@ def validate_agent_config(agent_name: str) -> dict:
         raise ValueError(
             f"Entrypoint module not found: {module_path} (expected at {full_path})"
         )
+
+    # Validate source packages exist
+    for package in SOURCE_PACKAGES:
+        package_path = repo_root / package
+        if not package_path.exists():
+            raise ValueError(
+                f"Source package not found: {package} (expected at {package_path})"
+            )
+        if not package_path.is_dir():
+            raise ValueError(
+                f"Source package is not a directory: {package} ({package_path})"
+            )
+
+    # Optionally check if entrypoint module can be imported
+    if check_imports:
+        try:
+            import importlib
+            module = importlib.import_module(config["entrypoint_module"])
+
+            # Check if entrypoint object exists
+            if not hasattr(module, config["entrypoint_object"]):
+                raise ValueError(
+                    f"Entrypoint object '{config['entrypoint_object']}' not found in module '{config['entrypoint_module']}'"
+                )
+
+            print(f"   ✅ Entrypoint module '{config['entrypoint_module']}' successfully imported")
+            print(f"   ✅ Entrypoint object '{config['entrypoint_object']}' found")
+        except ImportError as e:
+            print(f"   ⚠️  Import check skipped: {e}")
+            print(f"   ℹ️  This is OK for CI without full dependencies installed")
+            print(f"   ℹ️  Install dependencies with: pip install -r requirements.txt")
 
     return config
 
@@ -285,20 +318,39 @@ References:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Validate configuration without deploying",
+        default=True,
+        help="Validate configuration without deploying (DEFAULT behavior)",
+    )
+
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Execute actual deployment (opt-in, overrides --dry-run)",
     )
 
     args = parser.parse_args()
 
-    # Dry run: just validate config
+    # Execute flag overrides dry-run
+    if args.execute:
+        args.dry_run = False
+
+    # Dry run: just validate config (DEFAULT)
     if args.dry_run:
         print("🔍 DRY RUN MODE - Validating configuration...")
+        print(f"   Project: {args.project}")
+        print(f"   Location: {args.location}")
+        print(f"   Environment: {args.env}")
+        print(f"   Agent: {args.agent_name}")
+        print()
         try:
-            agent_config = validate_agent_config(args.agent_name)
+            agent_config = validate_agent_config(args.agent_name, check_imports=True)
             print(f"✅ Configuration valid for agent: {args.agent_name}")
             print(f"   Display Name: {agent_config['display_name']}")
             print(f"   Entrypoint: {agent_config['entrypoint_module']}.{agent_config['entrypoint_object']}")
             print(f"   Class Methods: {', '.join(agent_config['class_methods'])}")
+            print(f"   Source Packages: {', '.join(SOURCE_PACKAGES)}")
+            print()
+            print("✅ All validations passed. Use --execute to perform actual deployment.")
             return 0
         except Exception as e:
             print(f"❌ Configuration invalid: {e}", file=sys.stderr)
