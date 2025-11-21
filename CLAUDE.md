@@ -146,36 +146,58 @@ Use conventional commits format:
 
 ## 5. Where to Find the Deep Details
 
-**All detailed documentation lives in `000-docs/`**
+**All detailed documentation lives in `000-docs/`** - DON'T overcrowd this file.
 
-Key things to know:
-- **6767-prefixed docs** = SOP (Standard Operating Procedures) - canonical standards
-- **Archive**: `claude-working-notes-archive.md` - Historical verbose content
-- **Search first**: Use `ls 000-docs/` or `grep` to find what you need
+### Key SOP Documents (6767-series)
 
-When you need deep details on architecture, patterns, or standards - look in `000-docs/` first.
+All **6767-prefixed docs act as Standard Operating Procedures (SOPs)** - these are canonical standards:
+
+- **6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md** - Hard Mode rules (R1-R8)
+- **6774-DR-STND-adk-lazy-loading-app-pattern.md** - Lazy-loading App pattern
+- **6775-DR-STND-inline-source-deployment-for-vertex-agent-engine.md** - Inline source deployment
+- **6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md** - Prompt design contracts
+
+### Other Key References
+
+- **127-DR-STND-agent-engine-entrypoints.md** - Canonical entrypoints for inline deployment
+- **126-AA-AUDT-appaudit-devops-playbook.md** - Complete DevOps onboarding (15k words)
+- **claude-working-notes-archive.md** - Historical verbose content
+
+### How to Find What You Need
+
+```bash
+# List all SOPs (6767-series)
+ls 000-docs/6767*.md
+
+# List all standards
+ls 000-docs/*-DR-STND-*.md
+
+# Search for keyword
+grep -r "inline source" 000-docs/
+
+# Find doc by number
+ls 000-docs/127-*
+```
+
+**Rule**: When you need detailed info, **search `000-docs/` first** - don't bloat CLAUDE.md.
 
 ---
 
 ## 6. Changelog / Maintenance
 
-**Last Substantial Refresh:** 2025-11-21
+**Last Update:** 2025-11-21
 
-**Change:** Slimmed CLAUDE.md from 42,237 chars to < 8,000 chars by:
-- Moving verbose content to `000-docs/claude-working-notes-archive.md`
-- Keeping focused "how to work with Claude" guidance
-- Adding clear pointers to key `000-docs/` standards
+**Recent Changes:**
+- Added 127-DR-STND-agent-engine-entrypoints.md (canonical entrypoints reference)
+- Updated Section 5 to emphasize 6767-series as SOPs
+- Added clear search commands for finding docs in 000-docs/
 
 **Maintenance Policy:**
-- If CLAUDE.md gets bloated again, move excess content to:
-  - `000-docs/claude-working-notes-archive.md` (scratchpad, historical)
-  - Specific `000-docs/` files (if content belongs in a standard/guide)
-- CLAUDE.md should remain a **quick start + pointer doc**, not an everything-doc
-
-**Future Updates:**
-- Add links as new canonical docs (6767-series) are created
-- Update architecture section when major versions change
-- Keep this under ~8k characters for performance
+- **DON'T overcrowd CLAUDE.md** - it's a pointer doc, not a knowledge base
+- All detailed docs go in `000-docs/` following NNN-CC-ABCD naming
+- 6767-series docs = SOPs (Standard Operating Procedures)
+- CLAUDE.md should remain < 8k chars for performance
+- When adding new standards, update Section 5 with pointer, not full content
 
 ---
 
