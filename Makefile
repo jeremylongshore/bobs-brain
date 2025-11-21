@@ -96,6 +96,19 @@ type-check: ## Run type checking with mypy
 	@echo "$(GREEN)✅ Type check completed!$(NC)"
 
 #################################
+# A2A Contract Validation
+#################################
+
+check-a2a-contracts: ## Validate all AgentCard JSON files for A2A protocol compliance
+	@echo "$(BLUE)🔍 Validating A2A contracts...$(NC)"
+	$(PYTHON) scripts/check_a2a_contracts.py --all
+	@echo "$(GREEN)✅ A2A contract validation passed!$(NC)"
+
+check-a2a-single: ## Validate a single AgentCard (usage: make check-a2a-single CARD=path/to/agent-card.json)
+	@echo "$(BLUE)🔍 Validating AgentCard: $(CARD)$(NC)"
+	$(PYTHON) scripts/check_a2a_contracts.py $(CARD)
+
+#################################
 # Testing
 #################################
 
