@@ -350,9 +350,154 @@ Phase 3 is **validation only**:
 - ❌ Does NOT wire into production CI/CD yet
 
 **Next Phases**:
-- **Phase 4**: ARV-style quality gates
-- **Phase 5**: Real-but-safe dev deploy path
+- ~~**Phase 4**: ARV-style quality gates~~ ✅ **COMPLETE**
+- **Phase 5**: Real-but-safe dev deploy path (partial - manual workflow added)
 - **Phase 6**: Staging/prod deploy workflows
+
+---
+
+## ARV Gate + Dev Deploy (Phase 4)
+
+Phase 4 adds **Agent Readiness Verification (ARV)** checks and a manual dev deployment workflow with safety gates.
+
+### ARV Check Script
+
+**Location**: `scripts/check_inline_deploy_ready.py`
+
+**Purpose**: Validates readiness for inline source deployment before any execution.
+
+**Checks Performed**:
+
+1. **Environment Variables**:
+   - `GCP_PROJECT_ID` or `PROJECT_ID` is set
+   - `GCP_LOCATION` or `LOCATION` is set
+   - Placeholder projects only allowed in dev environment
+
+2. **Source Packages**:
+   - All source packages exist (`agents/`)
+   - Packages are directories under repo root
+
+3. **Agent Entrypoint**:
+   - Agent name exists in configuration
+   - Entrypoint module file exists
+   - Entrypoint object can be imported (graceful fallback for missing deps)
+
+4. **Environment Safety Rules**:
+   - **dev**: Least restrictive, allows placeholder project
+   - **staging**: Requires real project ID
+   - **prod**: Highest restrictions, requires approval
+
+**Exit Codes**:
+- `0` - All checks passed, ready for deployment
+- `1` - Configuration error or missing requirements
+- `2` - Safety violation
+
+**Usage**:
+```bash
+# Check Bob for dev deployment
+python scripts/check_inline_deploy_ready.py --agent-name bob --env dev
+
+# Via Makefile
+make check-inline-deploy-ready
+
+# With environment variables
+export AGENT_NAME=bob
+export ENV=dev
+export GCP_PROJECT_ID=my-project
+export GCP_LOCATION=us-central1
+python scripts/check_inline_deploy_ready.py
+```
+
+### Makefile Integration
+
+**Updated Targets** (Phase 4):
+
+```makefile
+# ARV check target (new)
+check-inline-deploy-ready:
+    # Runs ARV validation
+    # Exit codes: 0 (OK), 1 (misconfig), 2 (safety violation)
+
+# Execute targets now include ARV check as prerequisite
+deploy-inline-dev-execute: check-inline-deploy-ready
+    # ARV check must pass before deployment can proceed
+    # 5-second warning with Ctrl+C option
+    # Executes with --execute flag
+
+deploy-inline-staging-execute: check-inline-deploy-ready
+    # ARV check enforced for staging deployments
+```
+
+**ARV Integration**:
+- All `*-execute` targets now depend on `check-inline-deploy-ready`
+- If ARV check fails, deployment is blocked immediately
+- No deployment command is executed if ARV returns non-zero exit code
+
+### CI Workflow Updates
+
+**Dry-Run Workflow** (`.github/workflows/agent-engine-inline-dryrun.yml`):
+- Added ARV check step before dry-run validation
+- Runs on: `workflow_dispatch`, `pull_request`
+- Validates configuration without deploying
+- **NEW**: ARV gate ensures only valid configurations are tested
+
+**Manual Dev Deploy Workflow** (`.github/workflows/agent-engine-inline-dev-deploy.yml`):
+- **NEW in Phase 4**: Manual deployment to dev environment
+- Trigger: `workflow_dispatch` only (requires manual approval)
+- Steps:
+  1. **ARV checks** - Must pass before proceeding
+  2. **Dry-run validation** - Pre-flight check
+  3. **Real deployment** - Executes with `--execute` flag
+- Uses Workload Identity Federation for GCP authentication
+- Only deploys to **dev** environment (not staging/prod)
+
+**Workflow Inputs**:
+```yaml
+agent_name:
+  description: 'Agent to deploy (bob, iam-senior-adk-devops-lead, iam-adk)'
+  type: choice
+  required: true
+
+gcp_project_id:
+  description: 'GCP Project ID for deployment'
+  type: string
+  required: true
+
+gcp_location:
+  description: 'GCP region for deployment'
+  default: 'us-central1'
+```
+
+### Environment Safety Model
+
+| Environment | Placeholder Project | Manual Approval | Description |
+|-------------|---------------------|-----------------|-------------|
+| **dev** | ✅ Allowed | ❌ Not required | Least restrictive, for experimentation |
+| **staging** | ❌ Forbidden | ❌ Not required | Real project required, testing ground |
+| **prod** | ❌ Forbidden | ✅ Required | Highest restrictions, manual workflow_dispatch only |
+
+### Phase 4 Deliverables
+
+Phase 4 adds safety rails without blocking development:
+
+- ✅ **ARV Check Script**: Comprehensive validation before deployment
+- ✅ **Makefile Integration**: ARV as prerequisite for execute targets
+- ✅ **CI ARV Gate**: Dry-run workflow includes ARV check
+- ✅ **Manual Dev Deploy**: Safe manual deployment workflow for dev
+- ❌ **Staging/Prod Deploy**: Not in scope (Phase 6)
+- ❌ **Automatic Dev Deploy**: Not in scope (requires additional guards)
+
+**What Changed**:
+- All deployment paths now gated by ARV checks
+- Manual dev deployment available via GitHub Actions
+- Dry-run workflow validates ARV compliance
+- Makefile targets enforce ARV before execution
+
+**What's Next** (Phase 5+):
+- Staging deployment workflow with stricter gates
+- Production deployment workflow with approval requirements
+- Automatic dev deploy on merge (with comprehensive ARV)
+- Integration with Agent Engine deployment status checks
 
 ---
 
