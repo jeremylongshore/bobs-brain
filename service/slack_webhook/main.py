@@ -38,6 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Environment configuration
+SLACK_BOB_ENABLED = os.getenv("SLACK_BOB_ENABLED", "false").lower() == "true"
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -45,46 +46,78 @@ LOCATION = os.getenv("LOCATION")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 PORT = int(os.getenv("PORT", "8080"))
 
-# Agent Engine REST API endpoint
-AGENT_ENGINE_URL = os.getenv(
-    "AGENT_ENGINE_URL",
-    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
-)
+# A2A Gateway URL (SLACK-ENDTOEND-DEV: S2)
+# Preferred routing: Slack → a2a_gateway → Agent Engine
+A2A_GATEWAY_URL = os.getenv("A2A_GATEWAY_URL")
 
-# Phase AE2: SWE Pipeline Mode Configuration
-# Controls how SWE pipeline commands are routed
-SLACK_SWE_PIPELINE_MODE = os.getenv("SLACK_SWE_PIPELINE_MODE", "local").lower()
-# Options:
-#   - "local" (default): Forward directly to Agent Engine (current behavior)
-#   - "engine": Call a2a_gateway for SWE pipeline orchestration (Phase AE3)
-
-# A2A Gateway URL (for future Option B in Phase AE3)
-A2A_GATEWAY_URL = os.getenv(
-    "A2A_GATEWAY_URL",
-    "https://a2a-gateway-SERVICE_HASH-uc.a.run.app"  # Placeholder
-)
+# Agent Engine REST API endpoint (fallback/legacy)
+AGENT_ENGINE_URL = None
+if LOCATION and PROJECT_ID and AGENT_ENGINE_ID:
+    AGENT_ENGINE_URL = os.getenv(
+        "AGENT_ENGINE_URL",
+        f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
+    )
 
 # Validate required environment variables
-if not all(
-    [SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, PROJECT_ID, LOCATION, AGENT_ENGINE_ID]
-):
-    raise ValueError("Missing required environment variables")
+def validate_config() -> tuple[bool, list[str]]:
+    """
+    Validate Slack bot configuration.
+
+    Returns:
+        (is_valid, missing_vars): Tuple of validation status and list of missing variables
+    """
+    if not SLACK_BOB_ENABLED:
+        logger.info("Slack bot is DISABLED (SLACK_BOB_ENABLED=false)")
+        return True, []  # Valid config when disabled
+
+    missing = []
+
+    # Required for Slack signature verification and API calls
+    if not SLACK_BOT_TOKEN:
+        missing.append("SLACK_BOT_TOKEN")
+    if not SLACK_SIGNING_SECRET:
+        missing.append("SLACK_SIGNING_SECRET")
+
+    # Required for routing to Agent Engine
+    # Option A: Via a2a_gateway (preferred)
+    # Option B: Direct to Agent Engine (legacy)
+    has_gateway = bool(A2A_GATEWAY_URL)
+    has_direct = all([PROJECT_ID, LOCATION, AGENT_ENGINE_ID])
+
+    if not has_gateway and not has_direct:
+        missing.append("A2A_GATEWAY_URL or (PROJECT_ID + LOCATION + AGENT_ENGINE_ID)")
+
+    if missing:
+        logger.error(
+            f"Slack bot ENABLED but missing required variables: {', '.join(missing)}"
+        )
+        return False, missing
+
+    logger.info(
+        f"Slack bot ENABLED and configured "
+        f"(routing: {'a2a_gateway' if has_gateway else 'direct Agent Engine'})"
+    )
+    return True, []
+
+config_valid, missing_vars = validate_config()
 
 # Create FastAPI app
 app = FastAPI(
     title="Bob's Brain Slack Webhook",
     description="Slack event handler proxying to Vertex AI Agent Engine",
-    version="0.6.0",
+    version="0.7.0",  # SLACK-ENDTOEND-DEV
 )
 
-# Slack API client
-slack_client = httpx.AsyncClient(
-    base_url="https://slack.com/api",
-    headers={
-        "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-        "Content-Type": "application/json",
-    },
-)
+# Slack API client (only if bot is enabled and configured)
+slack_client = None
+if SLACK_BOB_ENABLED and SLACK_BOT_TOKEN:
+    slack_client = httpx.AsyncClient(
+        base_url="https://slack.com/api",
+        headers={
+            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            "Content-Type": "application/json",
+        },
+    )
 
 
 def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
@@ -345,18 +378,33 @@ async def post_slack_message(channel: str, text: str, thread_ts: str = None) -> 
 
 
 @app.get("/health")
-async def health() -> Dict[str, str]:
+async def health() -> Dict[str, Any]:
     """
-    Health check endpoint.
+    Health check endpoint with configuration status.
 
     Returns:
-        dict: Service health status
+        dict: Service health status and configuration
     """
+    # Determine routing method
+    routing = "disabled"
+    if SLACK_BOB_ENABLED:
+        if A2A_GATEWAY_URL:
+            routing = "a2a_gateway"
+        elif AGENT_ENGINE_URL:
+            routing = "direct_agent_engine"
+        else:
+            routing = "misconfigured"
+
     return {
-        "status": "healthy",
+        "status": "healthy" if (not SLACK_BOB_ENABLED or config_valid) else "degraded",
         "service": "slack-webhook",
-        "version": "0.6.0",
-        "agent_engine_url": AGENT_ENGINE_URL,
+        "version": "0.7.0",
+        "slack_bot_enabled": SLACK_BOB_ENABLED,
+        "config_valid": config_valid,
+        "missing_vars": missing_vars if not config_valid else [],
+        "routing": routing,
+        "a2a_gateway_url": A2A_GATEWAY_URL if A2A_GATEWAY_URL else None,
+        "agent_engine_url": AGENT_ENGINE_URL if AGENT_ENGINE_URL and not A2A_GATEWAY_URL else None,
     }
 
 
