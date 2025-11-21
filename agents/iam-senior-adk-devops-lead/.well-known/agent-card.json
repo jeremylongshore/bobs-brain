@@ -1,0 +1,207 @@
+{
+  "name": "iam-senior-adk-devops-lead",
+  "description": "Department foreman that orchestrates iam-* specialist agents for ADK/Vertex AI engineering workflows. Delegates tasks to workers, manages sequential/parallel execution, aggregates results, and validates outputs before reporting to Bob.",
+  "version": "0.1.0",
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.1.0",
+  "tags": ["foreman", "orchestration", "adk", "iam-department"],
+  "authentication": {
+    "required": true,
+    "methods": ["spiffe_svid", "gcp_service_account"],
+    "authorization": {
+      "allowed_callers": [
+        "spiffe://intent.solutions/agent/bobs-brain/*/*",
+        "spiffe://intent.solutions/agent/bob/*/*"
+      ]
+    }
+  },
+  "skills": [
+    {
+      "skill_id": "iam.orchestrate_workflow",
+      "name": "Orchestrate SWE Workflow",
+      "description": "Coordinate iam-* specialists to execute complete SWE pipeline: analysis → issue creation → fix planning → implementation → QA → documentation. Manages task delegation, result aggregation, and quality control.",
+      "input_schema": {
+        "type": "object",
+        "required": ["task_description", "repo_hint"],
+        "properties": {
+          "repo_hint": {
+            "type": "string",
+            "description": "Repository path or identifier (e.g., '/path/to/bobs-brain' or 'bobs-brain')"
+          },
+          "task_description": {
+            "type": "string",
+            "description": "High-level task description (e.g., 'audit ADK patterns', 'fix R1-R8 compliance')"
+          },
+          "pipeline_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional correlation ID for tracing (auto-generated if not provided)"
+          },
+          "env": {
+            "type": "string",
+            "enum": ["dev", "staging", "prod"],
+            "default": "dev",
+            "description": "Target environment for pipeline execution"
+          },
+          "max_issues_to_fix": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 2,
+            "description": "Maximum number of issues to attempt fixing in this run"
+          },
+          "include_cleanup": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to run cleanup phase (tech debt identification)"
+          },
+          "include_indexing": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to update knowledge index with pipeline learnings"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["preview", "dry-run", "create"],
+            "default": "preview",
+            "description": "Execution mode: preview (read-only), dry-run (log actions), create (apply changes)"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["pipeline_run_id", "status", "results"],
+        "properties": {
+          "pipeline_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation ID for this pipeline run"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "partial", "failed"],
+            "description": "Overall pipeline execution status"
+          },
+          "plan": {
+            "type": "object",
+            "description": "Execution plan showing delegation pattern used",
+            "properties": {
+              "pattern": {
+                "type": "string",
+                "enum": ["single", "sequential", "parallel", "mixed"]
+              },
+              "workflow": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "specialist": {"type": "string"},
+                    "skill": {"type": "string"},
+                    "order": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "results": {
+            "type": "object",
+            "description": "Aggregated results from all specialists",
+            "properties": {
+              "total_issues_found": {"type": "integer"},
+              "issues_fixed": {"type": "integer"},
+              "issues_documented": {"type": "integer"},
+              "pipeline_duration_seconds": {"type": "number"}
+            }
+          },
+          "recommendations": {
+            "type": "array",
+            "description": "High-level recommendations for Bob",
+            "items": {"type": "string"}
+          },
+          "issues": {
+            "type": "array",
+            "description": "Issues encountered during pipeline execution (not repo issues)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "specialist": {"type": "string"},
+                "error": {"type": "string"},
+                "retry_attempted": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam.validate_specialist_output",
+      "name": "Validate Specialist Output",
+      "description": "Quality control check on worker agent outputs before aggregation. Validates output format, schema compliance, and logical consistency.",
+      "input_schema": {
+        "type": "object",
+        "required": ["specialist_name", "skill_id", "output_data"],
+        "properties": {
+          "specialist_name": {
+            "type": "string",
+            "description": "Name of the specialist agent (e.g., 'iam-adk', 'iam-issue')"
+          },
+          "skill_id": {
+            "type": "string",
+            "description": "Skill that produced this output (e.g., 'iam.check_adk_compliance')"
+          },
+          "output_data": {
+            "type": "object",
+            "description": "Raw JSON output from specialist to validate"
+          },
+          "expected_schema_ref": {
+            "type": "string",
+            "description": "Optional reference to expected output schema for validation"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["valid", "specialist_name"],
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the output passes validation"
+          },
+          "specialist_name": {
+            "type": "string",
+            "description": "Echo of specialist name for correlation"
+          },
+          "validation_errors": {
+            "type": "array",
+            "description": "List of validation errors found (empty if valid)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "error_type": {
+                  "type": "string",
+                  "enum": ["missing_field", "invalid_type", "schema_violation", "logical_error"]
+                },
+                "field": {"type": "string"},
+                "message": {"type": "string"}
+              }
+            }
+          },
+          "recommendations": {
+            "type": "array",
+            "description": "Suggestions for specialist improvement",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    }
+  ],
+  "dependencies": {
+    "runtime": "vertex-ai-agent-engine",
+    "framework": "google-adk",
+    "framework_version": ">=0.2.0",
+    "model": "gemini-2.0-flash-exp"
+  },
+  "contact": {
+    "maintainer": "department-adk-iam",
+    "support_url": "https://github.com/jeremylongshore/bobs-brain/issues"
+  }
+}

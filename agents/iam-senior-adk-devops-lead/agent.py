@@ -31,6 +31,11 @@ AGENT_SPIFFE_ID = os.getenv(
     "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.1.0"
 )
 
+# AgentCard location (A2A protocol)
+AGENTCARD_PATH = os.path.join(
+    os.path.dirname(__file__), ".well-known", "agent-card.json"
+)
+
 # Validate required environment variables
 if not PROJECT_ID:
     raise ValueError("PROJECT_ID environment variable is required")
