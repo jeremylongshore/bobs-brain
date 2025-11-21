@@ -555,26 +555,33 @@ ORG_STORAGE_WRITE_ENABLED=false          # Must opt-in
 
 ---
 
-## VI. Implementation Mapping (Placeholder)
+## VI. Implementation Mapping
 
-**NOTE:** This section will be populated in **S2 (Mapping Phase)** of SPEC-ALIGN-ARV-EXPANSION.
+**IMPORTANT:** For concrete mappings from this specification to actual code, ARV scripts, and test coverage, see:
 
-For each rule above, we will document:
-- **Implementation Location(s)**: Where in the repo this rule is implemented
-- **ARV Check Script**: Which script enforces this rule
-- **Test Coverage**: Which tests validate this rule
-- **Manual Review Required**: Rules that can't be fully automated
+**→ `000-docs/121-DR-MAP-adk-spec-to-implementation-and-arv.md`**
 
-**See:** `000-docs/121-DR-MAP-adk-spec-to-implementation-and-arv.md` (to be created in S2)
+That mapping document provides:
+- **Implementation Locations**: Where each rule lives in the repo (agents/, service/, infra/, etc.)
+- **ARV Check Scripts**: Which scripts enforce each rule (existing and planned)
+- **Test Coverage**: Which tests validate each rule (existing and planned)
+- **Status Summary**: Coverage overview and gap analysis
+- **Priority Guidance**: What to implement first in S3
 
-**Example Format:**
-```markdown
-| Rule | Implementation | ARV Script | Test Coverage |
-|------|---------------|------------|---------------|
-| R1   | agents/*/agent.py | check_arv_agents.py | tests/test_arv_agents.py |
-| R3   | service/* | check_arv_services.py | tests/test_arv_services.py |
-| R6   | 000-docs/* | check_arv_docs.py | tests/test_arv_docs.py |
-```
+**Quick Reference - Key Implementation Files:**
+
+| Rule | Implementation Location | ARV Script | Status |
+|------|------------------------|------------|--------|
+| R1: ADK-Only | `agents/*/agent.py` | `check_arv_agents.py` (TODO) | ⚠️ Partial |
+| R2: Agent Engine | `infra/terraform/agent_engine.tf` | `check_arv_engine_flags.py` | ✅ |
+| R3: Gateway Sep | `service/*/main.py` | `check_arv_services.py` (TODO) | ⚠️ Partial |
+| R4: CI-Only | `.github/workflows/` | Manual review (WIF enforces) | ✅ |
+| R5: Dual Memory | `agents/bob/agent.py` | `check_arv_memory.py` (TODO) | ⚠️ |
+| R6: Single Docs | `000-docs/` | `check_arv_docs.py` (TODO) | ✅ |
+| R7: SPIFFE ID | `agents/bob/a2a_card.py` | `check_arv_spiffe.py` (TODO) | ⚠️ Partial |
+| R8: Drift Check | `scripts/ci/check_nodrift.sh` | ✅ Active | ✅ |
+
+**Note:** See full mapping doc for detailed evidence, what to check, and priority guidance.
 
 ---
 
