@@ -418,29 +418,111 @@ When adding new agents or services to this repository:
 
 ## Key Code Patterns
 
-### Agent Implementation (agents/bob/agent.py)
+### Agent Implementation - Lazy-Loading App Pattern (6774)
+
+**All new agents MUST follow the lazy-loading App pattern** for Agent Engine compatibility and optimal cold start performance. See `000-docs/6774-DR-STND-adk-lazy-loading-app-pattern.md` for complete details.
+
+#### Required Pattern (agents/iam_adk/agent.py - template)
 ```python
 from google.adk.agents import LlmAgent
-from google.adk import Runner
+from google.adk import App
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
+import os
+
+# ✅ GOOD: Config reads (cheap, no validation yet)
+PROJECT_ID = os.getenv("PROJECT_ID")
+LOCATION = os.getenv("LOCATION", "us-central1")
+AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
 def auto_save_session_to_memory(ctx):
     """After-agent callback for R5 compliance"""
     # Auto-save session to Memory Bank
 
-def get_agent() -> LlmAgent:
-    return LlmAgent(
+def create_agent() -> LlmAgent:
+    """
+    Create and configure the LlmAgent.
+
+    This function is called lazily by create_app() on first use.
+    Do NOT call this at module import time.
+
+    Enforces:
+    - R1: Uses google-adk LlmAgent
+    - R5: Configures after_agent_callback for memory persistence
+    - R7: Includes SPIFFE ID in agent description
+    """
+    # ✅ Validation happens here (lazy, not at import)
+    if not PROJECT_ID:
+        raise ValueError("PROJECT_ID environment variable is required")
+    if not LOCATION:
+        raise ValueError("LOCATION environment variable is required")
+    if not AGENT_ENGINE_ID:
+        raise ValueError("AGENT_ENGINE_ID environment variable is required")
+
+    agent = LlmAgent(
         model="gemini-2.0-flash-exp",
-        name="bobs_brain",
+        name="agent_name",
         tools=[...],
         instruction="...",
-        after_agent_callback=auto_save_session_to_memory
+        after_agent_callback=auto_save_session_to_memory,
+    )
+    return agent
+
+def create_app() -> App:
+    """
+    Create the App container for this agent.
+
+    The App wraps the agent and provides lazy initialization compatible
+    with Vertex AI Agent Engine.
+
+    Enforces:
+    - R2: App designed for Vertex AI Agent Engine deployment
+    - R5: Dual memory wiring (Session + Memory Bank)
+    """
+    # R5: Create memory services (lazy, inside function)
+    session_service = VertexAiSessionService(
+        project_id=PROJECT_ID,
+        location=LOCATION,
+        agent_engine_id=AGENT_ENGINE_ID
     )
 
-# Required for ADK CLI deployment
-root_agent = get_agent()
+    memory_service = VertexAiMemoryBankService(
+        project=PROJECT_ID,
+        location=LOCATION,
+        agent_engine_id=AGENT_ENGINE_ID
+    )
+
+    # Create App with lazy agent creation
+    # Pass create_agent as function reference (not called yet!)
+    app_instance = App(
+        agent=create_agent,  # ✅ Function reference, not instance
+        app_name=APP_NAME,
+        session_service=session_service,
+        memory_service=memory_service,
+    )
+    return app_instance
+
+# ✅ Module-level App (lazy initialization)
+# Agent Engine will access this on first request
+app = create_app()
 ```
+
+**Key Principles:**
+- ✅ **No heavy work at import time** - Keep imports fast (~50-200ms)
+- ✅ **Lazy agent creation** - Agent created on first App invocation
+- ✅ **Function reference** - Pass `create_agent` not `create_agent()` to App
+- ✅ **Module-level `app`** - Agent Engine expects `app` symbol, not `agent`
+- ✅ **Idempotent App** - `create_app()` safe to call multiple times
+
+**Benefits:**
+- Faster cold starts (import vs first invocation split)
+- Better testing (can import without full env)
+- Agent Engine billing (only pay for used agents)
+- Clear separation between definition and runtime
+
+**Migration Status:**
+- ✅ **iam-adk** - Migrated (v0.8.1, template agent)
+- ⏳ **Other agents** - Migration in progress (LAZY-3)
 
 ### Gateway Pattern (service/a2a_gateway/main.py)
 ```python

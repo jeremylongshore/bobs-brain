@@ -13,10 +13,16 @@ Enforces:
 - R2: Designed for Vertex AI Agent Engine runtime
 - R5: Dual memory (Session + Memory Bank) with auto-save callback
 - R7: SPIFFE ID propagation in logs
+
+LAZY-LOADING PATTERN (6774):
+- Uses create_agent() for lazy agent instantiation
+- Uses create_app() to wrap in App for Agent Engine
+- Exposes module-level `app` (not agent!)
+- No import-time validation or heavy work
 """
 
 from google.adk.agents import LlmAgent
-from google.adk import Runner
+from google.adk import App, Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
 from agents.shared_tools import IAM_ADK_TOOLS  # Use shared tools profile
@@ -30,7 +36,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# CONFIGURATION (Cheap reads, no validation yet)
+# ============================================================================
+
 # Environment variables (R7: SPIFFE ID required)
+# Note: os.getenv() is cheap - no validation at import time
 PROJECT_ID = os.getenv("PROJECT_ID")
 LOCATION = os.getenv("LOCATION", "us-central1")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
@@ -45,14 +56,10 @@ AGENTCARD_PATH = os.path.join(
     os.path.dirname(__file__), ".well-known", "agent-card.json"
 )
 
-# Validate required environment variables
-if not PROJECT_ID:
-    raise ValueError("PROJECT_ID environment variable is required")
-if not LOCATION:
-    raise ValueError("LOCATION environment variable is required")
-if not AGENT_ENGINE_ID:
-    raise ValueError("AGENT_ENGINE_ID environment variable is required")
 
+# ============================================================================
+# CALLBACKS
+# ============================================================================
 
 def auto_save_session_to_memory(ctx):
     """
@@ -100,9 +107,16 @@ def auto_save_session_to_memory(ctx):
         # Never block agent execution
 
 
-def get_agent() -> LlmAgent:
+# ============================================================================
+# LAZY AGENT CREATION (6774 Pattern)
+# ============================================================================
+
+def create_agent() -> LlmAgent:
     """
     Create and configure the iam-adk LlmAgent.
+
+    This function is called lazily by create_app() on first use.
+    Do NOT call this at module import time.
 
     Enforces:
     - R1: Uses google-adk LlmAgent (no alternative frameworks)
@@ -112,10 +126,21 @@ def get_agent() -> LlmAgent:
     Returns:
         LlmAgent: Configured agent instance specialized in ADK pattern analysis
 
+    Raises:
+        ValueError: If required environment variables are missing
+
     Note:
         This agent is designed to run in Vertex AI Agent Engine (R2).
-        Do NOT instantiate a Runner here - that happens in create_runner().
+        Validation happens here (lazy), not at import time.
     """
+    # ✅ Validation happens here (lazy, not at import)
+    if not PROJECT_ID:
+        raise ValueError("PROJECT_ID environment variable is required")
+    if not LOCATION:
+        raise ValueError("LOCATION environment variable is required")
+    if not AGENT_ENGINE_ID:
+        raise ValueError("AGENT_ENGINE_ID environment variable is required")
+
     logger.info(
         f"Creating iam-adk LlmAgent for {APP_NAME}",
         extra={"spiffe_id": AGENT_SPIFFE_ID},
@@ -162,31 +187,31 @@ When you receive a task:
 
 For analyze_adk_patterns skill:
 ```json
-{
+{{
   "compliance_status": "COMPLIANT|NON_COMPLIANT|WARNING",
   "violations": [
-    {
+    {{
       "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "rule": "R1|R2|R3|...|null",
       "message": "...",
       "file": "...",
       "line_number": 42
-    }
+    }}
   ],
   "recommendations": [...],
   "risk_level": "LOW|MEDIUM|HIGH|CRITICAL"
-}
+}}
 ```
 
 ## Handling Invalid or Unsupported Tasks
 
 If the input doesn't match any of your skills:
 ```json
-{
+{{
   "error": "unsupported_task",
   "message": "This specialist handles ADK pattern analysis. Received: <task_type>",
   "supported_skills": ["analyze_adk_patterns", "validate_agentcard"]
-}
+}}
 ```
 
 ## Constraints
@@ -213,9 +238,101 @@ If the input doesn't match any of your skills:
     return agent
 
 
+def create_app() -> App:
+    """
+    Create the App container for iam-adk agent.
+
+    The App wraps the agent and provides lazy initialization compatible
+    with Vertex AI Agent Engine. This function can be called multiple times
+    safely (idempotent).
+
+    Enforces:
+    - R2: App designed for Vertex AI Agent Engine deployment
+    - R5: Dual memory wiring (Session + Memory Bank)
+    - R7: SPIFFE ID propagation in logs
+
+    Returns:
+        App: Configured app instance for Agent Engine
+
+    Note:
+        This is the entry point for Agent Engine deployment.
+        The agent is created lazily on first invocation.
+    """
+    logger.info(
+        "Creating App container for iam-adk",
+        extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
+
+    # Validate required env vars before app creation
+    if not PROJECT_ID or not AGENT_ENGINE_ID:
+        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID are required for App creation")
+
+    # R5: Create memory services (lazy, inside function)
+    logger.info(
+        "Initializing dual memory services",
+        extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
+
+    session_service = VertexAiSessionService(
+        project_id=PROJECT_ID,
+        location=LOCATION,
+        agent_engine_id=AGENT_ENGINE_ID
+    )
+    logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
+
+    memory_service = VertexAiMemoryBankService(
+        project=PROJECT_ID,
+        location=LOCATION,
+        agent_engine_id=AGENT_ENGINE_ID
+    )
+    logger.info("✅ Memory Bank service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
+
+    # Create App with lazy agent creation
+    # Pass create_agent as function reference (not called yet!)
+    app_instance = App(
+        agent=create_agent,  # ✅ Function reference, not instance
+        app_name=APP_NAME,
+        session_service=session_service,
+        memory_service=memory_service,
+    )
+
+    logger.info(
+        "✅ App created successfully for iam-adk",
+        extra={
+            "spiffe_id": AGENT_SPIFFE_ID,
+            "app_name": APP_NAME,
+            "has_session_service": True,
+            "has_memory_service": True,
+        }
+    )
+
+    return app_instance
+
+
+# ============================================================================
+# AGENT ENGINE ENTRYPOINT (6774 Pattern)
+# ============================================================================
+
+# ✅ Module-level App (lazy initialization)
+# Agent Engine will access this on first request
+app = create_app()
+
+logger.info(
+    "✅ App instance created for Agent Engine deployment (iam-adk)",
+    extra={"spiffe_id": AGENT_SPIFFE_ID}
+)
+
+
+# ============================================================================
+# BACKWARDS COMPATIBILITY (Optional)
+# ============================================================================
+
 def create_runner() -> Runner:
     """
     Create Runner with dual memory wiring (Session + Memory Bank).
+
+    DEPRECATED: Use create_app() instead for Agent Engine deployment.
+    This function is kept for backwards compatibility with older deployment scripts.
 
     Enforces:
     - R2: Runner designed for Vertex AI Agent Engine deployment
@@ -229,6 +346,11 @@ def create_runner() -> Runner:
         This runner is created in the Agent Engine container.
         Gateway code in service/ MUST NOT import or call this (R3).
     """
+    logger.warning(
+        "⚠️  create_runner() is deprecated. Use create_app() instead.",
+        extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
+
     logger.info(
         f"Creating Runner with dual memory for iam-adk",
         extra={
@@ -238,6 +360,10 @@ def create_runner() -> Runner:
             "agent_engine_id": AGENT_ENGINE_ID,
         },
     )
+
+    # Validate required env vars
+    if not PROJECT_ID or not AGENT_ENGINE_ID:
+        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID required")
 
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(
@@ -254,7 +380,7 @@ def create_runner() -> Runner:
     )
 
     # Get agent with after_agent_callback configured
-    agent = get_agent()
+    agent = create_agent()
 
     # R5: Wire dual memory to Runner
     runner = Runner(
@@ -277,17 +403,10 @@ def create_runner() -> Runner:
     return runner
 
 
-# Create the root agent for ADK CLI deployment
-# ADK CLI expects a variable named 'root_agent' at module level
-root_agent = get_agent()
+# ============================================================================
+# MAIN (For local testing only)
+# ============================================================================
 
-logger.info(
-    "✅ root_agent created for ADK deployment (iam-adk)",
-    extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"},
-)
-
-
-# Entry point for Agent Engine container
 if __name__ == "__main__":
     """
     This entry point is used when the container is deployed to
@@ -307,21 +426,27 @@ if __name__ == "__main__":
         )
 
     try:
-        runner = create_runner()
+        # Use new App pattern
         logger.info(
-            "🚀 Agent Engine runner ready (iam-adk)",
+            "🚀 Testing App-based deployment (iam-adk)",
             extra={"spiffe_id": AGENT_SPIFFE_ID},
+        )
+
+        # App is already created at module level
+        logger.info(
+            "✅ App instance ready for Agent Engine",
+            extra={"spiffe_id": AGENT_SPIFFE_ID}
         )
 
         # For local testing only - Agent Engine manages this in production
         if os.getenv("GITHUB_ACTIONS") != "true":
             logger.info(
-                "Local test mode - Runner created but not started. "
-                "In production, Agent Engine manages the runner lifecycle."
+                "Local test mode - App created successfully. "
+                "In production, Agent Engine manages the app lifecycle."
             )
     except Exception as e:
         logger.error(
-            f"❌ Failed to create runner: {e}",
+            f"❌ Failed to create app: {e}",
             extra={"spiffe_id": AGENT_SPIFFE_ID},
             exc_info=True,
         )
