@@ -346,13 +346,13 @@ def get_secret(project_id: str, secret_id: str) -> str:
   https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
 
 - **Tutorial Notebook** (this repo):
-  `agents/agent_engine/tutorial_deploy_your_first_adk_agent_on_agent_engine.ipynb`
+  `000-docs/001-usermanual/tutorial_get_started_with_agent_engine_terraform_deployment.ipynb`
 
 - **Vertex AI Agent Engine Documentation** (inline source section):
   https://cloud.google.com/vertex-ai/docs/agent-engine (inline deployment guides)
 
 - **Related bobs-brain standards**:
-  - `6774-DR-STND-adk-lazy-loading-app-pattern.md` - Lazy-loading App pattern
+  - `6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md` - Lazy-loading App pattern
   - `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md` - Prompt design
   - `6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` - Hard Mode rules (R1-R8)
 
