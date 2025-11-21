@@ -146,56 +146,14 @@ Use conventional commits format:
 
 ## 5. Where to Find the Deep Details
 
-### Key Documentation in `000-docs/`
+**All detailed documentation lives in `000-docs/`**
 
-**Architecture & Standards:**
-- `6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` - Complete spec with R1-R8 rules
-- `6774-DR-STND-adk-lazy-loading-app-pattern.md` - Required pattern for all agents
-- `121-DR-MAP-adk-spec-to-implementation-and-arv.md` - Implementation mapping
+Key things to know:
+- **6767-prefixed docs** = SOP (Standard Operating Procedures) - canonical standards
+- **Archive**: `claude-working-notes-archive.md` - Historical verbose content
+- **Search first**: Use `ls 000-docs/` or `grep` to find what you need
 
-**Templates & Guides:**
-- `6767-DR-STND-iam-department-template-scope-and-rules.md` - What's reusable
-- `6767-DR-GUIDE-porting-iam-department-to-new-repo.md` - How to port template
-- `6767-DR-STND-iam-department-integration-checklist.md` - Integration tracking
-- `6767-DR-GUIDE-iam-department-user-guide.md` - User guide for department
-
-**Agent Patterns:**
-- `063-DR-IMPL-adk-a2a-agent-patterns-notes.md` - A2A communication patterns
-- `082-AT-ARCH-department-complete-structure.md` - Department architecture
-- `086-AT-ARCH-adk-tools-layer-and-profiles.md` - Tools layer architecture
-
-**RAG & Knowledge:**
-- `093-DR-STND-bob-rag-readiness-standard.md` - RAG readiness criteria
-- `092-AT-ARCH-bob-rag-and-vertex-search-integration.md` - RAG integration architecture
-
-**Portfolio Management:**
-- `109-PP-PLAN-multi-repo-swe-portfolio-scope.md` - Multi-repo SWE audits
-- `110-AA-REPT-portfolio-orchestrator-implementation.md` - Portfolio implementation
-
-**Archive:**
-- `claude-working-notes-archive.md` - Historical CLAUDE.md content (verbose, scratchpad)
-
-### When to Consult These Docs
-
-**Before creating new agents:**
-- Read lazy-loading pattern (6774)
-- Check ADK spec for R1-R8 compliance (6767)
-- Review existing agent patterns in `agents/bob/`
-
-**Before changing infrastructure:**
-- Check Terraform patterns in `infra/terraform/`
-- Review deployment workflows in `.github/workflows/`
-- Consult ADK spec for Agent Engine requirements
-
-**Before proposing architectural changes:**
-- Read department template scope (6767-DR-STND-iam-department-template-scope-and-rules)
-- Check if pattern already exists in `000-docs/`
-- Consider impact on Hard Mode rules (R1-R8)
-
-**When stuck or unsure:**
-- Search `000-docs/` for existing patterns
-- Check `claude-working-notes-archive.md` for historical context
-- Consult ADK documentation via plugins/tools
+When you need deep details on architecture, patterns, or standards - look in `000-docs/` first.
 
 ---
 
