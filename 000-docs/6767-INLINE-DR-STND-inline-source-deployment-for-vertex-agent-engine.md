@@ -285,6 +285,77 @@ Before deploying an agent with inline source:
 
 ---
 
+## CI Integration (Phase 3)
+
+Phase 3 introduces **dry-run validation** for inline source deployment, ensuring safe CI/CD integration without executing real deployments.
+
+### Entry Points
+
+**Deploy Script**: `agents/agent_engine/deploy_inline_source.py`
+- Supports multiple agents: bob, iam-senior-adk-devops-lead, iam-adk
+- **Default behavior**: Dry-run validation (safe)
+- **Opt-in deployment**: Use `--execute` flag
+
+**Makefile Targets**:
+- `make deploy-inline-dry-run` - Validates config without deploying (DEFAULT, safe)
+- `make deploy-inline-dev-execute` - Manual execution for dev (with 5-second warning)
+- `make deploy-inline-staging-execute` - Manual execution for staging
+
+**CI Workflow**: `.github/workflows/agent-engine-inline-dryrun.yml`
+- Runs on: workflow_dispatch, pull_request
+- Validates: Config, source packages, entrypoint imports
+- **Does NOT**: Execute real deployments
+
+### Validation Logic
+
+The dry-run mode validates:
+
+1. **Agent Configuration**:
+   - Agent name exists in AGENT_CONFIGS
+   - Entrypoint module path exists
+   - Entrypoint object is defined
+
+2. **Source Packages**:
+   - All source_packages directories exist
+   - Paths are under repo root
+
+3. **Imports** (optional):
+   - Entrypoint module can be imported
+   - Entrypoint object exists and is correct type
+   - Gracefully handles missing dependencies
+
+### Safe Defaults
+
+**Script Behavior**:
+```bash
+# DEFAULT: Dry-run (safe, no deployment)
+python -m agents.agent_engine.deploy_inline_source --agent-name bob
+
+# Explicit execution (opt-in)
+python -m agents.agent_engine.deploy_inline_source --agent-name bob --execute
+```
+
+**Makefile Behavior**:
+- Dry-run targets: No confirmation, run immediately
+- Execute targets: 5-second warning + Ctrl+C option
+- Color-coded output (blue=info, yellow=warning, red=danger)
+
+### Phase 3 Scope
+
+Phase 3 is **validation only**:
+- ✅ Validates inline deploy configuration
+- ✅ Ensures entrypoints are correct
+- ✅ Verifies source packages exist
+- ❌ Does NOT execute real deployments
+- ❌ Does NOT wire into production CI/CD yet
+
+**Next Phases**:
+- **Phase 4**: ARV-style quality gates
+- **Phase 5**: Real-but-safe dev deploy path
+- **Phase 6**: Staging/prod deploy workflows
+
+---
+
 ## Security Considerations
 
 ### Source Code Review
