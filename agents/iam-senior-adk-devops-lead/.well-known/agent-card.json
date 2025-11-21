@@ -18,8 +18,9 @@
     {
       "skill_id": "iam.orchestrate_workflow",
       "name": "Orchestrate SWE Workflow",
-      "description": "Coordinate iam-* specialists to execute complete SWE pipeline: analysis → issue creation → fix planning → implementation → QA → documentation. Manages task delegation, result aggregation, and quality control.",
+      "description": "Coordinate iam-* specialists to execute complete SWE pipeline: analysis → issue creation → fix planning → implementation → QA → documentation. Manages task delegation, result aggregation, and quality control. Input/output schemas align with PipelineRequest/PipelineResult contracts from agents/shared_contracts.py.",
       "input_schema": {
+        "$comment": "Schema aligned with PipelineRequest dataclass (agents/shared_contracts.py:73)",
         "type": "object",
         "required": ["task_description", "repo_hint"],
         "properties": {
@@ -68,6 +69,7 @@
         }
       },
       "output_schema": {
+        "$comment": "Schema aligned with PipelineResult dataclass (agents/shared_contracts.py:106)",
         "type": "object",
         "required": ["pipeline_run_id", "status", "results"],
         "properties": {

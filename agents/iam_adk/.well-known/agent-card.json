@@ -17,8 +17,9 @@
     {
       "skill_id": "iam.check_adk_compliance",
       "name": "Check ADK Compliance",
-      "description": "Analyze agent code for ADK pattern compliance. Validates against Hard Mode rules (R1-R8), checks agent structure, tool definitions, memory wiring, and A2A patterns. Returns structured compliance report with violations and recommendations.",
+      "description": "Analyze agent code for ADK pattern compliance. Validates against Hard Mode rules (R1-R8), checks agent structure, tool definitions, memory wiring, and A2A patterns. Returns structured compliance report with violations and recommendations. Output schema aligns with AnalysisReport/IssueSpec contracts from agents/shared_contracts.py.",
       "input_schema": {
+        "$comment": "Note: No formal 'AnalysisRequest' contract exists yet. This skill input defines the de facto request structure.",
         "type": "object",
         "required": ["target"],
         "properties": {
@@ -48,6 +49,7 @@
         }
       },
       "output_schema": {
+        "$comment": "Schema aligned with AnalysisReport dataclass (agents/shared_contracts.py:198). Individual violations map to IssueSpec structure.",
         "type": "object",
         "required": ["compliance_status", "violations", "risk_level"],
         "properties": {
