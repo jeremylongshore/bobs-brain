@@ -364,8 +364,15 @@ agent-engine-dev-smoke-verbose: ## Run dev smoke test with detailed output
 	@echo ""
 
 ## ============================================================================
-## Inline Source Deployment (Phase 3) - Safe dry-run validation by default
+## Inline Source Deployment (Phase 3+4) - ARV gates and safe deployment
 ## ============================================================================
+
+check-inline-deploy-ready: ## ARV check: Validate readiness for inline source deployment (Phase 4)
+	@echo "$(BLUE)🔍 ARV: Checking inline deploy readiness...$(NC)"
+	@$(PYTHON) scripts/check_inline_deploy_ready.py \
+		--agent-name $${AGENT_NAME:-bob} \
+		--env $${ENV:-dev}
+	@echo ""
 
 deploy-inline-dry-run: ## Dry-run validation for inline source deploy (DEFAULT, safe)
 	@echo "$(BLUE)🔍 Inline Source Deploy - DRY RUN (Validation Only)...$(NC)"
@@ -377,7 +384,8 @@ deploy-inline-dry-run: ## Dry-run validation for inline source deploy (DEFAULT, 
 		--env dev
 	@echo ""
 
-deploy-inline-dev-execute: ## MANUAL ONLY: Execute inline deploy to dev (requires --execute flag)
+deploy-inline-dev-execute: check-inline-deploy-ready ## MANUAL ONLY: Execute inline deploy to dev (ARV gate enforced)
+	@echo "$(GREEN)✅ ARV checks passed$(NC)"
 	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO DEV - This will create real Agent Engine resources!$(NC)"
 	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
 	@sleep 5
@@ -389,7 +397,8 @@ deploy-inline-dev-execute: ## MANUAL ONLY: Execute inline deploy to dev (require
 		--execute
 	@echo ""
 
-deploy-inline-staging-execute: ## MANUAL ONLY: Execute inline deploy to staging
+deploy-inline-staging-execute: check-inline-deploy-ready ## MANUAL ONLY: Execute inline deploy to staging (ARV gate enforced)
+	@echo "$(GREEN)✅ ARV checks passed$(NC)"
 	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO STAGING$(NC)"
 	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
 	@sleep 5
