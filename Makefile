@@ -448,6 +448,65 @@ slack-dev-smoke-cloud: ## Run Slack smoke test against Cloud Run deployment
 	@echo "$(GREEN)✅ Cloud Run smoke test completed!$(NC)"
 
 #################################
+# A2A Inspector (Debugging & Validation)
+#################################
+
+a2a-inspector-dev: ## Run A2A Inspector against dev gateway (Docker method)
+	@echo "$(BLUE)🔍 Starting A2A Inspector for Development...$(NC)"
+	@echo "$(YELLOW)See: 000-docs/123-DR-STND-a2a-inspector-usage-and-local-setup.md$(NC)"
+	@echo ""
+	@# Check if Docker is available
+	@command -v docker >/dev/null 2>&1 || { echo "$(RED)❌ Docker not installed$(NC)"; exit 1; }
+	@# Check if a2a-inspector image exists, build if not
+	@if ! docker images | grep -q a2a-inspector; then \
+		echo "$(YELLOW)Building a2a-inspector Docker image...$(NC)"; \
+		if [ -d /tmp/a2a-inspector ]; then \
+			cd /tmp/a2a-inspector && git pull; \
+		else \
+			git clone https://github.com/a2aproject/a2a-inspector.git /tmp/a2a-inspector; \
+		fi; \
+		cd /tmp/a2a-inspector && docker build -t a2a-inspector .; \
+	fi
+	@# Stop existing container if running
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker stop 2>/dev/null || true
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker rm 2>/dev/null || true
+	@# Start new container
+	@echo "$(BLUE)Starting a2a-inspector on port 8080...$(NC)"
+	@docker run -d -p 8080:8080 --name a2a-inspector a2a-inspector
+	@echo ""
+	@echo "$(GREEN)✅ A2A Inspector running!$(NC)"
+	@echo ""
+	@echo "$(BLUE)Access:$(NC) http://127.0.0.1:8080"
+	@echo ""
+	@if [ -n "$$A2A_GATEWAY_DEV_URL" ]; then \
+		echo "$(BLUE)Dev Gateway URL (from .env):$(NC) $$A2A_GATEWAY_DEV_URL"; \
+	else \
+		echo "$(YELLOW)⚠ A2A_GATEWAY_DEV_URL not set in .env$(NC)"; \
+		echo "$(YELLOW)Set it to your dev A2A gateway endpoint$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)To stop:$(NC) make a2a-inspector-stop"
+
+a2a-inspector-stop: ## Stop A2A Inspector container
+	@echo "$(BLUE)🛑 Stopping A2A Inspector...$(NC)"
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker stop 2>/dev/null || true
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker rm 2>/dev/null || true
+	@echo "$(GREEN)✅ A2A Inspector stopped$(NC)"
+
+a2a-inspector-logs: ## View A2A Inspector logs
+	@docker logs a2a-inspector
+
+a2a-inspector-status: ## Check A2A Inspector status
+	@echo "$(BLUE)🔍 A2A Inspector Status:$(NC)"
+	@if docker ps | grep -q a2a-inspector; then \
+		echo "$(GREEN)✅ Running on http://127.0.0.1:8080$(NC)"; \
+		docker ps | grep a2a-inspector; \
+	else \
+		echo "$(YELLOW)⚠ Not running$(NC)"; \
+		echo "$(YELLOW)Start with: make a2a-inspector-dev$(NC)"; \
+	fi
+
+#################################
 # Deployment Operations (CICD-DEPT)
 #################################
 
