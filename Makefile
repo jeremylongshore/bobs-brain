@@ -410,6 +410,12 @@ deploy-inline-staging-execute: check-inline-deploy-ready ## MANUAL ONLY: Execute
 		--execute
 	@echo ""
 
+smoke-bob-agent-engine-dev: ## Run dev smoke test against Bob's Agent Engine instance (Phase 5)
+	@echo "$(BLUE)🚦 Running Bob Agent Engine dev smoke test...$(NC)"
+	@echo "$(YELLOW)ℹ️  Requires BOB_AGENT_ENGINE_NAME_DEV to be set after dev deployment$(NC)"
+	@$(PYTHON) -m scripts.smoke_test_bob_agent_engine_dev
+	@echo ""
+
 ## ============================================================================
 
 arv-department: ## Run comprehensive ARV for IAM/ADK department (ARIV-DEPT)
