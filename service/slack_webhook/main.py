@@ -254,9 +254,9 @@ async def query_agent_engine(query: str, session_id: str) -> str:
 
     R3 Compliance: Proxies to Agent Engine, does not run locally.
 
-    Phase AE2: Added Option B path (commented) for future SWE pipeline mode.
-    When SLACK_SWE_PIPELINE_MODE=engine, queries will route through a2a_gateway
-    instead of directly to Agent Engine.
+    SLACK-ENDTOEND-DEV S2: Implements routing via A2A gateway (Option B).
+    - Option B (preferred): Route through a2a_gateway for consistency
+    - Option A (fallback): Direct Agent Engine proxy
 
     Args:
         query: User query text
@@ -267,82 +267,105 @@ async def query_agent_engine(query: str, session_id: str) -> str:
     """
     try:
         # ===========================================================================
-        # PHASE AE2: OPTION B PATH (COMMENTED - NOT YET ENABLED)
+        # SLACK-ENDTOEND-DEV S2: OPTION B ROUTING (IMPLEMENTED)
         # ===========================================================================
-        # Phase AE3 will enable this path for SWE pipeline commands
-        #
-        # if SLACK_SWE_PIPELINE_MODE == "engine":
-        #     # Option B: Route through a2a_gateway for multi-agent orchestration
-        #     logger.info(
-        #         "Routing to a2a_gateway (Option B - SWE Pipeline Mode)",
-        #         extra={"query_length": len(query), "session_id": session_id}
-        #     )
-        #
-        #     # Build A2A call payload
-        #     a2a_payload = {
-        #         "agent_role": "foreman",  # Route to iam-senior-adk-devops-lead
-        #         "prompt": query,
-        #         "session_id": session_id,
-        #         "caller_spiffe_id": "spiffe://intent.solutions/slack/webhook",
-        #         "env": os.getenv("DEPLOYMENT_ENV", "prod"),
-        #     }
-        #
-        #     async with httpx.AsyncClient(timeout=60.0) as client:
-        #         response = await client.post(
-        #             f"{A2A_GATEWAY_URL}/a2a/run",
-        #             json=a2a_payload,
-        #             headers={"Content-Type": "application/json"}
-        #         )
-        #         response.raise_for_status()
-        #         result = response.json()
-        #
-        #     return result.get("response", "No response from A2A gateway")
-        # else:
-        #     # Option A (default): Direct Agent Engine proxy (current behavior)
-        #     logger.info(
-        #         "Routing directly to Agent Engine (Option A - current)",
-        #         extra={"query_length": len(query), "session_id": session_id}
-        #     )
-        # ===========================================================================
-
-        # CURRENT BEHAVIOR (Option A): Direct Agent Engine proxy
-        payload = {"query": query, "session_id": session_id}
-
-        logger.info(
-            "Querying Agent Engine",
-            extra={"agent_engine_url": AGENT_ENGINE_URL, "session_id": session_id},
-        )
-
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                AGENT_ENGINE_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
+        if A2A_GATEWAY_URL:
+            # Option B: Route through a2a_gateway for consistency with other frontends
+            logger.info(
+                "Routing to a2a_gateway (Option B - via a2a protocol)",
+                extra={
+                    "query_length": len(query),
+                    "session_id": session_id,
+                    "a2a_gateway_url": A2A_GATEWAY_URL,
+                },
             )
 
-            response.raise_for_status()
-            result = response.json()
+            # Build A2A call payload following A2AAgentCall schema
+            a2a_payload = {
+                "agent_role": "bob",  # Target Bob orchestrator
+                "prompt": query,
+                "session_id": session_id,
+                "caller_spiffe_id": "spiffe://intent.solutions/slack/webhook",
+                "env": os.getenv("DEPLOYMENT_ENV", "dev"),
+            }
 
-        # Extract response text (adjust based on Agent Engine response format)
-        response_text = result.get("response", "I couldn't generate a response.")
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{A2A_GATEWAY_URL}/a2a/run",
+                    json=a2a_payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                result = response.json()
 
-        logger.info(
-            "Agent Engine response received",
-            extra={"response_length": len(response_text), "session_id": session_id},
-        )
+            # Extract response from A2AAgentResult
+            response_text = result.get("response", "No response from A2A gateway")
 
-        return response_text
+            # Check for errors in A2A result
+            if result.get("error"):
+                logger.error(
+                    "A2A gateway returned error",
+                    extra={
+                        "error": result.get("error"),
+                        "session_id": session_id,
+                    },
+                )
+                return "Sorry, I encountered an error processing your request."
+
+            logger.info(
+                "A2A gateway response received",
+                extra={
+                    "response_length": len(response_text),
+                    "session_id": result.get("session_id"),
+                    "correlation_id": result.get("correlation_id"),
+                },
+            )
+
+            return response_text
+
+        else:
+            # Option A (fallback): Direct Agent Engine proxy
+            logger.info(
+                "Routing directly to Agent Engine (Option A - fallback)",
+                extra={
+                    "query_length": len(query),
+                    "session_id": session_id,
+                    "agent_engine_url": AGENT_ENGINE_URL,
+                },
+            )
+
+            payload = {"query": query, "session_id": session_id}
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    AGENT_ENGINE_URL,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+
+                response.raise_for_status()
+                result = response.json()
+
+            # Extract response text (adjust based on Agent Engine response format)
+            response_text = result.get("response", "I couldn't generate a response.")
+
+            logger.info(
+                "Agent Engine response received",
+                extra={"response_length": len(response_text), "session_id": session_id},
+            )
+
+            return response_text
 
     except httpx.HTTPStatusError as e:
         logger.error(
-            f"Agent Engine returned error: {e.response.status_code}",
+            f"HTTP error during agent call: {e.response.status_code}",
             extra={"detail": e.response.text},
             exc_info=True,
         )
         return "Sorry, I encountered an error processing your request."
 
     except httpx.RequestError as e:
-        logger.error(f"Failed to connect to Agent Engine: {e}", exc_info=True)
+        logger.error(f"Failed to connect to backend: {e}", exc_info=True)
         return "Sorry, I'm having trouble connecting to my backend."
 
     except Exception as e:
