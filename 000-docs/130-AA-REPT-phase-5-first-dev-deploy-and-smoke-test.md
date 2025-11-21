@@ -181,13 +181,224 @@ Phase 5 builds on the foundation established in Phases 1-4:
 
 ---
 
+## Phase 6 – First Actual Dev Inline Deploy & Smoke Test
+
+### Execution Checklist
+
+**Pre-Deployment** (Run locally before triggering workflow):
+
+1. **Confirm Branch Status**
+   - [ ] On branch: `feature/a2a-agentcards-foreman-worker`
+   - [ ] Working tree clean: `git status`
+
+2. **Run Local Validation**
+   - [ ] ARV check passes: `make check-inline-deploy-ready`
+   - [ ] Dry-run passes: `make deploy-inline-dry-run`
+   - [ ] Capture successful output shape for AAR
+
+3. **Verify GCP Configuration**
+   - [ ] GCP Project ID confirmed (e.g., `205354194989`)
+   - [ ] GCP Location confirmed (e.g., `us-central1`)
+   - [ ] GitHub WIF secrets configured (if using GitHub Actions)
+
+**Deployment Execution**:
+
+4. **Trigger GitHub Actions Workflow** (Recommended)
+   - [ ] Navigate to: https://github.com/[YOUR_ORG]/bobs-brain/actions
+   - [ ] Select workflow: "Agent Engine Inline Deploy - Dev (Manual)"
+   - [ ] Click: "Run workflow"
+   - [ ] Select branch: `feature/a2a-agentcards-foreman-worker`
+   - [ ] Fill inputs:
+     - `agent_name`: bob
+     - `gcp_project_id`: [YOUR_PROJECT_ID]
+     - `gcp_location`: us-central1
+   - [ ] Click: "Run workflow" (green button)
+   - [ ] Monitor workflow execution in Actions tab
+
+**OR** (Alternative: Local Execution):
+
+4. **Run Local Deployment**
+   - [ ] Authenticate: `gcloud auth application-default login`
+   - [ ] Set env vars: `export GCP_PROJECT_ID=... GCP_LOCATION=us-central1`
+   - [ ] Execute: `make deploy-inline-dev-execute`
+   - [ ] Wait 5 seconds at warning prompt (or Ctrl+C to cancel)
+
+**Post-Deployment Setup**:
+
+5. **Capture Agent Engine Resource Name**
+   - [ ] From GitHub Actions logs OR local output, find line:
+     ```
+     Agent resource name: projects/.../locations/.../reasoningEngines/...
+     ```
+   - [ ] Copy full resource name
+
+6. **Configure Local Environment**
+   - [ ] Add to `.env`:
+     ```bash
+     BOB_AGENT_ENGINE_NAME_DEV=projects/205354194989/locations/us-central1/reasoningEngines/[AGENT_ID]
+     ```
+   - [ ] Export for current shell:
+     ```bash
+     export BOB_AGENT_ENGINE_NAME_DEV=projects/.../reasoningEngines/...
+     export GCP_PROJECT_ID=205354194989
+     export GCP_LOCATION=us-central1
+     ```
+
+7. **Verify Deployment in Console**
+   - [ ] Navigate to: https://console.cloud.google.com/vertex-ai/agent-engine
+   - [ ] Verify Bob agent appears in list
+   - [ ] Check agent status is "Active"
+
+**Smoke Test Execution**:
+
+8. **Run Smoke Test**
+   - [ ] Execute: `make smoke-bob-agent-engine-dev`
+   - [ ] Wait for response (may take up to 30s for cold start)
+   - [ ] Expected output:
+     ```
+     [SMOKE] RESULT: PASS
+     ```
+
+9. **Record Results**
+   - [ ] Smoke test result: PASS/FAIL
+   - [ ] Copy response snippet
+   - [ ] Note any errors or warnings
+   - [ ] Check Cloud Logging for agent logs
+
+**Validation**:
+
+10. **Post-Deployment Verification**
+    - [ ] Agent responding to queries
+    - [ ] No errors in Cloud Logging
+    - [ ] Run smoke test multiple times (confirm repeatable)
+    - [ ] Response time acceptable (< 30s)
+
+**Documentation**:
+
+11. **Update This AAR**
+    - [ ] Paste deployment output into "Deployment Output" section below
+    - [ ] Paste smoke test output into "Smoke Test Results" section below
+    - [ ] Fill in "Execution Details" (resource name, git commit, workflow URL)
+    - [ ] Update "Lessons Learned" with any issues encountered
+    - [ ] Change Status from PLANNING → COMPLETE
+
+12. **Commit AAR Updates**
+    - [ ] Stage changes: `git add 000-docs/130-AA-REPT-*.md`
+    - [ ] Commit: `git commit -m "docs(aar): update Phase 5 AAR with actual dev deploy results"`
+    - [ ] Note: Do NOT push to main yet (still on feature branch)
+
+---
+
+### How to Run the First Dev Inline Deploy (Manual)
+
+**GitHub Actions Workflow** (`.github/workflows/agent-engine-inline-dev-deploy.yml`):
+
+**Workflow Details**:
+- **Name**: Agent Engine Inline Deploy - Dev (Manual)
+- **Trigger**: `workflow_dispatch` (manual run only)
+- **Workflow File**: `.github/workflows/agent-engine-inline-dev-deploy.yml`
+
+**Steps to Execute**:
+
+1. **Navigate to GitHub Actions**:
+   ```
+   https://github.com/[YOUR_ORG]/bobs-brain/actions
+   ```
+
+2. **Select Workflow**:
+   - In left sidebar, click: "Agent Engine Inline Deploy - Dev (Manual)"
+
+3. **Run Workflow**:
+   - Click: "Run workflow" (dropdown button, top right)
+   - Branch: `feature/a2a-agentcards-foreman-worker`
+   - Inputs:
+     - `agent_name`: bob (select from dropdown)
+     - `gcp_project_id`: [YOUR_GCP_PROJECT_ID] (e.g., `205354194989`)
+     - `gcp_location`: us-central1 (default, can leave as-is)
+   - Click: "Run workflow" (green button)
+
+4. **Monitor Execution**:
+   - Workflow will appear in the list (may take a few seconds)
+   - Click on the workflow run to see live logs
+   - Watch for:
+     - ✅ ARV checks passing
+     - ✅ Dry-run validation passing
+     - 🚀 Deployment execution
+     - 📊 Deployment summary
+
+5. **Extract Resource Name**:
+   - In the final deployment step, look for:
+     ```
+     🚀 Deploying agent to dev environment...
+        Agent: bob
+        Project: [PROJECT_ID]
+        Location: us-central1
+
+     [... deployment output ...]
+
+     Agent resource name: projects/205354194989/locations/us-central1/reasoningEngines/1234567890123456789
+     ```
+   - **Copy this full resource name** (you'll need it for smoke testing)
+
+6. **Verify in Console**:
+   - Navigate to: https://console.cloud.google.com/vertex-ai/agent-engine
+   - Confirm Bob agent appears
+   - Check status is "Active"
+
+**What the Workflow Does**:
+
+The workflow executes these steps automatically:
+1. Checkout repository (your feature branch)
+2. Set up Python 3.12 with pip cache
+3. Install dependencies (`google-cloud-aiplatform`, `google-auth`)
+4. Authenticate to GCP using Workload Identity Federation (WIF)
+5. Set up gcloud CLI
+6. **Run ARV checks** (must pass)
+7. **Run dry-run validation** (must pass)
+8. **Deploy agent with --execute flag** (REAL DEPLOYMENT)
+9. Report deployment status with resource name
+
+**Expected Duration**: 3-5 minutes total
+
+**Workflow Guards**:
+- ARV check must pass (validates environment, packages, entrypoint)
+- Dry-run must pass (validates configuration before execution)
+- Uses WIF for secure GCP authentication (no service account keys in repo)
+- Dev environment only (cannot accidentally deploy to staging/prod)
+
+---
+
 ## Actual Execution
 
 **[TO BE FILLED DURING PHASE 6 EXECUTION]**
 
+### Execution Details (to be filled after first dev deploy)
+
+**Dev Agent Engine Resource**:
+```
+projects/205354194989/locations/us-central1/reasoningEngines/XXXXXXXXXXXXXXX
+```
+
+**Git Commit Deployed**:
+```
+[GIT_COMMIT_SHA] - [Commit message]
+```
+
+**GitHub Actions Run URL** (if used):
+```
+https://github.com/[YOUR_ORG]/bobs-brain/actions/runs/[RUN_ID]
+```
+
+**Deployment Command** (if local):
+```bash
+[Command used, e.g., make deploy-inline-dev-execute]
+```
+
 ### Deployment Method Used
 
 **[GitHub Actions / Local Execution]**
+
+**Reason for choice**: [Why this method was chosen]
 
 ### Deployment Timeline
 
@@ -205,15 +416,49 @@ Phase 5 builds on the foundation established in Phases 1-4:
 [Any warnings or errors]
 ```
 
+**Key Observations**:
+- [Observation 1, e.g., deployment completed without errors]
+- [Observation 2, e.g., cold start took X seconds]
+- [Any warnings or unusual behavior]
+
+### Smoke Test Configuration
+
+**Environment Variables Set**:
+```bash
+export BOB_AGENT_ENGINE_NAME_DEV=projects/.../reasoningEngines/...
+export GCP_PROJECT_ID=205354194989
+export GCP_LOCATION=us-central1
+```
+
+**Smoke Test Command**:
+```bash
+make smoke-bob-agent-engine-dev
+```
+
 ### Smoke Test Results
 
 **[PASTE SMOKE TEST OUTPUT]**
 
 ```
 [SMOKE] Starting Bob Agent Engine dev smoke test...
+[SMOKE] Configuration:
+[SMOKE]   Project: ...
+[SMOKE]   Location: ...
+[SMOKE]   Agent: ...
 [SMOKE] ...
 [SMOKE] RESULT: [PASS/FAIL]
 ```
+
+**Response Time**: [SECONDS]
+
+**Response Snippet**:
+```
+[First 200 characters of response]
+```
+
+**Cloud Logging**:
+- [Link to Cloud Logging query, if available]
+- [Summary of any errors or warnings in logs]
 
 ---
 
