@@ -1,241 +1,339 @@
 {
   "name": "iam-adk",
-  "description": "Specialist agent for ADK/Vertex AI pattern analysis and compliance checking. Validates agent implementations against Hard Mode rules (R1-R8), analyzes A2A communication patterns, and validates AgentCard schemas. Pure-function worker that returns structured JSON matching skill output schemas.",
-  "version": "0.8.0",
-  "spiffe_id": "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0",
-  "tags": ["specialist", "worker", "adk", "compliance", "iam-department"],
-  "authentication": {
-    "required": true,
-    "methods": ["spiffe_svid", "gcp_service_account"],
-    "authorization": {
-      "allowed_callers": [
-        "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/*/*"
-      ]
-    }
-  },
+  "version": "0.10.0",
+  "url": "https://iam-adk.intent.solutions",
+  "description": "iam-adk - ADK/Vertex Design & Static Analysis Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0\n\niam-adk specializes in analyzing ADK agent implementations for pattern compliance and best practices. Core expertise includes:\n- Reviewing ADK agent code against Hard Mode rules (R1-R8)\n- Analyzing Agent-to-Agent (A2A) communication patterns\n- Validating AgentCard schemas and skill definitions\n- Detecting ADK anti-patterns and architectural issues\n- Producing structured AuditReports and IssueSpecs\n- Recommending ADK best practices and improvements\n\nThis agent enforces google-adk patterns, Vertex AI Agent Engine compliance, and department adk iam standards.\n",
+  "capabilities": [
+    "adk_pattern_analysis",
+    "agentcard_validation",
+    "hard_mode_compliance_checking",
+    "audit_report_generation",
+    "issue_spec_creation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
   "skills": [
     {
-      "skill_id": "iam.check_adk_compliance",
+      "skill_id": "iam_adk.check_adk_compliance",
       "name": "Check ADK Compliance",
-      "description": "Analyze agent code for ADK pattern compliance. Validates against Hard Mode rules (R1-R8), checks agent structure, tool definitions, memory wiring, and A2A patterns. Returns structured compliance report with violations and recommendations. Output schema aligns with AnalysisReport/IssueSpec contracts from agents/shared_contracts.py.",
+      "description": "Analyze agent code for ADK pattern compliance and Hard Mode rule violations",
       "input_schema": {
-        "$comment": "Note: No formal 'AnalysisRequest' contract exists yet. This skill input defines the de facto request structure.",
         "type": "object",
-        "required": ["target"],
+        "required": [
+          "target"
+        ],
         "properties": {
           "target": {
             "type": "string",
-            "description": "File path or directory to analyze (e.g., 'agents/bob/agent.py' or 'agents/')"
+            "description": "File path or directory to analyze"
           },
           "focus_rules": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"]
+              "enum": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R6",
+                "R7",
+                "R8"
+              ]
             },
-            "description": "Optional: Specific Hard Mode rules to focus analysis on. If omitted, checks all rules."
+            "description": "Specific Hard Mode rules to focus on (optional)"
           },
-          "depth": {
+          "severity_threshold": {
             "type": "string",
-            "enum": ["quick", "standard", "deep"],
-            "default": "standard",
-            "description": "Analysis depth: quick (structural only), standard (full pattern check), deep (includes transitive deps)"
-          },
-          "include_recommendations": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to include remediation recommendations in output"
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ],
+            "default": "LOW",
+            "description": "Only report issues at or above this severity"
           }
         }
       },
       "output_schema": {
-        "$comment": "Schema aligned with AnalysisReport dataclass (agents/shared_contracts.py:198). Individual violations map to IssueSpec structure.",
         "type": "object",
-        "required": ["compliance_status", "violations", "risk_level"],
+        "required": [
+          "compliance_status",
+          "violations"
+        ],
         "properties": {
           "compliance_status": {
             "type": "string",
-            "enum": ["COMPLIANT", "NON_COMPLIANT", "WARNING"],
-            "description": "Overall compliance verdict"
+            "enum": [
+              "COMPLIANT",
+              "NON_COMPLIANT",
+              "WARNING"
+            ]
           },
           "violations": {
             "type": "array",
-            "description": "List of violations found (empty if compliant)",
             "items": {
               "type": "object",
-              "required": ["severity", "message"],
+              "required": [
+                "severity",
+                "message"
+              ],
               "properties": {
                 "severity": {
                   "type": "string",
-                  "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+                  "enum": [
+                    "CRITICAL",
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW"
+                  ]
                 },
                 "rule": {
                   "type": "string",
-                  "description": "Hard Mode rule violated (R1-R8) or null for general issues"
+                  "description": "Hard Mode rule violated (R1-R8) or null"
                 },
                 "message": {
-                  "type": "string",
-                  "description": "Human-readable description of the violation"
+                  "type": "string"
                 },
                 "file": {
-                  "type": "string",
-                  "description": "File path where violation was found"
+                  "type": "string"
                 },
                 "line_number": {
-                  "type": "integer",
-                  "description": "Line number of violation (if applicable)"
-                },
-                "code_snippet": {
-                  "type": "string",
-                  "description": "Relevant code snippet showing the violation"
+                  "type": "integer"
                 }
-              }
-            }
-          },
-          "recommendations": {
-            "type": "array",
-            "description": "Actionable recommendations to fix violations",
-            "items": {
-              "type": "object",
-              "properties": {
-                "priority": {
-                  "type": "string",
-                  "enum": ["immediate", "high", "medium", "low"]
-                },
-                "action": {"type": "string"},
-                "rationale": {"type": "string"}
               }
             }
           },
           "risk_level": {
             "type": "string",
-            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-            "description": "Overall risk assessment based on violations found"
-          },
-          "patterns_checked": {
-            "type": "array",
-            "items": {"type": "string"},
-            "description": "List of patterns that were validated"
-          },
-          "compliance_score": {
-            "type": "number",
-            "minimum": 0.0,
-            "maximum": 1.0,
-            "description": "Compliance score (0.0 = no compliance, 1.0 = perfect compliance)"
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
           }
         }
       }
     },
     {
-      "skill_id": "iam.validate_agentcard",
+      "skill_id": "iam_adk.validate_agentcard",
       "name": "Validate AgentCard",
-      "description": "Validate AgentCard JSON schema compliance and A2A contract correctness. Checks required fields, schema structure, skill definitions, and alignment with 6767 standards. Returns validation report with specific errors and recommendations.",
+      "description": "Validate AgentCard structure, schemas, and compliance with A2A standards",
       "input_schema": {
         "type": "object",
-        "required": ["agentcard_path"],
+        "required": [
+          "agentcard_path"
+        ],
         "properties": {
           "agentcard_path": {
             "type": "string",
-            "description": "Path to AgentCard JSON file (e.g., 'agents/bob/.well-known/agent-card.json')"
+            "description": "Path to agent directory or agentcard.json file"
           },
-          "validate_skills": {
+          "check_skills": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to validate skill input/output schemas"
-          },
-          "validate_against_implementation": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether to cross-check AgentCard against actual agent.py implementation"
-          },
-          "implementation_path": {
-            "type": "string",
-            "description": "Path to agent.py for implementation validation (required if validate_against_implementation is true)"
+            "description": "Validate skill schemas"
           }
         }
       },
       "output_schema": {
         "type": "object",
-        "required": ["valid", "agentcard_path"],
+        "required": [
+          "valid",
+          "errors"
+        ],
         "properties": {
           "valid": {
-            "type": "boolean",
-            "description": "Whether AgentCard passes all validation checks"
+            "type": "boolean"
           },
-          "agentcard_path": {
-            "type": "string",
-            "description": "Echo of input path for correlation"
-          },
-          "validation_errors": {
+          "errors": {
             "type": "array",
-            "description": "List of validation errors (empty if valid)",
             "items": {
               "type": "object",
-              "required": ["error_type", "message"],
+              "required": [
+                "field",
+                "message"
+              ],
               "properties": {
-                "error_type": {
-                  "type": "string",
-                  "enum": [
-                    "missing_required_field",
-                    "invalid_schema",
-                    "skill_schema_invalid",
-                    "version_format_invalid",
-                    "spiffe_id_malformed",
-                    "implementation_mismatch"
-                  ]
-                },
                 "field": {
-                  "type": "string",
-                  "description": "Field path where error occurred (e.g., 'skills[0].input_schema')"
+                  "type": "string"
                 },
                 "message": {
-                  "type": "string",
-                  "description": "Detailed error message"
+                  "type": "string"
                 },
-                "expected": {
+                "severity": {
                   "type": "string",
-                  "description": "Expected value or format"
-                },
-                "actual": {
-                  "type": "string",
-                  "description": "Actual value found"
+                  "enum": [
+                    "ERROR",
+                    "WARNING"
+                  ]
                 }
               }
             }
           },
           "warnings": {
             "type": "array",
-            "description": "Non-critical issues (best practice violations)",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_adk.analyze_agent_architecture",
+      "name": "Analyze Agent Architecture",
+      "description": "Analyze agent architecture for ADK best practices and design patterns",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "agent_directory"
+        ],
+        "properties": {
+          "agent_directory": {
+            "type": "string",
+            "description": "Path to agent directory"
+          },
+          "check_lazy_loading": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check 6767-LAZY lazy loading pattern compliance"
+          },
+          "check_memory_wiring": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check R5 dual memory wiring"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "analysis_status",
+          "findings"
+        ],
+        "properties": {
+          "analysis_status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "WARNING"
+            ]
+          },
+          "findings": {
+            "type": "array",
             "items": {
               "type": "object",
+              "required": [
+                "category",
+                "message",
+                "severity"
+              ],
               "properties": {
-                "warning_type": {"type": "string"},
-                "field": {"type": "string"},
-                "message": {"type": "string"}
+                "category": {
+                  "type": "string",
+                  "description": "Finding category (lazy_loading, memory, tools, etc.)"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "CRITICAL",
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW",
+                    "INFO"
+                  ]
+                },
+                "recommendation": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_adk.generate_audit_report",
+      "name": "Generate Audit Report",
+      "description": "Generate comprehensive ADK compliance audit report",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "Audit scope (repo, directory, agent)"
+          },
+          "include_recommendations": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include fix recommendations"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "audit_summary",
+          "findings_count",
+          "findings"
+        ],
+        "properties": {
+          "audit_summary": {
+            "type": "object",
+            "required": [
+              "compliant_agents",
+              "non_compliant_agents",
+              "total_agents"
+            ],
+            "properties": {
+              "compliant_agents": {
+                "type": "integer"
+              },
+              "non_compliant_agents": {
+                "type": "integer"
+              },
+              "total_agents": {
+                "type": "integer"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ]
               }
             }
           },
-          "skill_count": {
-            "type": "integer",
-            "description": "Number of skills defined in AgentCard"
+          "findings_count": {
+            "type": "integer"
           },
-          "recommendations": {
+          "findings": {
             "type": "array",
-            "items": {"type": "string"},
-            "description": "Suggestions for improving AgentCard quality"
+            "items": {
+              "type": "object",
+              "description": "Individual compliance findings"
+            }
           }
         }
       }
     }
   ],
-  "dependencies": {
-    "runtime": "vertex-ai-agent-engine",
-    "framework": "google-adk",
-    "framework_version": ">=0.2.0",
-    "model": "gemini-2.0-flash-exp"
-  },
-  "contact": {
-    "maintainer": "department-adk-iam",
-    "support_url": "https://github.com/jeremylongshore/bobs-brain/issues"
-  }
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0"
 }

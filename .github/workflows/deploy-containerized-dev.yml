@@ -1,0 +1,213 @@
+name: Containerized Agent Deployment - Dev (STUBBED)
+
+# Phase 18: Container-based deployment workflow with ARV gates
+#
+# This workflow demonstrates the complete containerized deployment pattern:
+# 1. ARV checks (gate)
+# 2. Docker build & push
+# 3. Terraform apply (STUBBED in Phase 18)
+#
+# IMPORTANT:
+# - ARV checks must pass before building images
+# - Docker images pushed to GCR
+# - Terraform deployment is STUBBED (commented out) in Phase 18
+# - Will be enabled after Phase 18 AAR and dev environment validation
+#
+# Pattern: Containerized deployment (vs inline source deployment)
+# References:
+# - Dockerfiles: agents/bob/Dockerfile, agents/iam_senior_adk_devops_lead/Dockerfile
+# - Terraform: infra/terraform/agent_engine.tf
+# - Standard: 000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: 'Agent to deploy (bob or foreman)'
+        required: true
+        type: choice
+        default: 'bob'
+        options:
+          - bob
+          - foreman
+          - both
+
+      gcp_project_id:
+        description: 'GCP Project ID'
+        required: true
+        type: string
+
+      gcp_region:
+        description: 'GCP Region'
+        required: false
+        type: string
+        default: 'us-central1'
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation (R4)
+
+env:
+  GCP_PROJECT_ID: ${{ inputs.gcp_project_id }}
+  GCP_REGION: ${{ inputs.gcp_region }}
+  APP_VERSION: '0.10.0'
+  ENVIRONMENT: dev
+
+jobs:
+  # ARV Gate: Must pass before building images
+  arv-gate:
+    name: ARV Checks (Deployment Gate)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt || echo "Requirements install incomplete"
+
+      - name: Run drift detection (R8)
+        run: bash scripts/ci/check_nodrift.sh
+
+      - name: Run A2A readiness check (Phase 17)
+        run: python scripts/check_a2a_readiness.py
+        env:
+          PYTHONPATH: .
+
+      - name: Run ARV minimum checks
+        run: make check-arv-minimum
+
+      - name: Report ARV gate status
+        run: |
+          echo "✅ All ARV checks passed!"
+          echo "Proceeding to Docker build & push..."
+
+  # Docker Build & Push
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: arv-gate  # Only run if ARV gate passes
+
+    strategy:
+      matrix:
+        include:
+          - agent: bob
+            dockerfile: agents/bob/Dockerfile
+            image_name: agent
+            context: .
+          - agent: foreman
+            dockerfile: agents/iam_senior_adk_devops_lead/Dockerfile
+            image_name: foreman
+            context: .
+
+    # Only build requested agent(s)
+    if: |
+      inputs.agent == 'both' ||
+      inputs.agent == matrix.agent
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io
+
+      - name: Build Docker image (${{ matrix.agent }})
+        run: |
+          echo "🐳 Building ${{ matrix.agent }} image..."
+          docker build \
+            -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }} \
+            -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest \
+            -f ${{ matrix.dockerfile }} \
+            ${{ matrix.context }}
+
+      - name: Push Docker image to GCR (${{ matrix.agent }})
+        run: |
+          echo "📦 Pushing ${{ matrix.agent }} image to GCR..."
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }}
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest
+
+      - name: Report image details
+        run: |
+          echo "✅ Image pushed successfully!"
+          echo "   Agent: ${{ matrix.agent }}"
+          echo "   Image: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }}"
+          echo "   Latest: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest"
+
+  # Terraform Deployment (STUBBED in Phase 18)
+  deploy-terraform:
+    name: Deploy via Terraform (STUBBED)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+
+      - name: STUBBED - Terraform Plan
+        run: |
+          echo "⏸️  STUBBED: Terraform plan would run here"
+          echo "   Command: terraform plan -var-file=envs/dev.tfvars"
+          echo "   Working directory: infra/terraform/"
+          echo ""
+          echo "   This step is stubbed in Phase 18."
+          echo "   Will be enabled after:"
+          echo "   - Phase 18 AAR review"
+          echo "   - Dev environment validation"
+          echo "   - Smoke test verification"
+
+      # COMMENTED OUT: Actual deployment (Phase 18)
+      # Uncomment after Phase 18 AAR and validation
+      #
+      # - name: Terraform Apply
+      #   working-directory: infra/terraform
+      #   run: |
+      #     terraform init
+      #     terraform apply -var-file=envs/dev.tfvars -auto-approve
+      #     echo "✅ Terraform apply completed"
+
+      - name: Report deployment status
+        run: |
+          echo "📊 Deployment Summary (STUBBED):"
+          echo "  Environment: ${{ env.ENVIRONMENT }}"
+          echo "  Project: ${{ env.GCP_PROJECT_ID }}"
+          echo "  Region: ${{ env.GCP_REGION }}"
+          echo "  Version: ${{ env.APP_VERSION }}"
+          echo ""
+          echo "ℹ️  This was a STUBBED deployment (Phase 18)."
+          echo "ℹ️  Docker images were built and pushed to GCR."
+          echo "ℹ️  Terraform deployment commented out until Phase 18 AAR."
+          echo ""
+          echo "Next steps:"
+          echo "  1. Complete Phase 18 AAR documentation"
+          echo "  2. Validate dev environment readiness"
+          echo "  3. Run smoke tests"
+          echo "  4. Uncomment Terraform apply step"

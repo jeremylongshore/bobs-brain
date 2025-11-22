@@ -59,6 +59,11 @@ jobs:
       - name: Run ARV engine flags check (Phase AE3)
         run: make check-arv-engine-flags
 
+      - name: Run A2A readiness check (Phase 17)
+        run: python scripts/check_a2a_readiness.py
+        env:
+          PYTHONPATH: .
+
   # ARV-DEPT: Comprehensive department readiness verification
   # Includes: config, tests, RAG, engine, storage, notifications (LIVE3)
   # LIVE3 readiness check is NON-BLOCKING (informational only)

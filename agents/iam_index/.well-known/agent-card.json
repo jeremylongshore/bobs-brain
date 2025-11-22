@@ -1,0 +1,255 @@
+{
+  "name": "iam-index",
+  "version": "0.10.0",
+  "url": "https://iam-index.intent.solutions",
+  "description": "iam-index - Knowledge Management Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.10.0\n\niam-index manages Vertex AI Search integration, indexes code and documentation, and maintains the knowledge base for department access.\n",
+  "capabilities": [
+    "vertex_search_management",
+    "code_indexing",
+    "doc_indexing",
+    "knowledge_base_maintenance"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_index.index_code_repository",
+      "name": "Index Code Repository",
+      "description": "Index code repository for searchability in Vertex AI Search",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "repo_path"
+        ],
+        "properties": {
+          "repo_path": {
+            "type": "string"
+          },
+          "file_patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude_patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "indexing_result"
+        ],
+        "properties": {
+          "indexing_result": {
+            "type": "object",
+            "required": [
+              "status",
+              "files_indexed"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SUCCESS",
+                  "PARTIAL",
+                  "FAILED"
+                ]
+              },
+              "files_indexed": {
+                "type": "integer"
+              },
+              "datastore_id": {
+                "type": "string"
+              },
+              "index_timestamp": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_index.index_documentation",
+      "name": "Index Documentation",
+      "description": "Index documentation files into Vertex AI Search datastore",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "docs_path"
+        ],
+        "properties": {
+          "docs_path": {
+            "type": "string"
+          },
+          "doc_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "indexing_result"
+        ],
+        "properties": {
+          "indexing_result": {
+            "type": "object",
+            "required": [
+              "status",
+              "docs_indexed"
+            ],
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "docs_indexed": {
+                "type": "integer"
+              },
+              "datastore_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_index.search_knowledge_base",
+      "name": "Search Knowledge Base",
+      "description": "Search indexed knowledge base using Vertex AI Search",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "max_results": {
+            "type": "integer",
+            "default": 10
+          },
+          "filter": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "search_results"
+        ],
+        "properties": {
+          "search_results": {
+            "type": "object",
+            "required": [
+              "results",
+              "total_count"
+            ],
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "relevance_score": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "total_count": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_index.update_knowledge_base",
+      "name": "Update Knowledge Base",
+      "description": "Update knowledge base with new or modified content",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "updates"
+        ],
+        "properties": {
+          "updates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "operation": {
+                  "type": "string",
+                  "enum": [
+                    "add",
+                    "update",
+                    "delete"
+                  ]
+                },
+                "document_id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "update_result"
+        ],
+        "properties": {
+          "update_result": {
+            "type": "object",
+            "required": [
+              "status",
+              "updates_applied"
+            ],
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "updates_applied": {
+                "type": "integer"
+              },
+              "failed_updates": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.10.0"
+}

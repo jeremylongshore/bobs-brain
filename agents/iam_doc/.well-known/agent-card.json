@@ -1,0 +1,230 @@
+{
+  "name": "iam-doc",
+  "version": "0.10.0",
+  "url": "https://iam-doc.intent.solutions",
+  "description": "iam-doc - Documentation Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-doc/dev/us-central1/0.10.0\n\niam-doc generates After-Action Reports (AARs), updates README files, creates design docs, and manages 000-docs/ structure.\n",
+  "capabilities": [
+    "aar_generation",
+    "readme_maintenance",
+    "design_documentation",
+    "docs_structure_management"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_doc.generate_aar",
+      "name": "Generate After-Action Report",
+      "description": "Generate comprehensive AAR for completed phase",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "phase_info"
+        ],
+        "properties": {
+          "phase_info": {
+            "type": "object",
+            "required": [
+              "phase_name",
+              "objectives",
+              "outcomes"
+            ],
+            "properties": {
+              "phase_name": {
+                "type": "string"
+              },
+              "objectives": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "outcomes": {
+                "type": "object"
+              },
+              "decisions": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "lessons_learned": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "aar_document"
+        ],
+        "properties": {
+          "aar_document": {
+            "type": "object",
+            "required": [
+              "file_path",
+              "content",
+              "doc_id"
+            ],
+            "properties": {
+              "file_path": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "doc_id": {
+                "type": "string"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_doc.update_readme",
+      "name": "Update README",
+      "description": "Update README files with latest information",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "readme_path",
+          "updates"
+        ],
+        "properties": {
+          "readme_path": {
+            "type": "string"
+          },
+          "updates": {
+            "type": "object",
+            "properties": {
+              "section": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "update",
+                  "remove"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "update_result"
+        ],
+        "properties": {
+          "update_result": {
+            "type": "object",
+            "required": [
+              "status",
+              "updated_content"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SUCCESS",
+                  "FAILED"
+                ]
+              },
+              "updated_content": {
+                "type": "string"
+              },
+              "changes_summary": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_doc.create_design_doc",
+      "name": "Create Design Document",
+      "description": "Create architecture or design documentation",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "design_info"
+        ],
+        "properties": {
+          "design_info": {
+            "type": "object",
+            "required": [
+              "title",
+              "overview"
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "overview": {
+                "type": "string"
+              },
+              "architecture": {
+                "type": "object"
+              },
+              "decisions": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "design_document"
+        ],
+        "properties": {
+          "design_document": {
+            "type": "object",
+            "required": [
+              "file_path",
+              "content"
+            ],
+            "properties": {
+              "file_path": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "doc_type": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-doc/dev/us-central1/0.10.0"
+}

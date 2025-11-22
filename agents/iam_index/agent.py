@@ -9,7 +9,6 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from agents.shared_tools import IAM_INDEX_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -30,15 +29,6 @@ AGENT_SPIFFE_ID = os.getenv(
     "AGENT_SPIFFE_ID",
     "spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.1.0"
 )
-
-# Validate required environment variables
-if not PROJECT_ID:
-    raise ValueError("PROJECT_ID environment variable is required")
-if not LOCATION:
-    raise ValueError("LOCATION environment variable is required")
-if not AGENT_ENGINE_ID:
-    raise ValueError("AGENT_ENGINE_ID environment variable is required")
-
 
 def auto_save_session_to_memory(ctx):
     """
@@ -75,7 +65,6 @@ def auto_save_session_to_memory(ctx):
             exc_info=True
         )
         # Never block agent execution
-
 
 def get_agent() -> LlmAgent:
     """
@@ -194,6 +183,9 @@ You must enforce all Hard Mode rules:
 
 Remember: You are the **knowledge nexus** - all agents rely on you for accurate, timely information retrieval."""
 
+    # ✅ Lazy import to avoid circular dependency (Phase 13)
+    from agents.shared_tools import IAM_INDEX_TOOLS
+
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",
         name="iam_index",  # Python identifier (no hyphens)
@@ -213,7 +205,6 @@ Remember: You are the **knowledge nexus** - all agents rely on you for accurate,
     )
 
     return agent
-
 
 def create_runner() -> Runner:
     """
@@ -261,7 +252,6 @@ def create_runner() -> Runner:
 
     return runner
 
-
 # Module-level agent for ADK CLI deployment
 root_agent = get_agent()
 
@@ -272,7 +262,6 @@ logger.info(
         "agent_name": "iam_index"
     }
 )
-
 
 if __name__ == "__main__":
     """

@@ -3,6 +3,9 @@ Vertex AI Search Tool Factory
 
 This module provides Vertex AI Search tools configured for the org knowledge hub.
 Bob and foreman use these tools to access the centralized RAG knowledge base.
+
+Phase 13 Update: Replaced dict-based tools with proper VertexAiSearchTool instances
+to comply with google-adk 1.18+ Pydantic validation.
 """
 
 import os
@@ -10,6 +13,9 @@ import logging
 import yaml
 from typing import Any, Dict, Optional
 from pathlib import Path
+
+# ADK 1.18+ proper tool import
+from google.adk.tools import VertexAiSearchTool
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +66,7 @@ def get_current_environment() -> str:
         return "staging"
 
 
-def get_bob_vertex_search_tool(env: Optional[str] = None) -> Any:
+def get_bob_vertex_search_tool(env: Optional[str] = None) -> Optional[VertexAiSearchTool]:
     """
     Get Vertex AI Search tool configured for Bob and foreman.
 
@@ -70,7 +76,7 @@ def get_bob_vertex_search_tool(env: Optional[str] = None) -> Any:
         env: Environment override. If None, auto-detect from env vars.
 
     Returns:
-        VertexAiSearchToolset configured for the current environment
+        VertexAiSearchTool configured for the current environment, or None if config not available
     """
     # Determine environment
     if env is None:
@@ -88,25 +94,15 @@ def get_bob_vertex_search_tool(env: Optional[str] = None) -> Any:
         # Use legacy configuration for backwards compatibility
         logger.info("Using legacy Vertex Search configuration (USE_ORG_KNOWLEDGE=false)")
 
-        # Return legacy tool configuration
-        # TODO: Import actual ADK VertexAiSearchToolset when available
-        # from google.adk.toolsets import VertexAiSearchToolset
-        # return VertexAiSearchToolset(
-        #     project_id="bobs-brain",
-        #     location="us",
-        #     datastore_id="bob-vertex-agent-datastore"
-        # )
-
-        # Stub for now
-        return {
-            "type": "vertex_search",
-            "config": {
-                "project_id": "bobs-brain",
-                "location": "us",
-                "datastore_id": "bob-vertex-agent-datastore",
-                "legacy": True
-            }
-        }
+        # ✅ Return proper ADK VertexAiSearchTool instance (Phase 13)
+        # Note: project_id and location are inferred from GCP credentials/environment
+        # The tool uses the default project from Application Default Credentials
+        return VertexAiSearchTool(
+            data_store_id="bob-vertex-agent-datastore",
+            # Optional parameters:
+            # max_results=10,
+            # filter="...",
+        )
 
     # Use new org knowledge hub configuration
     if "environments" not in config or env not in config["environments"]:
@@ -118,38 +114,18 @@ def get_bob_vertex_search_tool(env: Optional[str] = None) -> Any:
 
     logger.info(f"Using datastore: {datastore_config['id']} in project: {datastore_config['project_id']}")
 
-    # TODO: Import and use actual ADK VertexAiSearchToolset
-    # This is where the real ADK tool would be created:
-    #
-    # from google.adk.toolsets import VertexAiSearchToolset
-    #
-    # tool = VertexAiSearchToolset(
-    #     project_id=datastore_config["project_id"],
-    #     location=datastore_config["location"],
-    #     datastore_id=datastore_config["id"]
-    # )
-    #
-    # # Optional: Configure search parameters
-    # if "search" in env_config:
-    #     search_config = env_config["search"]
-    #     tool.set_refresh_schedule(search_config.get("refresh_schedule", "daily"))
-    #
-    # return tool
-
-    # For now, return a configuration stub
-    return {
-        "type": "vertex_search",
-        "config": {
-            "project_id": datastore_config["project_id"],
-            "location": datastore_config["location"],
-            "datastore_id": datastore_config["id"],
-            "source_uri": env_config["source"]["uri_pattern"],
-            "environment": env
-        }
-    }
+    # ✅ Return proper ADK VertexAiSearchTool instance (Phase 13)
+    # Note: google-adk 1.18 uses VertexAiSearchTool (singular), not VertexAiSearchToolset
+    # The project_id and location are inferred from GCP credentials if not in datastore config
+    return VertexAiSearchTool(
+        data_store_id=datastore_config["id"],
+        # Optional: Configure search parameters
+        # max_results=env_config.get("search", {}).get("max_results", 10),
+        # filter=env_config.get("search", {}).get("filter"),
+    )
 
 
-def get_foreman_vertex_search_tool(env: Optional[str] = None) -> Any:
+def get_foreman_vertex_search_tool(env: Optional[str] = None) -> Optional[VertexAiSearchTool]:
     """
     Get Vertex AI Search tool for iam-senior-adk-devops-lead (foreman).
 
@@ -160,7 +136,7 @@ def get_foreman_vertex_search_tool(env: Optional[str] = None) -> Any:
         env: Environment override. If None, auto-detect from env vars.
 
     Returns:
-        VertexAiSearchToolset configured for the foreman
+        VertexAiSearchTool configured for the foreman, or None if config not available
     """
     # For now, foreman uses the same tool as Bob
     return get_bob_vertex_search_tool(env)

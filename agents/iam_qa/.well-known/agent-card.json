@@ -1,0 +1,235 @@
+{
+  "name": "iam-qa",
+  "version": "0.10.0",
+  "url": "https://iam-qa.intent.solutions",
+  "description": "iam-qa - Testing & Quality Assurance Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-qa/dev/us-central1/0.10.0\n\niam-qa designs test suites, validates coverage, runs smoke tests, and produces QAVerdict verdicts for deployment decisions.\n",
+  "capabilities": [
+    "test_design",
+    "coverage_validation",
+    "smoke_testing",
+    "qa_verdict_generation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_qa.design_test_suite",
+      "name": "Design Test Suite",
+      "description": "Design comprehensive test suite for implemented changes",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "implementation"
+        ],
+        "properties": {
+          "implementation": {
+            "type": "object"
+          },
+          "coverage_target": {
+            "type": "number",
+            "default": 80
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "test_suite"
+        ],
+        "properties": {
+          "test_suite": {
+            "type": "object",
+            "required": [
+              "test_cases",
+              "estimated_coverage"
+            ],
+            "properties": {
+              "test_cases": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "estimated_coverage": {
+                "type": "number"
+              },
+              "test_categories": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_qa.validate_test_coverage",
+      "name": "Validate Test Coverage",
+      "description": "Validate that test coverage meets quality standards",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "test_results"
+        ],
+        "properties": {
+          "test_results": {
+            "type": "object"
+          },
+          "min_coverage": {
+            "type": "number",
+            "default": 80
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "coverage_valid",
+          "coverage_percentage"
+        ],
+        "properties": {
+          "coverage_valid": {
+            "type": "boolean"
+          },
+          "coverage_percentage": {
+            "type": "number"
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_qa.run_smoke_tests",
+      "name": "Run Smoke Tests",
+      "description": "Execute smoke tests for basic functionality validation",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "string"
+          },
+          "test_scope": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "smoke_test_results"
+        ],
+        "properties": {
+          "smoke_test_results": {
+            "type": "object",
+            "required": [
+              "passed",
+              "failed",
+              "status"
+            ],
+            "properties": {
+              "passed": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "failures": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_qa.generate_qa_verdict",
+      "name": "Generate QA Verdict",
+      "description": "Produce QA verdict for deployment decision",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "test_results",
+          "coverage_analysis"
+        ],
+        "properties": {
+          "test_results": {
+            "type": "object"
+          },
+          "coverage_analysis": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "verdict"
+        ],
+        "properties": {
+          "verdict": {
+            "type": "object",
+            "required": [
+              "decision",
+              "confidence"
+            ],
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "APPROVE",
+                  "REJECT",
+                  "CONDITIONAL"
+                ]
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW"
+                ]
+              },
+              "blocking_issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "recommendations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-qa/dev/us-central1/0.10.0"
+}

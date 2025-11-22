@@ -2,193 +2,128 @@
 Delegation tool for invoking iam-* specialist agents.
 
 This tool allows the foreman to delegate tasks to specialist agents
-via Agent-to-Agent (A2A) protocol or direct invocation.
+via Agent-to-Agent (A2A) protocol using AgentCard contracts.
+
+Follows:
+- 6767-LAZY: A2A dispatcher imported inside functions
+- AgentCard contracts: Uses skill_id and payload from AgentCards
+- R7: SPIFFE ID propagation in delegation
+
+Phase 17: Real A2A wiring with local specialist invocation.
 """
 
 import json
 import logging
+import os
 from typing import Dict, Any, Optional, List
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-
-class SpecialistAgent(Enum):
-    """Available iam-* specialist agents."""
-
-    IAM_ADK = "iam-adk"
-    IAM_ISSUE = "iam-issue"
-    IAM_FIX_PLAN = "iam-fix-plan"
-    IAM_FIX_IMPL = "iam-fix-impl"
-    IAM_QA = "iam-qa"
-    IAM_DOC = "iam-doc"
-    IAM_CLEANUP = "iam-cleanup"
-    IAM_INDEX = "iam-index"
+# R7: Get foreman's SPIFFE ID for propagation
+FOREMAN_SPIFFE_ID = os.getenv(
+    "AGENT_SPIFFE_ID",
+    "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0"
+)
 
 
 def delegate_to_specialist(
     specialist: str,
-    task_description: str,
-    context: Optional[Dict[str, Any]] = None,
-    timeout_seconds: int = 300
+    skill_id: str,
+    payload: Dict[str, Any],
+    context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Delegate a task to a specialist agent.
+    Delegate a task to a specialist agent via A2A protocol.
 
-    This is a mock implementation for Phase 1. In Phase 3, this will
-    use actual A2A protocol to invoke agents via Agent Engine.
+    Phase 17: Real A2A wiring using AgentCard contracts and local invocation.
 
     Args:
-        specialist: Name of the specialist agent (e.g., "iam-adk")
-        task_description: Detailed description of the task to perform
-        context: Optional context dictionary with additional information
-        timeout_seconds: Maximum time to wait for specialist response
+        specialist: Specialist agent name (e.g., "iam_adk", "iam_issue")
+        skill_id: Full skill identifier from AgentCard (e.g., "iam_adk.check_adk_compliance")
+        payload: Skill input matching the skill's input_schema
+        context: Optional context dict (request_id, pipeline_run_id, etc.)
 
     Returns:
         Dict containing:
         - specialist: Name of the agent that handled the task
-        - status: "success", "failure", or "timeout"
-        - result: The specialist's output
-        - metadata: Execution metadata (timing, logs, etc.)
+        - status: "SUCCESS", "FAILED", or "PARTIAL"
+        - result: The specialist's output data
+        - error: Error message if failed (optional)
+        - duration_ms: Execution time in milliseconds
+        - timestamp: ISO 8601 completion timestamp
 
     Example:
         >>> result = delegate_to_specialist(
-        ...     specialist="iam-adk",
-        ...     task_description="Analyze agent.py for ADK compliance",
-        ...     context={"file_path": "agents/bob/agent.py"}
+        ...     specialist="iam_adk",
+        ...     skill_id="iam_adk.check_adk_compliance",
+        ...     payload={"target": "agents/bob/agent.py", "focus_rules": ["R1", "R5"]},
+        ...     context={"request_id": "req_123"}
         ... )
-    """
-    logger.info(f"Delegating to {specialist}: {task_description[:100]}...")
 
-    # Validate specialist exists
+    Raises:
+        A2AError: If specialist/skill not found or validation fails
+    """
+    # 6767-LAZY: Import A2A dispatcher at runtime, not module import time
+    from agents.a2a import A2ATask, call_specialist, A2AError
+
+    logger.info(
+        f"A2A: Delegating to {specialist}.{skill_id}",
+        extra={
+            "specialist": specialist,
+            "skill_id": skill_id,
+            "foreman_spiffe": FOREMAN_SPIFFE_ID
+        }
+    )
+
     try:
-        specialist_enum = SpecialistAgent(specialist)
-    except ValueError:
+        # Build A2A task envelope
+        task = A2ATask(
+            specialist=specialist,
+            skill_id=skill_id,
+            payload=payload,
+            context=context or {},
+            spiffe_id=FOREMAN_SPIFFE_ID  # R7: Propagate foreman's SPIFFE ID
+        )
+
+        # Invoke specialist via A2A dispatcher
+        result = call_specialist(task)
+
+        # Convert A2AResult to foreman's expected format
+        return {
+            "specialist": result.specialist,
+            "status": result.status.lower(),  # SUCCESS → success for backward compat
+            "result": result.result,
+            "error": result.error,
+            "metadata": {
+                "skill_id": result.skill_id,
+                "duration_ms": result.duration_ms,
+                "timestamp": result.timestamp,
+                "a2a_protocol": True,
+                "phase": "Phase 17 - Real A2A Wiring"
+            }
+        }
+
+    except A2AError as e:
+        logger.error(
+            f"A2A: Delegation failed: {e}",
+            extra={
+                "specialist": specialist,
+                "skill_id": skill_id,
+                "error": str(e)
+            }
+        )
+
         return {
             "specialist": specialist,
             "status": "failure",
-            "result": f"Unknown specialist: {specialist}",
-            "metadata": {"error": "InvalidSpecialist"}
-        }
-
-    # Mock implementation for Phase 1
-    # In Phase 3, this will make actual A2A calls
-    mock_responses = {
-        SpecialistAgent.IAM_ADK: {
-            "status": "success",
-            "result": {
-                "compliance_score": 95,
-                "findings": [
-                    "✅ Uses ADK LlmAgent pattern",
-                    "✅ Dual memory properly wired",
-                    "✅ SPIFFE ID propagated",
-                    "⚠️ Consider adding more comprehensive error handling"
-                ],
-                "recommendations": [
-                    "Add retry logic for memory operations",
-                    "Implement circuit breaker pattern"
-                ]
-            }
-        },
-        SpecialistAgent.IAM_ISSUE: {
-            "status": "success",
-            "result": {
-                "issue_spec": {
-                    "title": "Implement comprehensive error handling",
-                    "body": "Add retry logic and circuit breaker patterns",
-                    "labels": ["enhancement", "adk", "reliability"],
-                    "assignees": [],
-                    "milestone": "Phase 2"
-                },
-                "issue_url": "https://github.com/org/repo/issues/123"
-            }
-        },
-        SpecialistAgent.IAM_FIX_PLAN: {
-            "status": "success",
-            "result": {
-                "plan": {
-                    "approach": "Add exponential backoff retry",
-                    "steps": [
-                        "Import retry utilities",
-                        "Wrap memory operations",
-                        "Add circuit breaker class",
-                        "Update tests"
-                    ],
-                    "estimated_effort": "2 hours",
-                    "risks": ["Increased complexity"]
-                }
-            }
-        },
-        SpecialistAgent.IAM_FIX_IMPL: {
-            "status": "success",
-            "result": {
-                "files_modified": ["agent.py", "tools/delegation.py"],
-                "lines_added": 45,
-                "lines_removed": 10,
-                "tests_added": 3,
-                "commit_sha": "abc123def456"
-            }
-        },
-        SpecialistAgent.IAM_QA: {
-            "status": "success",
-            "result": {
-                "tests_passed": 25,
-                "tests_failed": 0,
-                "coverage": 92.5,
-                "ci_status": "green",
-                "quality_gate": "passed"
-            }
-        },
-        SpecialistAgent.IAM_DOC: {
-            "status": "success",
-            "result": {
-                "documents_created": [
-                    "000-docs/081-AA-REPT-error-handling.md"
-                ],
-                "documents_updated": [
-                    "README.md",
-                    "CLAUDE.md"
-                ],
-                "word_count": 1250
-            }
-        },
-        SpecialistAgent.IAM_CLEANUP: {
-            "status": "success",
-            "result": {
-                "files_cleaned": 5,
-                "unused_imports_removed": 12,
-                "formatting_fixed": 8,
-                "type_hints_added": 15
-            }
-        },
-        SpecialistAgent.IAM_INDEX: {
-            "status": "success",
-            "result": {
-                "documents_indexed": 34,
-                "knowledge_entries": 156,
-                "search_index_updated": True,
-                "last_index_time": "2025-11-19T10:30:00Z"
+            "result": None,
+            "error": str(e),
+            "metadata": {
+                "skill_id": skill_id,
+                "a2a_error": True,
+                "phase": "Phase 17 - Real A2A Wiring"
             }
         }
-    }
-
-    # Get mock response for the specialist
-    response = mock_responses.get(specialist_enum, {
-        "status": "failure",
-        "result": "Specialist not yet implemented"
-    })
-
-    return {
-        "specialist": specialist,
-        "status": response["status"],
-        "result": response["result"],
-        "metadata": {
-            "mock_response": True,
-            "phase": "Phase 1 - Mock Implementation",
-            "context_provided": context is not None,
-            "timeout_seconds": timeout_seconds
-        }
-    }
 
 
 def delegate_to_multiple(
@@ -198,12 +133,15 @@ def delegate_to_multiple(
     """
     Delegate tasks to multiple specialists.
 
+    Phase 17: Sequential execution only (parallel is future phase).
+
     Args:
         delegations: List of delegation configurations, each containing:
-            - specialist: Name of the specialist
-            - task_description: Task to perform
-            - context: Optional context
-        execution_mode: "sequential" or "parallel" (mock in Phase 1)
+            - specialist: Specialist name (e.g., "iam_adk")
+            - skill_id: Full skill ID (e.g., "iam_adk.check_adk_compliance")
+            - payload: Skill input data
+            - context: Optional context (optional)
+        execution_mode: "sequential" or "parallel" (only sequential supported in Phase 17)
 
     Returns:
         List of results from each specialist
@@ -211,21 +149,27 @@ def delegate_to_multiple(
     Example:
         >>> results = delegate_to_multiple([
         ...     {
-        ...         "specialist": "iam-adk",
-        ...         "task_description": "Analyze code"
+        ...         "specialist": "iam_adk",
+        ...         "skill_id": "iam_adk.check_adk_compliance",
+        ...         "payload": {"target": "agents/bob/agent.py"}
         ...     },
         ...     {
-        ...         "specialist": "iam-doc",
-        ...         "task_description": "Update documentation"
+        ...         "specialist": "iam_doc",
+        ...         "skill_id": "iam_doc.generate_aar",
+        ...         "payload": {"phase_info": {...}}
         ...     }
         ... ])
     """
+    if execution_mode == "parallel":
+        logger.warning("Parallel execution not yet implemented in Phase 17; using sequential")
+
     results = []
 
     for delegation in delegations:
         result = delegate_to_specialist(
             specialist=delegation["specialist"],
-            task_description=delegation["task_description"],
+            skill_id=delegation["skill_id"],
+            payload=delegation["payload"],
             context=delegation.get("context")
         )
         results.append(result)
@@ -235,10 +179,9 @@ def delegate_to_multiple(
 
 def check_specialist_availability(specialist: str) -> bool:
     """
-    Check if a specialist agent is available.
+    Check if a specialist agent is available via AgentCard discovery.
 
-    In Phase 1, this returns True for known specialists.
-    In Phase 3, this will check actual Agent Engine status.
+    Phase 17: Uses A2A dispatcher to load AgentCard.
 
     Args:
         specialist: Name of the specialist agent
@@ -246,16 +189,27 @@ def check_specialist_availability(specialist: str) -> bool:
     Returns:
         True if specialist is available, False otherwise
     """
+    # 6767-LAZY: Import A2A at runtime
+    from agents.a2a import A2AError
+
     try:
-        SpecialistAgent(specialist)
+        # Try to load AgentCard - if it exists and is valid, specialist is available
+        from agents.a2a.dispatcher import load_agentcard
+        load_agentcard(specialist)
         return True
-    except ValueError:
+    except A2AError:
+        logger.debug(f"Specialist '{specialist}' not available: AgentCard not found or invalid")
+        return False
+    except Exception as e:
+        logger.warning(f"Unexpected error checking specialist '{specialist}': {e}")
         return False
 
 
 def get_specialist_capabilities(specialist: str) -> Dict[str, Any]:
     """
-    Get the capabilities of a specialist agent.
+    Get the capabilities of a specialist agent from its AgentCard.
+
+    Phase 17: Reads directly from AgentCard instead of hardcoded dict.
 
     Args:
         specialist: Name of the specialist agent
@@ -263,100 +217,35 @@ def get_specialist_capabilities(specialist: str) -> Dict[str, Any]:
     Returns:
         Dictionary describing the specialist's capabilities
     """
-    capabilities = {
-        "iam-adk": {
-            "description": "ADK/Vertex design and static analysis specialist",
-            "capabilities": [
-                "Analyze code for ADK compliance",
-                "Detect pattern violations",
-                "Suggest ADK best practices",
-                "Validate Agent Engine compatibility"
-            ],
-            "input_types": ["code_files", "agent_configs", "terraform_configs"],
-            "output_types": ["compliance_report", "findings", "recommendations"]
-        },
-        "iam-issue": {
-            "description": "GitHub issue specification and creation specialist",
-            "capabilities": [
-                "Create well-structured issue specs",
-                "Write comprehensive issue descriptions",
-                "Set appropriate labels and metadata",
-                "Link related issues and PRs"
-            ],
-            "input_types": ["problem_description", "context", "requirements"],
-            "output_types": ["issue_spec", "issue_url"]
-        },
-        "iam-fix-plan": {
-            "description": "Fix planning and design specialist",
-            "capabilities": [
-                "Analyze problems and design solutions",
-                "Create step-by-step fix plans",
-                "Estimate effort and complexity",
-                "Identify risks and dependencies"
-            ],
-            "input_types": ["issue_spec", "codebase_context", "constraints"],
-            "output_types": ["fix_plan", "approach", "estimates"]
-        },
-        "iam-fix-impl": {
-            "description": "Implementation and coding specialist",
-            "capabilities": [
-                "Implement fixes according to plan",
-                "Write production-quality code",
-                "Follow ADK patterns",
-                "Create appropriate tests"
-            ],
-            "input_types": ["fix_plan", "code_context", "test_requirements"],
-            "output_types": ["code_changes", "test_files", "commit_info"]
-        },
-        "iam-qa": {
-            "description": "Testing and CI/CD verification specialist",
-            "capabilities": [
-                "Run comprehensive tests",
-                "Verify CI/CD pipeline status",
-                "Check code coverage",
-                "Validate quality gates"
-            ],
-            "input_types": ["code_changes", "test_files", "ci_config"],
-            "output_types": ["test_results", "coverage_report", "ci_status"]
-        },
-        "iam-doc": {
-            "description": "Documentation and AAR creation specialist",
-            "capabilities": [
-                "Write technical documentation",
-                "Create After-Action Reports",
-                "Update existing docs",
-                "Follow 000-docs conventions"
-            ],
-            "input_types": ["work_performed", "decisions_made", "outcomes"],
-            "output_types": ["documents", "aars", "updates"]
-        },
-        "iam-cleanup": {
-            "description": "Repository hygiene specialist",
-            "capabilities": [
-                "Remove unused code",
-                "Fix formatting issues",
-                "Add type hints",
-                "Organize imports"
-            ],
-            "input_types": ["code_files", "cleanup_scope", "standards"],
-            "output_types": ["cleanup_report", "files_modified"]
-        },
-        "iam-index": {
-            "description": "Knowledge management specialist",
-            "capabilities": [
-                "Index documentation",
-                "Update search indices",
-                "Manage knowledge base",
-                "Track document relationships"
-            ],
-            "input_types": ["documents", "code_files", "metadata"],
-            "output_types": ["index_updates", "knowledge_graph"]
-        }
-    }
+    # 6767-LAZY: Import A2A at runtime
+    from agents.a2a import A2AError
+    from agents.a2a.dispatcher import load_agentcard
 
-    return capabilities.get(specialist, {
-        "description": "Unknown specialist",
-        "capabilities": [],
-        "input_types": [],
-        "output_types": []
-    })
+    try:
+        agentcard = load_agentcard(specialist)
+
+        # Extract capabilities from AgentCard
+        return {
+            "description": agentcard.get("description", "").split("\n")[0],  # First line only
+            "capabilities": agentcard.get("capabilities", []),
+            "skills": [skill.get("skill_id") for skill in agentcard.get("skills", [])],
+            "agentcard_version": agentcard.get("version", "unknown"),
+            "spiffe_id": agentcard.get("spiffe_id", ""),
+        }
+
+    except A2AError as e:
+        logger.warning(f"Failed to load capabilities for specialist '{specialist}': {e}")
+        return {
+            "description": f"Unknown specialist '{specialist}'",
+            "capabilities": [],
+            "skills": [],
+            "error": str(e)
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error loading capabilities for '{specialist}': {e}")
+        return {
+            "description": f"Error loading specialist '{specialist}'",
+            "capabilities": [],
+            "skills": [],
+            "error": str(e)
+        }

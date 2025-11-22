@@ -1,0 +1,215 @@
+{
+  "name": "iam-cleanup",
+  "version": "0.10.0",
+  "url": "https://iam-cleanup.intent.solutions",
+  "description": "iam-cleanup - Repository Hygiene & Cleanup Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-cleanup/dev/us-central1/0.10.0\n\niam-cleanup detects dead code, finds duplicated code, identifies structural issues, and proposes CleanupTask specifications.\n",
+  "capabilities": [
+    "dead_code_detection",
+    "duplication_detection",
+    "structural_analysis",
+    "cleanup_task_generation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_cleanup.detect_dead_code",
+      "name": "Detect Dead Code",
+      "description": "Identify unused code, functions, and dependencies",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "include_dependencies": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "dead_code_report"
+        ],
+        "properties": {
+          "dead_code_report": {
+            "type": "object",
+            "required": [
+              "items_found",
+              "total_loc"
+            ],
+            "properties": {
+              "items_found": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "function",
+                        "class",
+                        "module",
+                        "dependency"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "file": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "string",
+                      "enum": [
+                        "HIGH",
+                        "MEDIUM",
+                        "LOW"
+                      ]
+                    }
+                  }
+                }
+              },
+              "total_loc": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_cleanup.find_code_duplication",
+      "name": "Find Code Duplication",
+      "description": "Detect duplicated code blocks and refactoring opportunities",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "min_lines": {
+            "type": "integer",
+            "default": 10
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "duplication_report"
+        ],
+        "properties": {
+          "duplication_report": {
+            "type": "object",
+            "required": [
+              "duplicate_groups",
+              "total_duplicates"
+            ],
+            "properties": {
+              "duplicate_groups": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "locations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "lines": {
+                      "type": "integer"
+                    },
+                    "refactor_suggestion": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "total_duplicates": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_cleanup.generate_cleanup_tasks",
+      "name": "Generate Cleanup Tasks",
+      "description": "Generate prioritized cleanup task specifications",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "analysis_results"
+        ],
+        "properties": {
+          "analysis_results": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "cleanup_tasks"
+        ],
+        "properties": {
+          "cleanup_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "task_id",
+                "description",
+                "priority",
+                "safety_level"
+              ],
+              "properties": {
+                "task_id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW"
+                  ]
+                },
+                "safety_level": {
+                  "type": "string",
+                  "enum": [
+                    "SAFE",
+                    "MODERATE_RISK",
+                    "HIGH_RISK"
+                  ]
+                },
+                "estimated_impact": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-cleanup/dev/us-central1/0.10.0"
+}

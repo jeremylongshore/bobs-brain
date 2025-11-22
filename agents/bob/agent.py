@@ -23,7 +23,6 @@ from google.adk.apps import App
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from agents.shared_tools import BOB_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -101,8 +100,8 @@ def create_agent() -> LlmAgent:
     """
     Create and configure the LlmAgent.
 
-    This function is called lazily by create_app() on first use.
-    Do NOT call this at module import time.
+    Called by create_app() on first use (module-level app creation).
+    Do NOT call this at module import time from external code.
 
     Enforces:
     - R1: Uses google-adk LlmAgent (no alternative frameworks)
@@ -112,22 +111,13 @@ def create_agent() -> LlmAgent:
     Returns:
         LlmAgent: Configured agent instance specialized in ADK expertise
 
-    Raises:
-        ValueError: If required environment variables are missing
-
     Note:
         This agent is designed to run in Vertex AI Agent Engine (R2).
-        Validation happens here (lazy), not at import time.
+        Environment variable validation removed - ADK handles this on invocation.
+        Agent creation is cheap (no GCP calls) - safe for module-level app creation.
     """
-    # ✅ Validation happens here (lazy, not at import)
-    if not PROJECT_ID:
-        raise ValueError("PROJECT_ID environment variable is required")
-    if not LOCATION:
-        raise ValueError("LOCATION environment variable is required")
-    if not AGENT_ENGINE_ID:
-        raise ValueError("AGENT_ENGINE_ID environment variable is required")
-    if not AGENT_SPIFFE_ID:
-        raise ValueError("AGENT_SPIFFE_ID environment variable is required (R7)")
+    # ✅ No validation - let ADK handle it on actual invocation
+    # ✅ Cheap to call - just creates object, no GCP calls
 
     logger.info(
         f"Creating LlmAgent for {APP_NAME}", extra={"spiffe_id": AGENT_SPIFFE_ID}
@@ -230,6 +220,9 @@ When users ask about ADK, provide expert guidance with accurate code examples, d
 
 Be concise, accurate, and helpful. Focus on teaching developers to build production-ready agents."""
 
+    # ✅ Lazy import to avoid circular dependency (Phase 13)
+    from agents.shared_tools import BOB_TOOLS
+
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="bobs_brain",  # Required: Valid Python identifier (no hyphens)
@@ -248,60 +241,37 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
 
 def create_app() -> App:
     """
-    Create the App container for Bob agent.
+    Create the App container for Agent Engine deployment.
 
-    The App wraps the agent and provides lazy initialization compatible
-    with Vertex AI Agent Engine. This function can be called multiple times
-    safely (idempotent).
+    The App wraps the agent for Vertex AI Agent Engine. When deployed to
+    Agent Engine, the runtime automatically provides session and memory services.
+
+    For local testing with dual memory, use create_runner() instead.
 
     Enforces:
     - R2: App designed for Vertex AI Agent Engine deployment
-    - R5: Dual memory wiring (Session + Memory Bank)
     - R7: SPIFFE ID propagation in logs
 
     Returns:
         App: Configured app instance for Agent Engine
 
     Note:
-        This is the entry point for Agent Engine deployment.
-        The agent is created lazily on first invocation.
+        - Agent is created here (cheap - no validation, no GCP calls)
+        - Session/memory services NOT configured (Agent Engine provides them)
+        - For local testing with dual memory, use create_runner()
     """
     logger.info(
         "Creating App container for Bob",
         extra={"spiffe_id": AGENT_SPIFFE_ID}
     )
 
-    # Validate required env vars before app creation
-    if not PROJECT_ID or not AGENT_ENGINE_ID:
-        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID are required for App creation")
+    # ✅ Call create_agent() to get instance (cheap operation)
+    agent_instance = create_agent()
 
-    # R5: Create memory services (lazy, inside function)
-    logger.info(
-        "Initializing dual memory services",
-        extra={"spiffe_id": AGENT_SPIFFE_ID}
-    )
-
-    session_service = VertexAiSessionService(
-        project=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-    logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
-
-    memory_service = VertexAiMemoryBankService(
-        project=PROJECT_ID,
-        location=LOCATION,
-        agent_engine_id=AGENT_ENGINE_ID
-    )
-    logger.info("✅ Memory Bank service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
-
-    # Create App with lazy agent creation
-    # Pass create_agent as function reference (not called yet!)
+    # ✅ NEW API - Pydantic App with name and root_agent
     app_instance = App(
-        agent=create_agent,  # ✅ Function reference, not instance
-        app_name=APP_NAME,
-        session_service=session_service,
-        memory_service=memory_service,
+        name=APP_NAME,
+        root_agent=agent_instance,
     )
 
     logger.info(
@@ -309,8 +279,6 @@ def create_app() -> App:
         extra={
             "spiffe_id": AGENT_SPIFFE_ID,
             "app_name": APP_NAME,
-            "has_session_service": True,
-            "has_memory_service": True,
         }
     )
 
@@ -325,11 +293,11 @@ def create_runner() -> Runner:
     """
     Create Runner with dual memory wiring (Session + Memory Bank).
 
-    DEPRECATED: Use create_app() instead for Agent Engine deployment.
-    This function is kept for backwards compatibility with older deployment scripts.
+    DEPRECATED: Use create_app() for Agent Engine deployment.
+    This function is kept for backwards compatibility with local testing and CI.
 
     Enforces:
-    - R2: Runner designed for Vertex AI Agent Engine deployment
+    - R2: Runner designed for local testing (NOT Agent Engine deployment)
     - R5: Dual memory wiring (Session + Memory Bank)
     - R7: SPIFFE ID propagation in logs
 
@@ -337,11 +305,13 @@ def create_runner() -> Runner:
         Runner: Configured runner with dual memory services
 
     Note:
-        This runner is created in the Agent Engine container.
+        This runner is for LOCAL/CI testing only.
+        For Agent Engine deployment, use create_app() which returns an App.
         Gateway code in service/ MUST NOT import or call this (R3).
     """
     logger.warning(
-        "⚠️  create_runner() is deprecated. Use create_app() instead.",
+        "⚠️  create_runner() is deprecated for Agent Engine deployment. "
+        "Use create_app() for Agent Engine. create_runner() is for local/CI testing only.",
         extra={"spiffe_id": AGENT_SPIFFE_ID}
     )
 
@@ -355,9 +325,9 @@ def create_runner() -> Runner:
         },
     )
 
-    # Validate required env vars
+    # ✅ Validate env vars HERE (Runner requires them for memory services)
     if not PROJECT_ID or not AGENT_ENGINE_ID:
-        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID required")
+        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID required for Runner with dual memory")
 
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(

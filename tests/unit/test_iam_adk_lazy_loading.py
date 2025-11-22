@@ -57,9 +57,9 @@ class TestLazyImport:
 class TestCreateAgent:
     """Tests for create_agent() function."""
 
-    def test_create_agent_requires_project_id(self):
-        """Test create_agent() raises ValueError if PROJECT_ID missing."""
-        # Minimal env (missing PROJECT_ID)
+    def test_create_agent_without_project_id(self):
+        """Test create_agent() succeeds even if PROJECT_ID missing (6767-LAZY)."""
+        # Minimal env (missing PROJECT_ID) - should NOT raise at creation
         env = {
             'LOCATION': 'us-central1',
             'AGENT_ENGINE_ID': 'test-engine',
@@ -69,11 +69,14 @@ class TestCreateAgent:
         with patch.dict(os.environ, env, clear=True):
             from agents.iam_adk.agent import create_agent
 
-            with pytest.raises(ValueError, match="PROJECT_ID"):
-                create_agent()
+            # Agent creation is cheap and does NOT validate env (6767-LAZY)
+            # Validation happens when agent is invoked by Runner/Agent Engine
+            agent = create_agent()
+            assert agent is not None
+            assert agent.name == "iam_adk"
 
-    def test_create_agent_requires_location(self):
-        """Test create_agent() raises ValueError if LOCATION missing."""
+    def test_create_agent_without_location(self):
+        """Test create_agent() succeeds even if LOCATION missing (6767-LAZY)."""
         env = {
             'PROJECT_ID': 'test-project',
             'AGENT_ENGINE_ID': 'test-engine',
@@ -83,11 +86,13 @@ class TestCreateAgent:
         with patch.dict(os.environ, env, clear=True):
             from agents.iam_adk.agent import create_agent
 
-            with pytest.raises(ValueError, match="LOCATION"):
-                create_agent()
+            # Agent creation is cheap and does NOT validate env (6767-LAZY)
+            agent = create_agent()
+            assert agent is not None
+            assert agent.name == "iam_adk"
 
-    def test_create_agent_requires_agent_engine_id(self):
-        """Test create_agent() raises ValueError if AGENT_ENGINE_ID missing."""
+    def test_create_agent_without_agent_engine_id(self):
+        """Test create_agent() succeeds even if AGENT_ENGINE_ID missing (6767-LAZY)."""
         env = {
             'PROJECT_ID': 'test-project',
             'LOCATION': 'us-central1',
@@ -97,8 +102,10 @@ class TestCreateAgent:
         with patch.dict(os.environ, env, clear=True):
             from agents.iam_adk.agent import create_agent
 
-            with pytest.raises(ValueError, match="AGENT_ENGINE_ID"):
-                create_agent()
+            # Agent creation is cheap and does NOT validate env (6767-LAZY)
+            agent = create_agent()
+            assert agent is not None
+            assert agent.name == "iam_adk"
 
     def test_create_agent_with_valid_env(self):
         """Test create_agent() succeeds with valid environment."""
@@ -126,8 +133,8 @@ class TestCreateAgent:
 class TestCreateApp:
     """Tests for create_app() function."""
 
-    def test_create_app_requires_project_id(self):
-        """Test create_app() raises ValueError if PROJECT_ID missing."""
+    def test_create_app_without_project_id(self):
+        """Test create_app() succeeds even if PROJECT_ID missing (6767-LAZY)."""
         env = {
             'LOCATION': 'us-central1',
             'AGENT_ENGINE_ID': 'test-engine',
@@ -137,11 +144,13 @@ class TestCreateApp:
         with patch.dict(os.environ, env, clear=True):
             from agents.iam_adk.agent import create_app
 
-            with pytest.raises(ValueError, match="PROJECT_ID"):
-                create_app()
+            # App creation is cheap and does NOT validate env (6767-LAZY)
+            # Validation happens when app is invoked by Agent Engine
+            app = create_app()
+            assert app is not None
 
-    def test_create_app_requires_agent_engine_id(self):
-        """Test create_app() raises ValueError if AGENT_ENGINE_ID missing."""
+    def test_create_app_without_agent_engine_id(self):
+        """Test create_app() succeeds even if AGENT_ENGINE_ID missing (6767-LAZY)."""
         env = {
             'PROJECT_ID': 'test-project',
             'LOCATION': 'us-central1',
@@ -151,8 +160,9 @@ class TestCreateApp:
         with patch.dict(os.environ, env, clear=True):
             from agents.iam_adk.agent import create_app
 
-            with pytest.raises(ValueError, match="AGENT_ENGINE_ID"):
-                create_app()
+            # App creation is cheap and does NOT validate env (6767-LAZY)
+            app = create_app()
+            assert app is not None
 
     def test_create_app_with_valid_env(self):
         """Test create_app() succeeds with valid environment."""
@@ -171,8 +181,9 @@ class TestCreateApp:
 
             # Verify app is created
             assert app is not None
-            # App should have expected attributes
-            assert hasattr(app, 'app_name')
+            # App has 'name' attribute (from google.adk.apps.App)
+            assert hasattr(app, 'name')
+            assert app.name == 'bobs-brain'
 
 
 class TestAppEntrypoint:
