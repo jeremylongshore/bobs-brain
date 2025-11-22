@@ -28,14 +28,29 @@ variable "app_name" {
 variable "app_version" {
   description = "Application version"
   type        = string
-  default     = "0.6.0"
+  default     = "0.10.0"
 }
 
 # Agent Engine Configuration
-variable "agent_docker_image" {
-  description = "Docker image for Agent Engine (GCR path)"
+variable "bob_docker_image" {
+  description = "Docker image for Bob agent (GCR path)"
   type        = string
-  # Example: gcr.io/bobs-brain/agent:0.6.0
+  default     = "" # Computed from project_id and app_version if empty
+  # Example: gcr.io/bobs-brain-dev/agent:0.10.0
+}
+
+variable "foreman_docker_image" {
+  description = "Docker image for Foreman agent (GCR path)"
+  type        = string
+  default     = "" # Computed from project_id and app_version if empty
+  # Example: gcr.io/bobs-brain-dev/foreman:0.10.0
+}
+
+# Legacy variable for backward compatibility (deprecated in Phase 19)
+variable "agent_docker_image" {
+  description = "DEPRECATED: Use bob_docker_image instead"
+  type        = string
+  default     = ""
 }
 
 variable "agent_machine_type" {

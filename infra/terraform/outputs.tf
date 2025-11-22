@@ -90,16 +90,16 @@ output "spiffe_id" {
 output "deployment_summary" {
   description = "Deployment summary with all important URLs"
   value = {
-    environment        = var.environment
-    project_id         = var.project_id
-    region             = var.region
-    app_version        = var.app_version
-    agent_engine_id    = google_vertex_ai_reasoning_engine.bob.id
+    environment           = var.environment
+    project_id            = var.project_id
+    region                = var.region
+    app_version           = var.app_version
+    agent_engine_id       = google_vertex_ai_reasoning_engine.bob.id
     agent_engine_endpoint = "https://${var.region}-aiplatform.googleapis.com/v1/projects/${var.project_id}/locations/${var.region}/reasoningEngines/${google_vertex_ai_reasoning_engine.bob.id}:query"
-    a2a_gateway_url    = google_cloud_run_service.a2a_gateway.status[0].url
-    a2a_agentcard_url  = "${google_cloud_run_service.a2a_gateway.status[0].url}/.well-known/agent.json"
-    slack_webhook_url  = google_cloud_run_service.slack_webhook.status[0].url
-    slack_events_url   = "${google_cloud_run_service.slack_webhook.status[0].url}/slack/events"
-    spiffe_id          = var.agent_spiffe_id
+    a2a_gateway_url       = google_cloud_run_service.a2a_gateway.status[0].url
+    a2a_agentcard_url     = "${google_cloud_run_service.a2a_gateway.status[0].url}/.well-known/agent.json"
+    slack_webhook_url     = google_cloud_run_service.slack_webhook.status[0].url
+    slack_events_url      = "${google_cloud_run_service.slack_webhook.status[0].url}/slack/events"
+    spiffe_id             = var.agent_spiffe_id
   }
 }
