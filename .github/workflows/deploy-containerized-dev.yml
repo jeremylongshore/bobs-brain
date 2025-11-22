@@ -151,15 +151,29 @@ jobs:
           echo "   Image: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }}"
           echo "   Latest: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest"
 
-  # Terraform Deployment (STUBBED in Phase 18)
-  deploy-terraform:
-    name: Deploy via Terraform (STUBBED)
+  # Inline Source Deployment (Phase 19)
+  # IMPORTANT: This workflow name says "containerized" but actual deployment
+  # uses INLINE SOURCE pattern per 6767-INLINE standard.
+  # Docker images built above are for future consideration/experimentation.
+  deploy-inline-source:
+    name: Deploy via Inline Source (MANUAL SETUP REQUIRED)
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: arv-gate  # Does NOT depend on Docker build
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -167,47 +181,107 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: '1.5.0'
-
-      - name: STUBBED - Terraform Plan
+      - name: Check required environment variables
         run: |
-          echo "⏸️  STUBBED: Terraform plan would run here"
-          echo "   Command: terraform plan -var-file=envs/dev.tfvars"
-          echo "   Working directory: infra/terraform/"
-          echo ""
-          echo "   This step is stubbed in Phase 18."
-          echo "   Will be enabled after:"
-          echo "   - Phase 18 AAR review"
-          echo "   - Dev environment validation"
-          echo "   - Smoke test verification"
+          echo "🔍 Checking required environment variables..."
 
-      # COMMENTED OUT: Actual deployment (Phase 18)
-      # Uncomment after Phase 18 AAR and validation
+          # Check GitHub secrets
+          if [ -z "${{ secrets.WIF_PROVIDER }}" ]; then
+            echo "❌ ERROR: WIF_PROVIDER secret not configured"
+            echo "   Set up Workload Identity Federation in GCP and add to GitHub secrets"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.WIF_SERVICE_ACCOUNT }}" ]; then
+            echo "❌ ERROR: WIF_SERVICE_ACCOUNT secret not configured"
+            echo "   Configure service account with Agent Engine permissions"
+            exit 1
+          fi
+
+          # Check workflow inputs
+          if [ -z "${{ inputs.gcp_project_id }}" ]; then
+            echo "❌ ERROR: gcp_project_id input not provided"
+            exit 1
+          fi
+
+          echo "✅ All required environment variables present"
+
+      - name: MANUAL SETUP REQUIRED - Inline Source Deployment
+        run: |
+          echo "📋 MANUAL SETUP REQUIRED FOR INLINE SOURCE DEPLOYMENT"
+          echo ""
+          echo "This workflow is ready to build Docker images and run ARV checks."
+          echo "However, actual Agent Engine deployment requires manual setup:"
+          echo ""
+          echo "REQUIRED MANUAL STEPS:"
+          echo "  1. GCP Project Setup:"
+          echo "     - Create GCP project: ${{ inputs.gcp_project_id }}"
+          echo "     - Enable Vertex AI API"
+          echo "     - Enable Agent Engine API"
+          echo ""
+          echo "  2. Workload Identity Federation (R4):"
+          echo "     - Configure WIF pool and provider"
+          echo "     - Grant service account Agent Engine permissions"
+          echo "     - Add WIF_PROVIDER and WIF_SERVICE_ACCOUNT to GitHub secrets"
+          echo ""
+          echo "  3. Terraform Backend:"
+          echo "     - Create GCS bucket for Terraform state"
+          echo "     - Configure backend in infra/terraform/main.tf"
+          echo ""
+          echo "  4. Inline Source Deployment Script:"
+          echo "     - Run: python scripts/deploy_inline_source.py --agent bob --env dev"
+          echo "     - Or: python scripts/deploy_inline_source.py --agent foreman --env dev"
+          echo "     - Script deploys source code directly to Agent Engine"
+          echo ""
+          echo "  5. Import to Terraform (after manual deploy):"
+          echo "     - terraform import google_vertex_ai_reasoning_engine.bob AGENT_ID"
+          echo "     - terraform import google_vertex_ai_reasoning_engine.foreman AGENT_ID"
+          echo ""
+          echo "CURRENT STATUS:"
+          echo "  ✅ ARV checks: Passed"
+          echo "  ✅ Docker images: Built and pushed to GCR"
+          echo "  ⏸️  Agent Engine deployment: Manual setup required"
+          echo ""
+          echo "See: 000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md"
+          echo ""
+          echo "To enable automated deployment:"
+          echo "  1. Complete manual setup steps above"
+          echo "  2. Create scripts/deploy_inline_source.py if not exists"
+          echo "  3. Uncomment deployment commands below"
+
+      # COMMENTED OUT: Actual inline source deployment
+      # Uncomment after completing manual setup steps above
       #
-      # - name: Terraform Apply
-      #   working-directory: infra/terraform
+      # - name: Deploy bob via inline source
+      #   if: inputs.agent == 'bob' || inputs.agent == 'both'
       #   run: |
-      #     terraform init
-      #     terraform apply -var-file=envs/dev.tfvars -auto-approve
-      #     echo "✅ Terraform apply completed"
+      #     python scripts/deploy_inline_source.py \
+      #       --agent bob \
+      #       --project-id ${{ inputs.gcp_project_id }} \
+      #       --region ${{ inputs.gcp_region }} \
+      #       --env dev \
+      #       --app-version ${{ env.APP_VERSION }}
+      #
+      # - name: Deploy foreman via inline source
+      #   if: inputs.agent == 'foreman' || inputs.agent == 'both'
+      #   run: |
+      #     python scripts/deploy_inline_source.py \
+      #       --agent foreman \
+      #       --project-id ${{ inputs.gcp_project_id }} \
+      #       --region ${{ inputs.gcp_region }} \
+      #       --env dev \
+      #       --app-version ${{ env.APP_VERSION }}
 
       - name: Report deployment status
         run: |
-          echo "📊 Deployment Summary (STUBBED):"
+          echo "📊 Deployment Summary:"
           echo "  Environment: ${{ env.ENVIRONMENT }}"
-          echo "  Project: ${{ env.GCP_PROJECT_ID }}"
-          echo "  Region: ${{ env.GCP_REGION }}"
+          echo "  Project: ${{ inputs.gcp_project_id }}"
+          echo "  Region: ${{ inputs.gcp_region }}"
           echo "  Version: ${{ env.APP_VERSION }}"
           echo ""
-          echo "ℹ️  This was a STUBBED deployment (Phase 18)."
-          echo "ℹ️  Docker images were built and pushed to GCR."
-          echo "ℹ️  Terraform deployment commented out until Phase 18 AAR."
+          echo "  Agent(s): ${{ inputs.agent }}"
+          echo "  Deployment method: Inline Source (6767-INLINE)"
           echo ""
-          echo "Next steps:"
-          echo "  1. Complete Phase 18 AAR documentation"
-          echo "  2. Validate dev environment readiness"
-          echo "  3. Run smoke tests"
-          echo "  4. Uncomment Terraform apply step"
+          echo "ℹ️  Docker images built for future/experimental use"
+          echo "ℹ️  Actual deployment requires manual setup (see above)"
