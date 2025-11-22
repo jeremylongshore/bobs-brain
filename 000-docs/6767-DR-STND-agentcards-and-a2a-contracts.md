@@ -807,4 +807,24 @@ make check-a2a-contracts
 
 ---
 
+## IX. References
+
+**Official A2A Protocol Resources:**
+- A2A Protocol Specification: https://a2a-protocol.org/
+- A2A Inspector Tool: https://github.com/a2aproject/a2a-inspector
+- A2A Inspector Web UI: https://a2aprotocol.ai/a2a-inspector
+
+**Google Cloud Platform / ADK Resources:**
+- Google ADK Documentation: https://cloud.google.com/vertex-ai/docs/agent-development-kit
+- Vertex AI Agent Engine: https://cloud.google.com/vertex-ai/docs/agent-engine
+- Agent Engine Inline Deployment Discussion: https://discuss.google.dev/t/deploying-agents-with-inline-source-on-vertex-ai-agent-engine/288935
+
+**Related Internal Standards (6767 Canonical Docs):**
+- `6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` - ADK/Agent Engine specification
+- `6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md` - Inline source deployment
+- `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md` - Prompt design with A2A contracts
+- `6767-A2AINSP-AA-REPT-a2a-inspector-integration-for-department-adk-iam.md` - a2a-inspector integration
+
+---
+
 **End of Document**
