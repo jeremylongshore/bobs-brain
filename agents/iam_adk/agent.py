@@ -275,7 +275,7 @@ def create_app() -> App:
     )
 
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         location=LOCATION,
         agent_engine_id=AGENT_ENGINE_ID
     )
@@ -368,7 +368,7 @@ def create_runner() -> Runner:
 
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
+        project=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
     )
     logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
 

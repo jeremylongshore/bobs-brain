@@ -227,7 +227,7 @@ def create_runner() -> Runner:
 
     # R5: Session Service (short-term cache)
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         location=LOCATION,
         agent_engine_id=AGENT_ENGINE_ID
     )

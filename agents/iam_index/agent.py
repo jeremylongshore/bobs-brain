@@ -231,12 +231,12 @@ def create_runner() -> Runner:
 
     # R5: Dual memory wiring
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         location=LOCATION
     )
 
     memory_service = VertexAiMemoryBankService(
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         location=LOCATION
     )
 
