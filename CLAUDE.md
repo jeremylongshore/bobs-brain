@@ -17,7 +17,8 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 - **Next**: Execute Phase 6 dev deployment when GCP access is available
 
 **Key Documents:**
-- **Master Index**: `000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md` (START HERE)
+- **6767 Global Catalog**: `000-docs/6767-000-DR-INDEX-bobs-brain-standards-catalog.md` (START HERE for all 6767 standards)
+- **Agent Engine Sub-Index**: `000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md` (for deployment/A2A topics)
 - **Hard Mode Rules**: `000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` (R1-R8)
 - **Inline Deployment**: `000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md`
 - **DevOps Playbook**: `000-docs/120-AA-AUDT-appaudit-devops-playbook.md`

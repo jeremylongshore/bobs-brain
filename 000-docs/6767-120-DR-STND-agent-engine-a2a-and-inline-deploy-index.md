@@ -28,6 +28,24 @@ This document serves as the **master index** for the Bob's Brain Agent Engine / 
 - A complete specification (see linked 6767 standards for details)
 - Implementation code (see repo code for actual agents)
 
+### Relationship to 6767-000 Global Catalog
+
+**This document (6767-120) is a SUB-INDEX** within the larger 6767 documentation series.
+
+**Navigation Hierarchy:**
+- **6767-000** = Global catalog of ALL 6767-* standards, guides, and reference docs
+- **6767-120** (this doc) = Sub-index focused on Agent Engine, A2A, and inline deployment topics
+- **Individual 6767-*** = Specific standards, guides, and implementation docs
+
+**When to Use Each:**
+- **Start with 6767-000** for global orientation across all topics (operations, templates, prompts, etc.)
+- **Drill into 6767-120** when working specifically on Agent Engine deployment or A2A protocol topics
+- **Jump to specific 6767-*** docs when you know exactly what you need
+
+**Cross-References:**
+- See `000-docs/6767-000-DR-INDEX-bobs-brain-standards-catalog.md` for complete catalog
+- See Section V below for links to all Agent Engine / A2A / inline deployment standards
+
 ---
 
 ## II. Agent Engine Topology & Inline Source Deployment
