@@ -773,13 +773,13 @@ Required in `.env`:
 PROJECT_ID=your-gcp-project
 LOCATION=us-central1
 AGENT_ENGINE_ID=your-engine-id
-AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.9.0
+AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0
 
 # Application
 APP_NAME=bobs-brain
-APP_VERSION=0.9.0
+APP_VERSION=0.10.0
 
-# Org Storage (v0.9.0+)
+# Org Storage (v0.10.0+)
 ORG_STORAGE_WRITE_ENABLED=true
 ORG_STORAGE_BUCKET=intent-org-knowledge-hub-dev
 
@@ -897,11 +897,14 @@ gcloud ai agent-engines list --region=us-central1
 
 ## 📊 Project Status
 
-**Current Version:** v0.9.0
+**Current Version:** v0.10.0
 
-**Status:** ✅ Production-ready
+**Status:** ✅ Dev-ready (Agent Engine deployment infrastructure complete, not yet deployed to production)
 
 **Recent Updates:**
+- ✅ Agent Engine inline source deployment infrastructure (v0.10.0)
+- ✅ AgentCard alignment & contract-first prompt design (v0.10.0)
+- ✅ ARV (Agent Readiness Verification) gates (v0.10.0)
 - ✅ LIVE1-GCS: Org-wide storage with GCS (v0.9.0)
 - ✅ PORT1-3: Multi-repo portfolio orchestration (v0.9.0)
 - ✅ IAM Templates: Reusable multi-agent framework (v0.9.0)

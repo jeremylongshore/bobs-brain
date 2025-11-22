@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.0] - 2025-11-21
 
-### Added - Contract-First Prompt Design & AgentCard Alignment
+### Added - Agent Engine / A2A Preview (Dev-Ready, Not Deployed)
 
 - **Canonical Prompt Design Standard (6767-115)**
   - Created `000-docs/6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md`
@@ -26,6 +26,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verifies contract references ($comment fields) present
   - Cross-agent consistency tests (authentication, framework, authorization)
   - All 18 tests passing (100% success rate)
+
+- **Agent Engine Inline Source Deployment Infrastructure (Phases 4-6)**
+  - Created `000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md`
+    - Comprehensive standard for inline source deployment on Vertex AI Agent Engine
+    - Replaces legacy serialized/pickle deployment pattern
+    - Source code deployed directly from Git (CI-friendly, no GCS bucket required)
+    - Entrypoint module/object pattern documentation
+    - 5-phase implementation guide (foundation, ARV, CI wiring, dev deploy, smoke test)
+  - Agent Readiness Verification (ARV) gates
+    - Created `scripts/check_inline_deploy_ready.py` (4 validation checks)
+    - Environment variable validation
+    - Source package validation
+    - Agent entrypoint validation (module + object existence)
+    - Environment safety rules (dev/staging/prod)
+    - Integrated into Makefile (`check-inline-deploy-ready` target)
+  - Inline source deployment scripts
+    - Created `agents/agent_engine/deploy_inline_source.py`
+    - Dry-run mode for validation without deployment
+    - Execute mode for real deployment
+    - Automatic source tarball packaging
+    - Integrated into Makefile (`deploy-inline-dry-run`, `deploy-inline-dev-execute` targets)
+  - Dev deployment workflow
+    - Created `.github/workflows/agent-engine-inline-dev-deploy.yml`
+    - Manual `workflow_dispatch` trigger (safe, auditable)
+    - ARV + dry-run pre-flight checks (must pass before deployment)
+    - Workload Identity Federation (WIF) authentication
+    - Deployment logging with resource name extraction
+  - Smoke testing infrastructure
+    - Created `scripts/smoke_test_bob_agent_engine_dev.py`
+    - Post-deployment health check validation
+    - Uses `ReasoningEngineExecutionServiceClient` for Agent Engine queries
+    - Validates response markers ("status", "ok")
+    - Integrated into Makefile (`smoke-bob-agent-engine-dev` target)
+    - Requires `BOB_AGENT_ENGINE_NAME_DEV` env var (set after deployment)
+  - Configuration documentation
+    - Updated `.env.example` with Agent Engine deployment variables
+    - `BOB_AGENT_ENGINE_NAME_DEV` section with setup instructions
+    - Format: `projects/PROJECT_ID/locations/LOCATION/reasoningEngines/AGENT_ID`
+  - Implementation AARs
+    - Created `000-docs/128-AA-REPT-phase-4-arv-gate-dev-deploy.md`
+    - Created `000-docs/130-AA-REPT-phase-5-first-dev-deploy-and-smoke-test.md`
+    - Comprehensive execution checklists and runbooks
+    - Deployment validation procedures
+    - Post-deployment documentation templates
 
 ### Changed
 
