@@ -36,7 +36,9 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 - Foreman + workers architecture (iam-senior-adk-devops-lead → iam-*)
 - AgentCards in `.well-known/agent-card.json` for all agents
 - Validation via `tests/unit/test_agentcard_json.py` and a2a-inspector (planned)
+- **A2A compliance (a2a-inspector + a2a-tck) scaffolded; see 6767-121 for details**
 - See: `000-docs/6767-DR-STND-agentcards-and-a2a-contracts.md`
+- See: `000-docs/6767-121-DR-STND-a2a-compliance-tck-and-inspector.md`
 
 ---
 

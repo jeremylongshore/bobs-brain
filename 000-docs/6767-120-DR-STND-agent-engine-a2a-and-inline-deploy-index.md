@@ -104,6 +104,27 @@ This document serves as the **master index** for the Bob's Brain Agent Engine / 
 - See: `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md`
 - Integration: `6767-A2AINSP-AA-REPT-a2a-inspector-integration-for-department-adk-iam.md`
 
+### A2A Compliance Tooling
+
+**Purpose:** Validate A2A protocol compliance using official tools
+
+**Tools:**
+- **a2a-inspector** (Interactive) - Manual debugging and validation of AgentCards and A2A endpoints
+- **a2a-tck** (Automated) - Technology Compatibility Kit for formal A2A spec compliance testing
+
+**Current Status (v0.10.0):**
+- Documentation and local scripts in place (Phase A)
+- CI workflow scaffolded (disabled by default, manual trigger only)
+- No live A2A endpoints yet (agents not deployed to Agent Engine)
+
+**Usage:**
+- Local a2a-inspector validation: See `scripts/run_a2a_inspector_local.md`
+- Local a2a-tck testing: Run `./scripts/run_a2a_tck_local.sh` (requires `A2A_TCK_SUT_URL`)
+- CI scaffold: `.github/workflows/a2a-compliance.yml` (workflow_dispatch only)
+
+**Full Standard:**
+- See: `6767-121-DR-STND-a2a-compliance-tck-and-inspector.md`
+
 ---
 
 ## IV. Department Architecture: Foreman + Workers
@@ -161,6 +182,7 @@ spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0
 | `6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` | ADK/Agent Engine spec | Hard Mode rules (R1-R8), compliance requirements |
 | `6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md` | Inline deployment | Source code deployment pattern, ARV gates, CI workflow |
 | `6767-DR-STND-agentcards-and-a2a-contracts.md` | AgentCards & A2A | Contract structure, skill patterns, validation |
+| `6767-121-DR-STND-a2a-compliance-tck-and-inspector.md` | A2A compliance | a2a-inspector (interactive), a2a-tck (automated) validation |
 | `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md` | Prompt design | 5-part system prompt template, contract-first philosophy |
 | `6767-DR-STND-arv-minimum-gate.md` | ARV baseline | Agent Readiness Verification minimum requirements |
 | `6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md` | Lazy-loading pattern | Module-level `app` variable pattern |
