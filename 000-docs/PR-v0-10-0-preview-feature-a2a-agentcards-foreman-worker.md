@@ -15,6 +15,8 @@ This PR brings v0.10.0-preview to main with complete Agent Engine deployment inf
 - Complete inline source deployment infrastructure (ARV gates, CI workflows, smoke tests)
 - A2A / AgentCard contracts for foreman + worker architecture (iam-senior-adk-devops-lead → iam-*)
 - Comprehensive 6767 documentation suite with master index and external citations
+- A2A compliance tooling documentation (a2a-inspector + a2a-tck with phased adoption plan)
+- Document Filing System Standard v3.0 with corrected 6767 naming rules
 - Version alignment to v0.10.0 across all files (CHANGELOG, README, .env.example)
 - Repository "showable" to external developers without requiring GCP credentials
 
@@ -69,10 +71,13 @@ This PR brings v0.10.0-preview to main with complete Agent Engine deployment inf
 ### 6767 Documentation Suite
 
 **New Standards:**
+- `6767-000-DR-INDEX-bobs-brain-standards-catalog.md` - Global catalog of all 6767 standards
 - `6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md` - Master index (START HERE)
 - `6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` - Hard Mode rules (R1-R8)
 - `6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md` - Inline deployment
 - `6767-DR-STND-agentcards-and-a2a-contracts.md` - A2A contracts + external citations
+- `6767-121-DR-STND-a2a-compliance-tck-and-inspector.md` - A2A compliance tooling standard
+- `6767-DR-STND-document-filing-system-standard-v3.md` - Document filing system v3.0
 - `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md` - Prompt design
 - `6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md` - Lazy-loading pattern
 - `6767-DR-STND-arv-minimum-gate.md` - ARV baseline
