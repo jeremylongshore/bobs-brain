@@ -13,8 +13,10 @@
 This document serves as the **master catalog** for all 6767-prefixed documentation in the Bob's Brain repository.
 
 **6767 Series Overview:**
-- **6767-NNN-***  - Numbered canonical standards (e.g., 6767-120, 6767-121)
+- **6767-NNN-***  - Numbered canonical standards (e.g., 6767-120, 6767-121) **[Pre-v3.0 legacy naming]**
 - **6767-ABCD-*** - Topical/mnemonic standards (e.g., 6767-INLINE, 6767-LAZY, 6767-A2AINSP)
+
+**Note on Naming:** See `000-docs/6767-DR-STND-document-filing-system-standard-v3.md` for current 6767 naming rules. Per v3.0, the correct pattern is `6767-CC-ABCD-description.ext` (no numeric IDs in filenames). Existing files with patterns like `6767-000-*` or `6767-120-*` are pre-v3.0 legacy and will be renamed in a future migration phase.
 
 **Scope:**
 - All 6767-* docs are considered **canonical** or **reference** material

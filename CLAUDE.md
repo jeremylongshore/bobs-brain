@@ -126,10 +126,11 @@ When working in this repo, Claude should:
 
 ### Documentation Standards
 
-**Document Filing System v2.0:**
-- Format: `NNN-CC-ABCD-description.md`
+**Document Filing System v3.0:**
+- Format: `NNN-CC-ABCD-description.md` (project-specific) or `6767-CC-ABCD-description.md` (canonical standards)
 - Categories: PP (Planning), AT (Architecture), AA (After-Action Reports), DR (Documentation/Reference)
 - All docs in `000-docs/` - NO scattered documentation
+- See: `000-docs/6767-DR-STND-document-filing-system-standard-v3.md` for complete rules
 
 **Key Doc Types:**
 - **PLAN** (`NNN-AA-PLAN-*.md`) - Phase planning before work starts

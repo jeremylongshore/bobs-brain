@@ -28,6 +28,8 @@ This document serves as the **master index** for the Bob's Brain Agent Engine / 
 - A complete specification (see linked 6767 standards for details)
 - Implementation code (see repo code for actual agents)
 
+**Note on 6767 Naming:** This doc uses document ID "6767-120" in its header but follows pre-v3.0 naming conventions in its filename. See `000-docs/6767-DR-STND-document-filing-system-standard-v3.md` for current 6767 naming rules.
+
 ### Relationship to 6767-000 Global Catalog
 
 **This document (6767-120) is a SUB-INDEX** within the larger 6767 documentation series.

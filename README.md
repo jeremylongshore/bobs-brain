@@ -548,7 +548,7 @@ When you port Bob's Brain to your product (DiagnosticPro, PipelinePilot, etc.):
 - ✅ **Gateway services** - A2A and Slack endpoints
 - ✅ **Terraform infrastructure** - Agent Engine, Cloud Run, IAM
 - ✅ **CI/CD workflows** - Drift check, tests, deploy
-- ✅ **Documentation system** - 000-docs/ with filing standards
+- ✅ **Documentation system** - 000-docs/ with [filing standards v3.0](000-docs/6767-DR-STND-document-filing-system-standard-v3.md)
 
 ### Time to Port
 
