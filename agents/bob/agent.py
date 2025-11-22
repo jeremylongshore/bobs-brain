@@ -19,7 +19,8 @@ LAZY-LOADING PATTERN (6767-LAZY):
 """
 
 from google.adk.agents import LlmAgent
-from google.adk import App, Runner
+from google.adk.apps import App
+from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
 from agents.shared_tools import BOB_TOOLS  # Use shared tools profile
