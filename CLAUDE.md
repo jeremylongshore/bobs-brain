@@ -8,6 +8,38 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 
 ---
 
+## 📋 TL;DR for DevOps (Quick Reference)
+
+**Current Status (v0.10.0):**
+- **Version**: v0.10.0 – Agent Engine / A2A Preview (Dev-Ready, Not Deployed)
+- **Branch**: Work on `feature/a2a-agentcards-foreman-worker` until merge to main
+- **Deployment**: Infrastructure ready, awaiting first dev deployment to Agent Engine
+- **Next**: Execute Phase 6 dev deployment when GCP access is available
+
+**Key Documents:**
+- **Master Index**: `000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md` (START HERE)
+- **Hard Mode Rules**: `000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md` (R1-R8)
+- **Inline Deployment**: `000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md`
+- **DevOps Playbook**: `000-docs/120-AA-AUDT-appaudit-devops-playbook.md`
+
+**Deployment Pattern:**
+- ✅ **Production**: Inline source deployment (source code → Agent Engine, no serialization)
+- ⛔ **Legacy**: Serialized/pickle deployment (deprecated, do not use)
+
+**Key Scripts:**
+- `make check-all` - Run all quality checks (drift detection, tests, ARV)
+- `make check-inline-deploy-ready` - ARV checks for Agent Engine deployment
+- `make deploy-inline-dry-run` - Validate deployment config without deploying
+- `make smoke-bob-agent-engine-dev` - Post-deployment health check (requires deployed agent)
+
+**A2A / AgentCard Plan:**
+- Foreman + workers architecture (iam-senior-adk-devops-lead → iam-*)
+- AgentCards in `.well-known/agent-card.json` for all agents
+- Validation via `tests/unit/test_agentcard_json.py` and a2a-inspector (planned)
+- See: `000-docs/6767-DR-STND-agentcards-and-a2a-contracts.md`
+
+---
+
 ## 2. Repo Context (Short)
 
 **Bob's Brain** is a production-grade **ADK agent department** built on Google's Agent Development Kit (ADK) and Vertex AI Agent Engine. It serves as:
