@@ -62,11 +62,8 @@ jobs:
           python scripts/check_arv_minimum.py
           echo "✅ ARV minimum checks passed"
 
-      - name: Run A2A readiness checks
-        run: |
-          echo "🔍 Running A2A readiness checks..."
-          python scripts/check_a2a_readiness.py
-          echo "✅ A2A readiness checks passed"
+      # Note: A2A readiness is included in ARV minimum checks
+      # check_a2a_readiness.py is not currently used
 
       - name: Run drift detection
         run: |
