@@ -27,6 +27,89 @@ Phase 21 successfully implemented **real** Vertex AI Agent Engine deployment cap
 
 ---
 
+## Project Creation Sanity Check
+
+**Critical Verification**: This repository does NOT create new GCP projects.
+
+### Investigation Performed
+
+**Terraform Files Searched**:
+- `infra/terraform/*.tf` (all 9 Terraform configuration files)
+- Searched for: `resource "google_project"`
+- Searched for: `google_project` (all variations)
+
+### Findings
+
+✅ **NO project creation resources found**
+
+The Terraform configuration only uses:
+
+1. **`data "google_project"`** (in `cloud_run.tf`):
+   - Reads existing project data (project number)
+   - Does NOT create a project
+   ```hcl
+   data "google_project" "project" {
+   }
+   ```
+
+2. **`google_project_service`** (in `main.tf`):
+   - Enables APIs on the existing project
+   - Does NOT create a project
+   ```hcl
+   resource "google_project_service" "required_apis" {
+     project = var.project_id  # Uses existing project
+     service = each.key
+   }
+   ```
+
+3. **`google_project_iam_member`** (in `iam.tf`):
+   - Grants IAM permissions in the existing project
+   - Does NOT create a project
+   ```hcl
+   resource "google_project_iam_member" "agent_engine_aiplatform" {
+     project = var.project_id  # Uses existing project
+     role    = "roles/aiplatform.user"
+     member  = "serviceAccount:..."
+   }
+   ```
+
+### Project ID Source
+
+The project ID is provided via variable:
+```hcl
+# variables.tf
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+}
+```
+
+This variable is set in:
+- **Environment tfvars**: `infra/terraform/envs/dev.tfvars`, etc.
+- **CI/CD workflows**: GitHub Actions passes `project_id=bobs-brain`
+- **Deployment scripts**: `scripts/deploy_inline_source.py` defaults to `bobs-brain`
+
+### Explicit Documentation
+
+Added comments to `infra/terraform/main.tf` (line 1):
+```
+# IMPORTANT: This Terraform configuration assumes an EXISTING GCP project.
+# It does NOT create projects. The project ID must be provided via var.project_id.
+# For bobs-brain, the canonical project is:
+#   Project ID: bobs-brain
+#   Project Number: 205354194989
+```
+
+### Conclusion
+
+✅ **Verified**: This repository uses only the existing `bobs-brain` project (ID: bobs-brain, number: 205354194989)
+
+❌ **No Risk**: No Terraform resources will create new GCP projects
+
+📋 **Documented**: Project creation prohibition is now explicitly documented in Terraform and this AAR
+
+---
+
 ## Phase 21 vs Phase 20: What Changed
 
 ### Phase 20 (Baseline - Design Only)
@@ -516,6 +599,7 @@ Related: Phase 21 - Agent Engine dev deployment
 
 ### Internal Documents
 
+- `000-docs/153-NOTE-bobs-brain-first-real-agent-engine-deploy-playbook.md`: **Operator playbook for first deployment**
 - `000-docs/6767-101-AT-ARCH-agent-engine-topology-and-envs.md`: Agent Engine topology
 - `agents/config/agent_engine.py`: Agent Engine configuration module
 - `CLAUDE.md`: Repository overview and common tasks
