@@ -206,71 +206,59 @@ jobs:
 
           echo "✅ All required environment variables present"
 
-      - name: MANUAL SETUP REQUIRED - Inline Source Deployment
+      - name: Deploy bob via inline source (DRY-RUN)
+        if: inputs.agent == 'bob' || inputs.agent == 'both'
         run: |
-          echo "📋 MANUAL SETUP REQUIRED FOR INLINE SOURCE DEPLOYMENT"
-          echo ""
-          echo "This workflow is ready to build Docker images and run ARV checks."
-          echo "However, actual Agent Engine deployment requires manual setup:"
-          echo ""
-          echo "REQUIRED MANUAL STEPS:"
-          echo "  1. GCP Project Setup:"
-          echo "     - Create GCP project: ${{ inputs.gcp_project_id }}"
-          echo "     - Enable Vertex AI API"
-          echo "     - Enable Agent Engine API"
-          echo ""
-          echo "  2. Workload Identity Federation (R4):"
-          echo "     - Configure WIF pool and provider"
-          echo "     - Grant service account Agent Engine permissions"
-          echo "     - Add WIF_PROVIDER and WIF_SERVICE_ACCOUNT to GitHub secrets"
-          echo ""
-          echo "  3. Terraform Backend:"
-          echo "     - Create GCS bucket for Terraform state"
-          echo "     - Configure backend in infra/terraform/main.tf"
-          echo ""
-          echo "  4. Inline Source Deployment Script:"
-          echo "     - Run: python scripts/deploy_inline_source.py --agent bob --env dev"
-          echo "     - Or: python scripts/deploy_inline_source.py --agent foreman --env dev"
-          echo "     - Script deploys source code directly to Agent Engine"
-          echo ""
-          echo "  5. Import to Terraform (after manual deploy):"
-          echo "     - terraform import google_vertex_ai_reasoning_engine.bob AGENT_ID"
-          echo "     - terraform import google_vertex_ai_reasoning_engine.foreman AGENT_ID"
-          echo ""
-          echo "CURRENT STATUS:"
-          echo "  ✅ ARV checks: Passed"
-          echo "  ✅ Docker images: Built and pushed to GCR"
-          echo "  ⏸️  Agent Engine deployment: Manual setup required"
-          echo ""
-          echo "See: 000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md"
-          echo ""
-          echo "To enable automated deployment:"
-          echo "  1. Complete manual setup steps above"
-          echo "  2. Create scripts/deploy_inline_source.py if not exists"
-          echo "  3. Uncomment deployment commands below"
+          echo "🚀 Deploying bob to Agent Engine (DRY-RUN MODE)..."
+          python scripts/deploy_inline_source.py \
+            --agent bob \
+            --project-id ${{ inputs.gcp_project_id }} \
+            --region ${{ inputs.gcp_region }} \
+            --env dev \
+            --app-version ${{ env.APP_VERSION }} \
+            --dry-run
+        env:
+          PROJECT_ID: ${{ inputs.gcp_project_id }}
+          REGION: ${{ inputs.gcp_region }}
+          ENV: dev
 
-      # COMMENTED OUT: Actual inline source deployment
-      # Uncomment after completing manual setup steps above
+      - name: Deploy foreman via inline source (DRY-RUN)
+        if: inputs.agent == 'foreman' || inputs.agent == 'both'
+        run: |
+          echo "🚀 Deploying foreman to Agent Engine (DRY-RUN MODE)..."
+          python scripts/deploy_inline_source.py \
+            --agent iam-senior-adk-devops-lead \
+            --project-id ${{ inputs.gcp_project_id }} \
+            --region ${{ inputs.gcp_region }} \
+            --env dev \
+            --app-version ${{ env.APP_VERSION }} \
+            --dry-run
+        env:
+          PROJECT_ID: ${{ inputs.gcp_project_id }}
+          REGION: ${{ inputs.gcp_region }}
+          ENV: dev
+
+      # FUTURE: Remove --dry-run flag when GCP/WIF setup is complete
       #
-      # - name: Deploy bob via inline source
-      #   if: inputs.agent == 'bob' || inputs.agent == 'both'
-      #   run: |
-      #     python scripts/deploy_inline_source.py \
-      #       --agent bob \
-      #       --project-id ${{ inputs.gcp_project_id }} \
-      #       --region ${{ inputs.gcp_region }} \
-      #       --env dev \
-      #       --app-version ${{ env.APP_VERSION }}
+      # To enable REAL deployment (after manual setup):
+      #   1. Complete GCP project setup (see 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md)
+      #   2. Uncomment WIF resources in infra/terraform/iam.tf
+      #   3. Add WIF_PROVIDER and WIF_SERVICE_ACCOUNT to GitHub secrets
+      #   4. Remove --dry-run flag from deployment steps above
+      #   5. Verify smoke tests are enabled (SMOKE_TEST_ENABLED=true)
       #
-      # - name: Deploy foreman via inline source
-      #   if: inputs.agent == 'foreman' || inputs.agent == 'both'
-      #   run: |
-      #     python scripts/deploy_inline_source.py \
-      #       --agent foreman \
-      #       --project-id ${{ inputs.gcp_project_id }} \
-      #       --region ${{ inputs.gcp_region }} \
-      #       --env dev \
-      #       --app-version ${{ env.APP_VERSION }}
+      # Manual Setup Checklist:
+      #   □ Create GCP project (bobs-brain-dev or other)
+      #   □ Enable Vertex AI API + Agent Engine API
+      #   □ Deploy WIF via Terraform (uncomment in iam.tf)
+      #   □ Add GitHub secrets (WIF_PROVIDER, WIF_SERVICE_ACCOUNT)
+      #   □ Test deployment with --dry-run first
+      #   □ Remove --dry-run for real deployment
+      #   □ Enable smoke tests (set SMOKE_TEST_ENABLED=true)
+      #
+      # See complete manual setup guide:
+      #   - 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md
+      #   - 000-docs/148-AA-REPT-phase-19-agent-engine-dev-deployment.md
 
       - name: Report deployment status
         run: |
@@ -282,9 +270,14 @@ jobs:
           echo ""
           echo "  Agent(s): ${{ inputs.agent }}"
           echo "  Deployment method: Inline Source (6767-INLINE)"
+          echo "  Deployment mode: DRY-RUN (validation only)"
+          echo ""
+          echo "✅ Deployment script executed successfully in dry-run mode"
+          echo "✅ Configuration validated (entrypoints, resource names, etc.)"
           echo ""
           echo "ℹ️  Docker images built for future/experimental use"
-          echo "ℹ️  Actual deployment requires manual setup (see above)"
+          echo "ℹ️  Real deployment requires manual GCP/WIF setup"
+          echo "ℹ️  See 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md for setup guide"
 
   # Post-Deployment Smoke Tests (Phase 19 Task 4)
   smoke-tests:
