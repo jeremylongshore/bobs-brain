@@ -272,7 +272,48 @@ def main() -> int:
         help="Deployment environment"
     )
 
+    parser.add_argument(
+        "--config-only",
+        action="store_true",
+        help="Validate configuration without invoking agent (dry-run mode)"
+    )
+
     args = parser.parse_args()
+
+    # Config-only mode: just validate inputs
+    if args.config_only:
+        print_header("SMOKE TEST CONFIGURATION VALIDATION")
+        print_info(f"Project: {args.project or '(not set)'}")
+        print_info(f"Location: {args.location}")
+        print_info(f"Agent: {args.agent}")
+        print_info(f"Environment: {args.env}")
+        print_info(f"Agent Engine ID: {args.agent_engine_id or '(will use default)'}")
+        print()
+
+        # Validate required parameters
+        if not args.project:
+            print_failure("Missing required parameter: project")
+            print_info("Set via --project or PROJECT_ID environment variable")
+            return 2
+
+        if not args.agent_engine_id:
+            default_id = f"{args.agent}-{args.env}"
+            print_info(f"No Agent Engine ID provided - would default to: {default_id}")
+
+        test_prompt = get_smoke_test_prompt(args.agent)
+        print_info(f"Test prompt: \"{test_prompt}\"")
+        print()
+
+        if GCP_AVAILABLE:
+            print_success("Google Cloud AI Platform client available")
+        else:
+            print_warning("Google Cloud AI Platform client not available")
+            print_info("Install with: pip install google-cloud-aiplatform")
+
+        print()
+        print_success("✅ Configuration validation complete (config-only mode)")
+        print_info("Remove --config-only flag to run actual smoke test")
+        return 0
 
     try:
         return run_smoke_test(args)
