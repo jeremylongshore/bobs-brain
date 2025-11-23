@@ -20,7 +20,7 @@ echo "🔍 Scanning for framework drift violations..."
 echo "================================================"
 
 VIOLATIONS=0
-EXCLUDE_DIRS=".venv|99-Archive|node_modules"
+EXCLUDE_DIRS=".venv|99-Archive|archive|node_modules"
 
 # R1: Check for alternative agent frameworks
 echo ""
@@ -28,6 +28,7 @@ echo "R1: Checking for alternative agent frameworks..."
 if grep -rE "from langchain|import langchain|from crewai|import crewai|from autogen|import autogen" \
     --exclude-dir=.venv \
     --exclude-dir=99-Archive \
+    --exclude-dir=archive \
     --exclude-dir=node_modules \
     --exclude-dir=000-docs \
     . 2>/dev/null | grep -v "CLAUDE.md" | grep -v "check_nodrift.sh"; then
