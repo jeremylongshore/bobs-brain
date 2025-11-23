@@ -1,6 +1,12 @@
 # Main Terraform Configuration
 # Bob's Brain - Hard Mode Architecture
 #
+# IMPORTANT: This Terraform configuration assumes an EXISTING GCP project.
+# It does NOT create projects. The project ID must be provided via var.project_id.
+# For bobs-brain, the canonical project is:
+#   Project ID: bobs-brain
+#   Project Number: 205354194989
+#
 # This Terraform configuration deploys:
 # 1. Vertex AI Agent Engine (R2) - ADK agent runtime
 # 2. A2A Gateway (R3) - Agent-to-Agent protocol proxy
