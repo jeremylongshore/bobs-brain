@@ -1,0 +1,316 @@
+{
+  "name": "iam-senior-adk-devops-lead",
+  "version": "0.10.0",
+  "url": "https://bob.intent.solutions/foreman",
+  "description": "IAM Senior ADK DevOps Lead - Foreman Agent\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0\n\nThe Foreman agent orchestrates a department of specialized IAM worker agents for ADK-based software engineering tasks:\n- Routes tasks to appropriate specialist workers (iam-adk, iam-issue, iam-fix, iam-qa, iam-docs)\n- Coordinates multi-step workflows across worker agents\n- Aggregates results from distributed agent teams\n- Enforces ADK/Vertex AI compliance standards (Hard Mode rules R1-R8)\n- Provides unified task tracking and status reporting\n\nThe Foreman operates as a middle-tier orchestrator in the bob → foreman → workers architecture, implementing the Agent Factory pattern with A2A protocol for agent-to-agent communication.",
+  "capabilities": [
+    "task_routing",
+    "worker_coordination",
+    "workflow_orchestration",
+    "compliance_enforcement",
+    "result_aggregation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "foreman.route_task",
+      "name": "Route Task to Worker",
+      "description": "Analyze task requirements and route to appropriate IAM specialist worker",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "task_description"
+        ],
+        "properties": {
+          "task_description": {
+            "type": "string",
+            "description": "Description of the software engineering task"
+          },
+          "task_type": {
+            "type": "string",
+            "enum": [
+              "adk_design",
+              "issue_creation",
+              "fix_planning",
+              "fix_implementation",
+              "qa_validation",
+              "documentation",
+              "cleanup",
+              "indexing"
+            ],
+            "description": "Type of task (if known)"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "default": "medium",
+            "description": "Task priority level"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "assigned_worker",
+          "routing_rationale"
+        ],
+        "properties": {
+          "assigned_worker": {
+            "type": "string",
+            "description": "Worker agent assigned to task (e.g., iam-adk, iam-issue)"
+          },
+          "routing_rationale": {
+            "type": "string",
+            "description": "Explanation of why this worker was selected"
+          },
+          "task_breakdown": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Breakdown of task into subtasks (if applicable)"
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "foreman.coordinate_workflow",
+      "name": "Coordinate Multi-Agent Workflow",
+      "description": "Orchestrate a multi-step workflow across multiple IAM worker agents",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "workflow_description"
+        ],
+        "properties": {
+          "workflow_description": {
+            "type": "string",
+            "description": "Description of the overall workflow"
+          },
+          "workflow_steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "step_name": {
+                  "type": "string"
+                },
+                "worker_agent": {
+                  "type": "string"
+                },
+                "dependencies": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "description": "Optional explicit workflow steps"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "workflow_plan",
+          "execution_order"
+        ],
+        "properties": {
+          "workflow_plan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "step_number": {
+                  "type": "integer"
+                },
+                "worker": {
+                  "type": "string"
+                },
+                "task": {
+                  "type": "string"
+                },
+                "dependencies": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "execution_order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ordered list of workers to execute"
+          },
+          "estimated_duration": {
+            "type": "string",
+            "description": "Estimated workflow completion time"
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "foreman.aggregate_results",
+      "name": "Aggregate Worker Results",
+      "description": "Collect and synthesize results from multiple worker agents",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "worker_results"
+        ],
+        "properties": {
+          "worker_results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "worker_name": {
+                  "type": "string"
+                },
+                "task_completed": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "success",
+                    "failure",
+                    "partial"
+                  ]
+                }
+              }
+            }
+          },
+          "aggregation_strategy": {
+            "type": "string",
+            "enum": [
+              "summary",
+              "detailed",
+              "combined"
+            ],
+            "default": "summary",
+            "description": "How to aggregate the results"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "aggregated_result",
+          "overall_status"
+        ],
+        "properties": {
+          "aggregated_result": {
+            "type": "string",
+            "description": "Synthesized result from all workers"
+          },
+          "overall_status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial_success",
+              "failure"
+            ]
+          },
+          "worker_statuses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "worker": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "foreman.enforce_compliance",
+      "name": "Enforce ADK/Vertex Compliance",
+      "description": "Validate worker outputs against Hard Mode rules (R1-R8) and ADK standards",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "artifact_to_validate"
+        ],
+        "properties": {
+          "artifact_to_validate": {
+            "type": "string",
+            "description": "Code, config, or documentation to validate"
+          },
+          "validation_rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific rules to check (e.g., R1, R2, R3)"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "compliance_status",
+          "violations"
+        ],
+        "properties": {
+          "compliance_status": {
+            "type": "string",
+            "enum": [
+              "compliant",
+              "violations_found",
+              "warnings_only"
+            ]
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "error",
+                    "warning"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "remediation": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0"
+}
