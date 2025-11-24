@@ -1,384 +1,269 @@
-name: Containerized Agent Deployment - Dev (STUBBED)
-
-# Phase 18: Container-based deployment workflow with ARV gates
-#
-# This workflow demonstrates the complete containerized deployment pattern:
-# 1. ARV checks (gate)
-# 2. Docker build & push
-# 3. Terraform apply (STUBBED in Phase 18)
-#
-# IMPORTANT:
-# - ARV checks must pass before building images
-# - Docker images pushed to GCR
-# - Terraform deployment is STUBBED (commented out) in Phase 18
-# - Will be enabled after Phase 18 AAR and dev environment validation
-#
-# Pattern: Containerized deployment (vs inline source deployment)
-# References:
-# - Dockerfiles: agents/bob/Dockerfile, agents/iam_senior_adk_devops_lead/Dockerfile
-# - Terraform: infra/terraform/agent_engine.tf
-# - Standard: 000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md
+name: Deploy to Agent Engine (Inline Source - Dev)
 
 on:
   workflow_dispatch:
     inputs:
       agent:
-        description: 'Agent to deploy (bob or foreman)'
+        description: 'Agent to deploy'
         required: true
-        type: choice
         default: 'bob'
+        type: choice
         options:
           - bob
           - foreman
           - both
-
-      gcp_project_id:
-        description: 'GCP Project ID'
+      deploy_mode:
+        description: 'Deployment mode'
         required: true
-        type: string
-
-      gcp_region:
-        description: 'GCP Region'
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - apply
+      smoke_tests_enabled:
+        description: 'Enable live smoke tests'
         required: false
-        type: string
-        default: 'us-central1'
+        default: false
+        type: boolean
 
 permissions:
   contents: read
-  id-token: write  # Required for Workload Identity Federation (R4)
+  id-token: write  # Required for Workload Identity Federation
 
 env:
-  GCP_PROJECT_ID: ${{ inputs.gcp_project_id }}
-  GCP_REGION: ${{ inputs.gcp_region }}
-  APP_VERSION: '0.10.0'
+  PROJECT_ID: bobs-brain
+  REGION: us-central1
   ENVIRONMENT: dev
 
 jobs:
-  # ARV Gate: Must pass before building images
-  arv-gate:
-    name: ARV Checks (Deployment Gate)
+  # ==============================================================================
+  # ARV Gates - Must pass before any deployment
+  # ==============================================================================
+  arv-checks:
+    name: ARV Readiness Gates
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt || echo "Requirements install incomplete"
-
-      - name: Run drift detection (R8)
-        run: bash scripts/ci/check_nodrift.sh
-
-      - name: Run A2A readiness check (Phase 17)
-        run: python scripts/check_a2a_readiness.py
-        env:
-          PYTHONPATH: .
-
-      - name: Run ARV minimum checks
-        run: make check-arv-minimum
-
-      - name: Report ARV gate status
-        run: |
-          echo "✅ All ARV checks passed!"
-          echo "Proceeding to Docker build & push..."
-
-  # Docker Build & Push
-  build-and-push:
-    name: Build & Push Docker Images
-    runs-on: ubuntu-latest
-    needs: arv-gate  # Only run if ARV gate passes
-
-    strategy:
-      matrix:
-        include:
-          - agent: bob
-            dockerfile: agents/bob/Dockerfile
-            image_name: agent
-            context: .
-          - agent: foreman
-            dockerfile: agents/iam_senior_adk_devops_lead/Dockerfile
-            image_name: foreman
-            context: .
-
-    # Only build requested agent(s)
-    if: |
-      inputs.agent == 'both' ||
-      inputs.agent == matrix.agent
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker gcr.io
-
-      - name: Build Docker image (${{ matrix.agent }})
-        run: |
-          echo "🐳 Building ${{ matrix.agent }} image..."
-          docker build \
-            -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }} \
-            -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest \
-            -f ${{ matrix.dockerfile }} \
-            ${{ matrix.context }}
-
-      - name: Push Docker image to GCR (${{ matrix.agent }})
-        run: |
-          echo "📦 Pushing ${{ matrix.agent }} image to GCR..."
-          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }}
-          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest
-
-      - name: Report image details
-        run: |
-          echo "✅ Image pushed successfully!"
-          echo "   Agent: ${{ matrix.agent }}"
-          echo "   Image: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:${{ env.APP_VERSION }}"
-          echo "   Latest: gcr.io/${{ env.GCP_PROJECT_ID }}/${{ matrix.image_name }}:latest"
-
-  # Inline Source Deployment (Phase 19)
-  # IMPORTANT: This workflow name says "containerized" but actual deployment
-  # uses INLINE SOURCE pattern per 6767-INLINE standard.
-  # Docker images built above are for future consideration/experimentation.
-  deploy-inline-source:
-    name: Deploy via Inline Source (MANUAL SETUP REQUIRED)
-    runs-on: ubuntu-latest
-    needs: arv-gate  # Does NOT depend on Docker build
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - name: Check required environment variables
+      - name: Run ARV minimum checks
         run: |
-          echo "🔍 Checking required environment variables..."
+          echo "🔍 Running ARV minimum checks..."
+          python scripts/check_arv_minimum.py
+          echo "✅ ARV minimum checks passed"
 
-          # Check GitHub secrets
-          if [ -z "${{ secrets.WIF_PROVIDER }}" ]; then
-            echo "❌ ERROR: WIF_PROVIDER secret not configured"
-            echo "   Set up Workload Identity Federation in GCP and add to GitHub secrets"
-            exit 1
-          fi
+      # Note: A2A readiness is included in ARV minimum checks
+      # check_a2a_readiness.py is not currently used
 
-          if [ -z "${{ secrets.WIF_SERVICE_ACCOUNT }}" ]; then
-            echo "❌ ERROR: WIF_SERVICE_ACCOUNT secret not configured"
-            echo "   Configure service account with Agent Engine permissions"
-            exit 1
-          fi
-
-          # Check workflow inputs
-          if [ -z "${{ inputs.gcp_project_id }}" ]; then
-            echo "❌ ERROR: gcp_project_id input not provided"
-            exit 1
-          fi
-
-          echo "✅ All required environment variables present"
-
-      - name: Deploy bob via inline source (DRY-RUN)
-        if: inputs.agent == 'bob' || inputs.agent == 'both'
+      - name: Run drift detection
         run: |
-          echo "🚀 Deploying bob to Agent Engine (DRY-RUN MODE)..."
-          python scripts/deploy_inline_source.py \
-            --agent bob \
-            --project-id ${{ inputs.gcp_project_id }} \
-            --region ${{ inputs.gcp_region }} \
-            --env dev \
-            --app-version ${{ env.APP_VERSION }} \
-            --dry-run
-        env:
-          PROJECT_ID: ${{ inputs.gcp_project_id }}
-          REGION: ${{ inputs.gcp_region }}
-          ENV: dev
+          echo "🔍 Running drift detection..."
+          bash scripts/ci/check_nodrift.sh
+          echo "✅ No drift violations detected"
 
-      - name: Deploy foreman via inline source (DRY-RUN)
-        if: inputs.agent == 'foreman' || inputs.agent == 'both'
-        run: |
-          echo "🚀 Deploying foreman to Agent Engine (DRY-RUN MODE)..."
-          python scripts/deploy_inline_source.py \
-            --agent iam-senior-adk-devops-lead \
-            --project-id ${{ inputs.gcp_project_id }} \
-            --region ${{ inputs.gcp_region }} \
-            --env dev \
-            --app-version ${{ env.APP_VERSION }} \
-            --dry-run
-        env:
-          PROJECT_ID: ${{ inputs.gcp_project_id }}
-          REGION: ${{ inputs.gcp_region }}
-          ENV: dev
-
-      # FUTURE: Remove --dry-run flag when GCP/WIF setup is complete
-      #
-      # To enable REAL deployment (after manual setup):
-      #   1. Complete GCP project setup (see 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md)
-      #   2. Uncomment WIF resources in infra/terraform/iam.tf
-      #   3. Add WIF_PROVIDER and WIF_SERVICE_ACCOUNT to GitHub secrets
-      #   4. Remove --dry-run flag from deployment steps above
-      #   5. Verify smoke tests are enabled (SMOKE_TEST_ENABLED=true)
-      #
-      # Manual Setup Checklist:
-      #   □ Create GCP project (bobs-brain-dev or other)
-      #   □ Enable Vertex AI API + Agent Engine API
-      #   □ Deploy WIF via Terraform (uncomment in iam.tf)
-      #   □ Add GitHub secrets (WIF_PROVIDER, WIF_SERVICE_ACCOUNT)
-      #   □ Test deployment with --dry-run first
-      #   □ Remove --dry-run for real deployment
-      #   □ Enable smoke tests (set SMOKE_TEST_ENABLED=true)
-      #
-      # See complete manual setup guide:
-      #   - 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md
-      #   - 000-docs/148-AA-REPT-phase-19-agent-engine-dev-deployment.md
-
-      - name: Report deployment status
-        run: |
-          echo "📊 Deployment Summary:"
-          echo "  Environment: ${{ env.ENVIRONMENT }}"
-          echo "  Project: ${{ inputs.gcp_project_id }}"
-          echo "  Region: ${{ inputs.gcp_region }}"
-          echo "  Version: ${{ env.APP_VERSION }}"
-          echo ""
-          echo "  Agent(s): ${{ inputs.agent }}"
-          echo "  Deployment method: Inline Source (6767-INLINE)"
-          echo "  Deployment mode: DRY-RUN (validation only)"
-          echo ""
-          echo "✅ Deployment script executed successfully in dry-run mode"
-          echo "✅ Configuration validated (entrypoints, resource names, etc.)"
-          echo ""
-          echo "ℹ️  Docker images built for future/experimental use"
-          echo "ℹ️  Real deployment requires manual GCP/WIF setup"
-          echo "ℹ️  See 000-docs/149-NOTE-wif-and-github-actions-dev-audit.md for setup guide"
-
-  # Post-Deployment Smoke Tests (Phase 19 Task 4)
-  smoke-tests:
-    name: Smoke Test Deployed Agents
+  # ==============================================================================
+  # Deploy Bob Agent
+  # ==============================================================================
+  deploy-bob:
+    name: Deploy Bob (${{ inputs.deploy_mode }})
     runs-on: ubuntu-latest
-    needs: deploy-inline-source
-    if: always()  # Run even if deploy was skipped, but will fail if no agents deployed
-
+    needs: arv-checks
+    if: inputs.agent == 'bob' || inputs.agent == 'both'
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt || echo "Requirements install incomplete"
+          pip install -r requirements.txt
+          pip install 'google-cloud-aiplatform[adk,agent_engines]>=1.111'
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to GCP (WIF)
+        if: inputs.deploy_mode == 'apply'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Check deployment status
-        id: check_deployment
+      - name: Deploy Bob (Dry-Run)
+        if: inputs.deploy_mode == 'dry-run'
         run: |
-          echo "🔍 Checking if agents are actually deployed..."
-          echo ""
-          echo "ℹ️  NOTE: Smoke tests require agents to be deployed to Agent Engine."
-          echo "   Current workflow stubs actual deployment (manual setup required)."
-          echo ""
-          echo "   If you have manually deployed agents, set SMOKE_TEST_ENABLED=true"
-          echo "   as a GitHub Actions environment variable to run smoke tests."
-          echo ""
-
-          if [ "${{ vars.SMOKE_TEST_ENABLED }}" == "true" ]; then
-            echo "deployment_ready=true" >> $GITHUB_OUTPUT
-            echo "✅ Smoke tests enabled (SMOKE_TEST_ENABLED=true)"
-          else
-            echo "deployment_ready=false" >> $GITHUB_OUTPUT
-            echo "⏸️  Smoke tests disabled (SMOKE_TEST_ENABLED not set)"
-            echo "   Set SMOKE_TEST_ENABLED=true in repository variables to enable"
-          fi
-
-      - name: Smoke test bob
-        if: |
-          steps.check_deployment.outputs.deployment_ready == 'true' &&
-          (inputs.agent == 'bob' || inputs.agent == 'both')
-        run: |
-          echo "🧪 Running smoke test for bob..."
-          python scripts/smoke_test_agent_engine.py \
-            --project ${{ inputs.gcp_project_id }} \
-            --location ${{ inputs.gcp_region }} \
+          echo "🔍 Validating Bob deployment configuration..."
+          python scripts/deploy_inline_source.py \
             --agent bob \
-            --env dev
-        env:
-          PROJECT_ID: ${{ inputs.gcp_project_id }}
-          LOCATION: ${{ inputs.gcp_region }}
-          AGENT_NAME: bob
-          ENV: dev
+            --env dev \
+            --dry-run
+          echo "✅ Bob deployment config valid"
 
-      - name: Smoke test foreman
-        if: |
-          steps.check_deployment.outputs.deployment_ready == 'true' &&
-          (inputs.agent == 'foreman' || inputs.agent == 'both')
+      - name: Deploy Bob (Real)
+        if: inputs.deploy_mode == 'apply'
+        env:
+          PROJECT_ID: ${{ env.PROJECT_ID }}
+          LOCATION: ${{ env.REGION }}
         run: |
-          echo "🧪 Running smoke test for foreman..."
+          echo "🚀 Deploying Bob to Vertex AI Agent Engine..."
+          python scripts/deploy_inline_source.py \
+            --agent bob \
+            --env dev \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }}
+          echo "✅ Bob deployed successfully"
+
+  # ==============================================================================
+  # Deploy Foreman Agent
+  # ==============================================================================
+  deploy-foreman:
+    name: Deploy Foreman (${{ inputs.deploy_mode }})
+    runs-on: ubuntu-latest
+    needs: arv-checks
+    if: inputs.agent == 'foreman' || inputs.agent == 'both'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install 'google-cloud-aiplatform[adk,agent_engines]>=1.111'
+
+      - name: Authenticate to GCP (WIF)
+        if: inputs.deploy_mode == 'apply'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Deploy Foreman (Dry-Run)
+        if: inputs.deploy_mode == 'dry-run'
+        run: |
+          echo "🔍 Validating Foreman deployment configuration..."
+          python scripts/deploy_inline_source.py \
+            --agent foreman \
+            --env dev \
+            --dry-run
+          echo "✅ Foreman deployment config valid"
+
+      - name: Deploy Foreman (Real)
+        if: inputs.deploy_mode == 'apply'
+        env:
+          PROJECT_ID: ${{ env.PROJECT_ID }}
+          LOCATION: ${{ env.REGION }}
+        run: |
+          echo "🚀 Deploying Foreman to Vertex AI Agent Engine..."
+          python scripts/deploy_inline_source.py \
+            --agent foreman \
+            --env dev \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }}
+          echo "✅ Foreman deployed successfully"
+
+  # ==============================================================================
+  # Smoke Tests
+  # ==============================================================================
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-bob, deploy-foreman]
+    if: always() && (needs.deploy-bob.result == 'success' || needs.deploy-foreman.result == 'success')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install 'google-cloud-aiplatform[adk,agent_engines]>=1.111'
+
+      - name: Smoke Tests (Config-Only)
+        if: inputs.deploy_mode == 'dry-run' || inputs.smoke_tests_enabled == false
+        run: |
+          echo "🔍 Running smoke tests in config-only mode..."
+          python scripts/smoke_test_agent_engine.py --config-only
+          echo "✅ Smoke test config validated"
+
+      - name: Authenticate to GCP (WIF)
+        if: inputs.deploy_mode == 'apply' && inputs.smoke_tests_enabled == true
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Smoke Tests (Live)
+        if: inputs.deploy_mode == 'apply' && inputs.smoke_tests_enabled == true
+        env:
+          PROJECT_ID: ${{ env.PROJECT_ID }}
+          LOCATION: ${{ env.REGION }}
+        run: |
+          echo "🧪 Running live smoke tests against Agent Engine..."
           python scripts/smoke_test_agent_engine.py \
-            --project ${{ inputs.gcp_project_id }} \
-            --location ${{ inputs.gcp_region }} \
-            --agent iam-senior-adk-devops-lead \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
             --env dev
-        env:
-          PROJECT_ID: ${{ inputs.gcp_project_id }}
-          LOCATION: ${{ inputs.gcp_region }}
-          AGENT_NAME: iam-senior-adk-devops-lead
-          ENV: dev
+          echo "✅ Live smoke tests passed"
 
-      - name: Smoke test summary
-        if: always()
+  # ==============================================================================
+  # Status Summary
+  # ==============================================================================
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-bob, deploy-foreman, smoke-tests]
+    if: always()
+    steps:
+      - name: Print Summary
         run: |
-          echo "📊 Smoke Test Summary:"
-          echo ""
+          echo "=" >> $GITHUB_STEP_SUMMARY
+          echo "=" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** \`${{ inputs.deploy_mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Agent(s):** ${{ inputs.agent }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Smoke Tests:** ${{ inputs.smoke_tests_enabled && 'Enabled' || 'Disabled' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ steps.check_deployment.outputs.deployment_ready }}" == "true" ]; then
-            echo "  Status: Smoke tests executed"
-            echo "  Agents tested: ${{ inputs.agent }}"
-            echo ""
-            echo "  Check step results above for pass/fail status"
+          if [ "${{ inputs.deploy_mode }}" = "dry-run" ]; then
+            echo "### 🔍 Dry-Run Mode" >> $GITHUB_STEP_SUMMARY
+            echo "Configuration validation completed successfully." >> $GITHUB_STEP_SUMMARY
+            echo "No actual deployment was performed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To perform a real deployment:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to Actions → Deploy to Agent Engine (Inline Source - Dev)" >> $GITHUB_STEP_SUMMARY
+            echo "2. Select \`deploy_mode: apply\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Ensure WIF_PROVIDER and WIF_SERVICE_ACCOUNT secrets are configured" >> $GITHUB_STEP_SUMMARY
           else
-            echo "  Status: Smoke tests skipped (agents not deployed)"
-            echo "  Agents requested: ${{ inputs.agent }}"
-            echo ""
-            echo "  To enable smoke tests:"
-            echo "    1. Deploy agents manually using scripts/deploy_inline_source.py"
-            echo "    2. Set SMOKE_TEST_ENABLED=true in repository variables"
-            echo "    3. Re-run this workflow"
+            echo "### 🚀 Real Deployment" >> $GITHUB_STEP_SUMMARY
+            echo "Agents were deployed to Vertex AI Agent Engine." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**View in Console:**" >> $GITHUB_STEP_SUMMARY
+            echo "- [Agent Engine](https://console.cloud.google.com/vertex-ai/agent-engine?project=${{ env.PROJECT_ID }})" >> $GITHUB_STEP_SUMMARY
+            echo "- [Monitoring](https://console.cloud.google.com/monitoring?project=${{ env.PROJECT_ID }})" >> $GITHUB_STEP_SUMMARY
           fi

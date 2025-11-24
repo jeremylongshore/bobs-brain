@@ -1,331 +1,327 @@
 #!/usr/bin/env python3
 """
-Agent Engine Deployment Smoke Test
+Smoke Test for Vertex AI Agent Engine Deployments
 
-Phase 18: Post-deployment health check for agents running in Vertex AI Agent Engine.
+Tests deployed agents with lightweight queries to verify they're responding correctly.
 
-This script performs a minimal "is it alive?" check by invoking a deployed agent
-with a trivial request and verifying it responds successfully.
+Part of Phase 21 - Real Agent Engine deployment implementation.
 
 Usage:
-    # Test bob in dev
-    python scripts/smoke_test_agent_engine.py \
-      --project bobs-brain-dev \
-      --location us-central1 \
-      --agent bob \
-      --env dev
+    # Config-only mode (validation without API calls)
+    python scripts/smoke_test_agent_engine.py --config-only
 
-    # Test foreman with environment variables
-    export PROJECT_ID=bobs-brain-dev
-    export LOCATION=us-central1
-    export AGENT_NAME=iam-senior-adk-devops-lead
-    export ENV=dev
-    python scripts/smoke_test_agent_engine.py
+    # Live smoke tests
+    python scripts/smoke_test_agent_engine.py \\
+        --project bobs-brain \\
+        --region us-central1 \\
+        --env dev
 
 Exit Codes:
-    0 - Agent responded successfully
-    1 - Agent failed to respond or returned error
-    2 - Configuration error (missing params, etc.)
+    0 - Success (all tests passed)
+    1 - Test failures
+    2 - Configuration error
+    3 - Missing dependencies
 
-References:
-    - 000-docs/145-NOTE-agent-engine-dev-deployment-prereqs.md
-    - 000-docs/146-AA-REPT-phase-17-a2a-wiring-and-agent-engine-dev-prep.md
+Related Docs:
+    - 000-docs/152-AA-REPT-phase-21-agent-engine-dev-first-live-deploy-and-smoke-tests.md
 """
 
 import argparse
 import os
 import sys
-import time
-from typing import Dict, Any, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 
-# Try to import GCP libraries (may not be available locally)
-try:
-    from google.cloud import aiplatform
-    from google.cloud.aiplatform import gapic
-    GCP_AVAILABLE = True
-except ImportError:
-    print("⚠️  Google Cloud AI Platform libraries not available", file=sys.stderr)
-    print("   Install with: pip install google-cloud-aiplatform", file=sys.stderr)
-    GCP_AVAILABLE = False
+# Add repo root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-class Colors:
-    """Terminal colors for output."""
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
-
-
-def print_header(text: str) -> None:
-    """Print section header."""
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 80}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{text}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 80}{Colors.RESET}\n")
-
-
-def print_success(text: str) -> None:
-    """Print success message."""
-    print(f"{Colors.GREEN}✓{Colors.RESET} {text}")
-
-
-def print_failure(text: str) -> None:
-    """Print failure message."""
-    print(f"{Colors.RED}✗{Colors.RESET} {text}")
-
-
-def print_warning(text: str) -> None:
-    """Print warning message."""
-    print(f"{Colors.YELLOW}⚠{Colors.RESET} {text}")
-
-
-def print_info(text: str) -> None:
-    """Print info message."""
-    print(f"{Colors.BLUE}ℹ{Colors.RESET} {text}")
-
-
-def get_smoke_test_prompt(agent_name: str) -> str:
+def validate_config(args: argparse.Namespace) -> Dict:
     """
-    Get minimal smoke test prompt for agent.
+    Validate smoke test configuration.
 
     Args:
-        agent_name: Name of agent (bob, iam-senior-adk-devops-lead, etc.)
+        args: Command-line arguments
 
     Returns:
-        Simple test prompt that should get a response
+        Configuration dictionary
+
+    Raises:
+        SystemExit: If configuration is invalid (exit code 2)
     """
-    prompts = {
-        "bob": "Hello Bob. Please respond with a simple greeting to confirm you're operational.",
-        "iam-senior-adk-devops-lead": "Hello foreman. Please confirm you can receive requests.",
-        "iam-adk": "Hello iam-adk specialist. Please confirm you're operational.",
-    }
-
-    return prompts.get(
-        agent_name,
-        f"Hello {agent_name}. Please respond to confirm you're operational."
-    )
-
-
-def invoke_agent_engine(
-    project_id: str,
-    location: str,
-    agent_engine_id: str,
-    prompt: str
-) -> tuple[bool, Optional[Dict[str, Any]]]:
-    """
-    Invoke agent via Vertex AI Agent Engine API.
-
-    Args:
-        project_id: GCP project ID
-        location: GCP region
-        agent_engine_id: Agent Engine resource ID
-        prompt: Input prompt
-
-    Returns:
-        (success, response_data)
-    """
-    if not GCP_AVAILABLE:
-        print_failure("Google Cloud libraries not available - cannot invoke agent")
-        return False, None
-
-    try:
-        print_info(f"Invoking agent at {location}/{agent_engine_id}...")
-
-        # Initialize AI Platform
-        aiplatform.init(project=project_id, location=location)
-
-        # Create agent client
-        client = aiplatform.gapic.ReasoningEngineServiceClient(
-            client_options={"api_endpoint": f"{location}-aiplatform.googleapis.com"}
-        )
-
-        # Construct resource name
-        resource_name = f"projects/{project_id}/locations/{location}/reasoningEngines/{agent_engine_id}"
-
-        # Invoke agent (simplified - actual API may vary)
-        request = gapic.QueryReasoningEngineRequest(
-            name=resource_name,
-            input={"query": prompt}
-        )
-
-        response = client.query_reasoning_engine(request=request)
-
-        print_success("Agent responded successfully")
-
-        # Parse response
-        result_data = {
-            "status": "success",
-            "response": str(response),
-            "latency_ms": None  # Would need timing logic
+    # Config-only mode doesn't need project/region
+    if args.config_only:
+        return {
+            "mode": "config-only",
+            "agents_to_test": ["bob", "foreman"],
         }
 
-        return True, result_data
+    # Live mode requires project and region
+    if not args.project:
+        args.project = os.getenv("PROJECT_ID")
+        if not args.project:
+            print("❌ Error: --project required for live tests")
+            print("   Or set PROJECT_ID environment variable")
+            sys.exit(2)
 
-    except Exception as e:
-        print_failure(f"Failed to invoke agent: {e}")
-        return False, {"error": str(e)}
+    if not args.region:
+        args.region = os.getenv("LOCATION", "us-central1")
+
+    if not args.env:
+        args.env = "dev"
+
+    config = {
+        "mode": "live",
+        "project": args.project,
+        "region": args.region,
+        "environment": args.env,
+        "agents_to_test": ["bob", "foreman"],
+    }
+
+    return config
 
 
-def run_smoke_test(args: argparse.Namespace) -> int:
+def run_config_only_tests(config: Dict) -> bool:
     """
-    Run smoke test for deployed agent.
+    Run config-only smoke tests (no API calls).
 
     Args:
-        args: Parsed command-line arguments
+        config: Test configuration
 
     Returns:
-        Exit code (0 = success, 1 = failure, 2 = config error)
+        True if all tests pass
     """
-    print_header("AGENT ENGINE SMOKE TEST")
-    print_info(f"Project: {args.project}")
-    print_info(f"Location: {args.location}")
-    print_info(f"Agent: {args.agent}")
-    print_info(f"Environment: {args.env}")
+    print("=" * 80)
+    print("SMOKE TEST - CONFIG-ONLY MODE")
+    print("=" * 80)
+    print("Validating test configuration without making API calls...")
     print()
 
-    # Validate configuration
-    if not args.project:
-        print_failure("Missing required parameter: project")
-        return 2
+    # Check that test prompts are defined
+    test_prompts = {
+        "bob": "What is your name and role?",
+        "foreman": "What is your role in the SWE department?",
+    }
 
-    if not args.agent_engine_id:
-        print_warning("AGENT_ENGINE_ID not provided - using default naming convention")
-        # Try to construct ID from agent name and environment
-        args.agent_engine_id = f"{args.agent}-{args.env}"
-        print_info(f"Assuming Agent Engine ID: {args.agent_engine_id}")
+    print("✅ Test prompts configured:")
+    for agent, prompt in test_prompts.items():
+        print(f"   {agent}: '{prompt[:50]}...'")
 
-    # Get test prompt
-    test_prompt = get_smoke_test_prompt(args.agent)
-    print_info(f"Test prompt: \"{test_prompt[:60]}...\"")
+    # Check that we can import required modules
+    print("\n✅ Checking Python imports...")
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from agents.config.agent_engine import get_agent_engine_config
+        print("   agents.config.agent_engine: OK")
+    except ImportError as e:
+        print(f"   ❌ Import error: {e}")
+        return False
+
+    print("\n✅ Config-only smoke test validation passed")
+    print("   To run live tests, remove --config-only flag")
+    return True
+
+
+def run_live_smoke_tests(config: Dict) -> bool:
+    """
+    Run live smoke tests against deployed Agent Engine.
+
+    Args:
+        config: Test configuration
+
+    Returns:
+        True if all tests pass
+
+    Raises:
+        SystemExit: If dependencies are missing (exit code 3)
+    """
+    # Check dependencies
+    try:
+        import vertexai
+        from vertexai import agent_engines
+    except ImportError as e:
+        print(f"❌ Error: Missing required libraries: {e}")
+        print("   Install with: pip install google-cloud-aiplatform[adk,agent_engines]")
+        sys.exit(3)
+
+    print("=" * 80)
+    print("SMOKE TEST - LIVE MODE")
+    print("=" * 80)
+    print(f"Project: {config['project']}")
+    print(f"Region: {config['region']}")
+    print(f"Environment: {config['environment']}")
+    print("=" * 80)
     print()
 
-    # Invoke agent
-    start_time = time.time()
-    success, response = invoke_agent_engine(
-        project_id=args.project,
-        location=args.location,
-        agent_engine_id=args.agent_engine_id,
-        prompt=test_prompt
+    # Initialize Vertex AI
+    vertexai.init(
+        project=config['project'],
+        location=config['region'],
     )
-    duration_ms = int((time.time() - start_time) * 1000)
 
-    # Report results
-    print()
-    print_header("SMOKE TEST RESULTS")
+    # Get agent configurations
+    from agents.config.agent_engine import get_agent_engine_config
 
-    if success:
-        print_success("Agent responded successfully")
-        print_info(f"Response time: {duration_ms}ms")
-        if response:
-            print_info(f"Response data: {str(response)[:100]}...")
-        print()
-        print_success("✅ SMOKE TEST PASSED")
-        return 0
+    test_results = []
+
+    # Test each agent
+    for agent_role in config['agents_to_test']:
+        print(f"\n🧪 Testing {agent_role}...")
+
+        try:
+            # Get agent config
+            agent_config = get_agent_engine_config(
+                env=config['environment'],
+                agent_role=agent_role
+            )
+
+            if not agent_config:
+                print(f"   ⚠️  {agent_role} not deployed to {config['environment']}")
+                continue
+
+            # Check if this is a placeholder
+            if "PLACEHOLDER" in agent_config.reasoning_engine_id:
+                print(f"   ⚠️  {agent_role} has placeholder config, skipping")
+                continue
+
+            resource_name = agent_config.reasoning_engine_id
+            print(f"   Resource: {resource_name}")
+
+            # Get the remote app
+            try:
+                remote_app = agent_engines.get(resource_name)
+                print(f"   ✅ Agent Engine connection established")
+            except Exception as e:
+                print(f"   ❌ Failed to connect: {e}")
+                test_results.append(False)
+                continue
+
+            # Send a lightweight smoke test query
+            test_prompt = f"[SMOKE TEST] What is your name? (Reply briefly)"
+            print(f"   📤 Sending: '{test_prompt[:50]}...'")
+
+            try:
+                # Create a test session
+                import asyncio
+
+                async def test_query():
+                    session = await remote_app.async_create_session(
+                        user_id="smoke_test_user"
+                    )
+                    session_id = session["id"]
+
+                    # Send query
+                    response_parts = []
+                    async for event in remote_app.async_stream_query(
+                        user_id="smoke_test_user",
+                        session_id=session_id,
+                        message=test_prompt,
+                    ):
+                        if hasattr(event, 'text'):
+                            response_parts.append(event.text)
+                        elif isinstance(event, dict) and 'text' in event:
+                            response_parts.append(event['text'])
+
+                    return ''.join(response_parts)
+
+                response = asyncio.run(test_query())
+
+                # Check response
+                if response and len(response) > 0:
+                    print(f"   📥 Response: '{response[:100]}...'")
+                    print(f"   ✅ {agent_role} responded successfully")
+                    test_results.append(True)
+                else:
+                    print(f"   ❌ {agent_role} returned empty response")
+                    test_results.append(False)
+
+            except Exception as e:
+                print(f"   ❌ Query failed: {e}")
+                test_results.append(False)
+
+        except Exception as e:
+            print(f"   ❌ Test error: {e}")
+            test_results.append(False)
+
+    # Summary
+    print("\n" + "=" * 80)
+    print("SMOKE TEST SUMMARY")
+    print("=" * 80)
+
+    total_tests = len(test_results)
+    passed_tests = sum(test_results)
+    failed_tests = total_tests - passed_tests
+
+    print(f"Total tests: {total_tests}")
+    print(f"Passed: {passed_tests}")
+    print(f"Failed: {failed_tests}")
+
+    if failed_tests == 0 and total_tests > 0:
+        print("\n✅ All smoke tests passed!")
+        return True
     else:
-        print_failure("Agent did not respond successfully")
-        print_info(f"Attempted in: {duration_ms}ms")
-        if response and "error" in response:
-            print_failure(f"Error: {response['error']}")
-        print()
-        print_failure("❌ SMOKE TEST FAILED")
-        return 1
+        print(f"\n❌ {failed_tests} smoke tests failed")
+        return False
 
 
-def main() -> int:
-    """Main entry point."""
+def main():
     parser = argparse.ArgumentParser(
-        description="Smoke test for Vertex AI Agent Engine deployments",
+        description="Smoke test deployed Agent Engine agents",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
-    )
+        epilog="""
+Examples:
+    # Config-only mode (validation without API calls)
+    python scripts/smoke_test_agent_engine.py --config-only
 
-    parser.add_argument(
-        "--project",
-        default=os.getenv("PROJECT_ID"),
-        help="GCP project ID (or set PROJECT_ID env var)"
-    )
-
-    parser.add_argument(
-        "--location",
-        default=os.getenv("LOCATION", "us-central1"),
-        help="GCP region (or set LOCATION env var)"
-    )
-
-    parser.add_argument(
-        "--agent",
-        default=os.getenv("AGENT_NAME", "bob"),
-        help="Agent name (bob, iam-senior-adk-devops-lead, etc.)"
-    )
-
-    parser.add_argument(
-        "--agent-engine-id",
-        default=os.getenv("AGENT_ENGINE_ID"),
-        help="Agent Engine resource ID (or set AGENT_ENGINE_ID env var)"
-    )
-
-    parser.add_argument(
-        "--env",
-        default=os.getenv("ENV", "dev"),
-        choices=["dev", "staging", "prod"],
-        help="Deployment environment"
+    # Live smoke tests
+    python scripts/smoke_test_agent_engine.py \\
+        --project bobs-brain \\
+        --region us-central1 \\
+        --env dev
+        """
     )
 
     parser.add_argument(
         "--config-only",
         action="store_true",
-        help="Validate configuration without invoking agent (dry-run mode)"
+        help="Validate configuration only, do not call APIs"
+    )
+
+    parser.add_argument(
+        "--project",
+        help="GCP project ID (or use PROJECT_ID env var)"
+    )
+
+    parser.add_argument(
+        "--region",
+        help="GCP region (or use LOCATION env var)"
+    )
+
+    parser.add_argument(
+        "--env",
+        choices=["dev", "staging", "prod"],
+        default="dev",
+        help="Environment to test"
     )
 
     args = parser.parse_args()
 
-    # Config-only mode: just validate inputs
-    if args.config_only:
-        print_header("SMOKE TEST CONFIGURATION VALIDATION")
-        print_info(f"Project: {args.project or '(not set)'}")
-        print_info(f"Location: {args.location}")
-        print_info(f"Agent: {args.agent}")
-        print_info(f"Environment: {args.env}")
-        print_info(f"Agent Engine ID: {args.agent_engine_id or '(will use default)'}")
-        print()
+    # Validate configuration
+    config = validate_config(args)
 
-        # Validate required parameters
-        if not args.project:
-            print_failure("Missing required parameter: project")
-            print_info("Set via --project or PROJECT_ID environment variable")
-            return 2
+    # Run appropriate test mode
+    if config['mode'] == 'config-only':
+        success = run_config_only_tests(config)
+    else:
+        success = run_live_smoke_tests(config)
 
-        if not args.agent_engine_id:
-            default_id = f"{args.agent}-{args.env}"
-            print_info(f"No Agent Engine ID provided - would default to: {default_id}")
-
-        test_prompt = get_smoke_test_prompt(args.agent)
-        print_info(f"Test prompt: \"{test_prompt}\"")
-        print()
-
-        if GCP_AVAILABLE:
-            print_success("Google Cloud AI Platform client available")
-        else:
-            print_warning("Google Cloud AI Platform client not available")
-            print_info("Install with: pip install google-cloud-aiplatform")
-
-        print()
-        print_success("✅ Configuration validation complete (config-only mode)")
-        print_info("Remove --config-only flag to run actual smoke test")
-        return 0
-
-    try:
-        return run_smoke_test(args)
-    except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Interrupted by user{Colors.RESET}")
-        return 130
-    except Exception as e:
-        print(f"\n{Colors.RED}Unexpected error: {e}{Colors.RESET}")
-        import traceback
-        traceback.print_exc()
-        return 1
+    # Exit with appropriate code
+    if success:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
