@@ -1,8 +1,8 @@
 {
   "name": "iam-senior-adk-devops-lead",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "url": "https://bob.intent.solutions/foreman",
-  "description": "IAM Senior ADK DevOps Lead - Foreman Agent\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0\n\nThe Foreman agent orchestrates a department of specialized IAM worker agents for ADK-based software engineering tasks:\n- Routes tasks to appropriate specialist workers (iam-adk, iam-issue, iam-fix, iam-qa, iam-docs)\n- Coordinates multi-step workflows across worker agents\n- Aggregates results from distributed agent teams\n- Enforces ADK/Vertex AI compliance standards (Hard Mode rules R1-R8)\n- Provides unified task tracking and status reporting\n\nThe Foreman operates as a middle-tier orchestrator in the bob → foreman → workers architecture, implementing the Agent Factory pattern with A2A protocol for agent-to-agent communication.",
+  "description": "IAM Senior ADK DevOps Lead - Foreman Agent\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.11.0\n\nThe Foreman agent orchestrates a department of specialized IAM worker agents for ADK-based software engineering tasks:\n- Routes tasks to appropriate specialist workers (iam-adk, iam-issue, iam-fix, iam-qa, iam-docs)\n- Coordinates multi-step workflows across worker agents\n- Aggregates results from distributed agent teams\n- Enforces ADK/Vertex AI compliance standards (Hard Mode rules R1-R8)\n- Provides unified task tracking and status reporting\n\nThe Foreman operates as a middle-tier orchestrator in the bob → foreman → workers architecture, implementing the Agent Factory pattern with A2A protocol for agent-to-agent communication.",
   "capabilities": [
     "task_routing",
     "worker_coordination",
@@ -312,5 +312,5 @@
       }
     }
   ],
-  "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0"
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.11.0"
 }

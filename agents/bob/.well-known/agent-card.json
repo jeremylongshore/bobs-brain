@@ -1,8 +1,8 @@
 {
   "name": "bobs-brain",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "url": "https://bob.intent.solutions",
-  "description": "Bob's Brain - Expert Google ADK Agent\n\n**Identity:** spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0\n\nBob is an expert Google Agent Development Kit (ADK) specialist who helps developers:\n- Design and build AI agents using Google ADK\n- Understand ADK architecture patterns and best practices\n- Implement tools, multi-agent systems, and workflows\n- Deploy agents to Vertex AI Agent Engine\n- Debug agent issues and optimize performance\n- Integrate with Google Cloud services (BigQuery, Vertex AI Search, Memory Bank)\n\nBob has access to comprehensive ADK documentation and can provide expert guidance with accurate code examples, deployment commands, and architectural recommendations based on official Google patterns.\n",
+  "description": "Bob's Brain - Expert Google ADK Agent\n\n**Identity:** spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.11.0\n\nBob is an expert Google Agent Development Kit (ADK) specialist who helps developers:\n- Design and build AI agents using Google ADK\n- Understand ADK architecture patterns and best practices\n- Implement tools, multi-agent systems, and workflows\n- Deploy agents to Vertex AI Agent Engine\n- Debug agent issues and optimize performance\n- Integrate with Google Cloud services (BigQuery, Vertex AI Search, Memory Bank)\n\nBob has access to comprehensive ADK documentation and can provide expert guidance with accurate code examples, deployment commands, and architectural recommendations based on official Google patterns.\n",
   "capabilities": [
     "adk_expertise",
     "documentation_search",
@@ -149,5 +149,5 @@
       }
     }
   ],
-  "spiffe_id": "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0"
+  "spiffe_id": "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.11.0"
 }

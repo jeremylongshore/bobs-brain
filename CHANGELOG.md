@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-11-23
+
+### Added - Production-Ready A2A Protocol & Monitoring
+
+- **Full A2A Protocol Implementation (Phase 22)**
+  - Created foreman AgentCard (`agents/iam_senior_adk_devops_lead/.well-known/agent-card.json`)
+  - 4 foreman-specific skills: route_task, coordinate_workflow, aggregate_results, enforce_compliance
+  - SPIFFE ID compliance (R7 requirement)
+  - Complete agent-to-agent discovery and communication protocol
+
+- **Vertex AI Agent Engine Built-in Monitoring Discovery**
+  - Documented comprehensive built-in monitoring capabilities
+  - Resource type: `aiplatform.googleapis.com/ReasoningEngine`
+  - Automatic metrics: request count, latency (p50/p95/p99), error rates
+  - Cloud Monitoring, Logging, and Trace integration included
+  - No custom infrastructure needed - metrics collected automatically
+
+- **Production Deployment Infrastructure (Phases 19-22)**
+  - Inline source deployment script (`scripts/deploy_inline_source.py`)
+  - CI/CD workflow with ARV gates (`.github/workflows/deploy-containerized-dev.yml`)
+  - Comprehensive smoke test coverage for bob and foreman agents
+  - Operator runbooks with 6-step deployment procedures
+  - Config-only validation mode for pre-deployment checks
+
+- **Documentation & Standards**
+  - Phase 19 AAR: Agent Engine dev deployment
+  - Phase 20 AAR: Inline deployment script and dev wiring
+  - Phase 21 AAR: Terminal verification and drift fix
+  - Phase 22 AAR: Foreman deployment and production monitoring
+  - Complete 6767-series standards catalog with index
+
+### Fixed
+
+- **CI/CD Infrastructure**
+  - Drift detection exclusions for archive/ and claudes-docs/ directories
+  - Document numbering conflicts resolved (quick reference renumbered to 156)
+
+- **Agent Compatibility**
+  - Updated VertexAi services to use 'project' parameter
+  - Fixed App import to use google.adk.apps
+  - Resolved google-adk 1.18.0 breaking API changes
+
+### Changed
+
+- **Test Coverage**
+  - 171 unit tests passing (100% of runnable tests)
+  - 26 expected failures (require google-adk installation)
+  - AgentCard validation tests added (10 passing, 8 xfailed)
+
+### Technical Milestone
+
+This release represents **Agent Engine deployment readiness** with full A2A protocol support, comprehensive monitoring strategy, and production-grade CI/CD infrastructure. The repository is now ready for real Agent Engine deployments pending WIF enablement.
+
 ## [0.10.0] - 2025-11-21
 
 ### Added - Agent Engine / A2A Preview (Dev-Ready, Not Deployed)
