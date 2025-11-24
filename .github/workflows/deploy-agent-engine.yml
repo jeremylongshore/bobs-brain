@@ -65,7 +65,7 @@ jobs:
           echo "Project: $PROJECT_ID"
           echo "Region: $REGION"
 
-          adk deploy agent_engine my_agent \
+          adk deploy agent_engine agents.bob.agent \
             --project "$PROJECT_ID" \
             --region "$REGION" \
             --staging_bucket "$STAGING_BUCKET" \

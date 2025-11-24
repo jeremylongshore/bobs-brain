@@ -10,7 +10,7 @@ resource "google_storage_bucket" "adk_staging" {
   name          = "${var.project_id}-adk-staging"
   location      = var.region
   project       = var.project_id
-  force_destroy = false  # Protect against accidental deletion
+  force_destroy = false # Protect against accidental deletion
 
   # Security: Block public access
   uniform_bucket_level_access = true
@@ -18,7 +18,7 @@ resource "google_storage_bucket" "adk_staging" {
   # Lifecycle: Clean up old deployment artifacts after 30 days
   lifecycle_rule {
     condition {
-      age = 30  # Days
+      age = 30 # Days
     }
     action {
       type = "Delete"
@@ -56,7 +56,7 @@ resource "google_storage_bucket" "adk_docs" {
   name          = "${var.project_id}-adk-docs"
   location      = var.region
   project       = var.project_id
-  force_destroy = false  # Protect documentation
+  force_destroy = false # Protect documentation
 
   # Security: Block public access
   uniform_bucket_level_access = true
@@ -154,7 +154,7 @@ resource "google_storage_bucket" "org_knowledge_hub" {
   name          = var.org_storage_bucket_name
   location      = var.org_storage_location
   project       = var.project_id
-  force_destroy = false  # Protect org-wide knowledge
+  force_destroy = false # Protect org-wide knowledge
 
   # Security: Block public access
   uniform_bucket_level_access = true
@@ -163,8 +163,8 @@ resource "google_storage_bucket" "org_knowledge_hub" {
   lifecycle_rule {
     # Delete per-repo detailed results after 90 days
     condition {
-      age                        = 90
-      matches_prefix             = ["portfolio/runs/*/per-repo/"]
+      age            = 90
+      matches_prefix = ["portfolio/runs/*/per-repo/"]
     }
     action {
       type = "Delete"

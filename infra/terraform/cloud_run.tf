@@ -56,6 +56,11 @@ resource "google_cloud_run_service" "a2a_gateway" {
         }
 
         env {
+          name  = "DEPLOYMENT_ENV"
+          value = var.environment
+        }
+
+        env {
           name  = "PORT"
           value = "8080"
         }
@@ -89,8 +94,8 @@ resource "google_cloud_run_service" "a2a_gateway" {
 
     metadata {
       annotations = {
-        "autoscaling.knative.dev/minScale" = "0"
-        "autoscaling.knative.dev/maxScale" = tostring(var.gateway_max_instances)
+        "autoscaling.knative.dev/minScale"  = "0"
+        "autoscaling.knative.dev/maxScale"  = tostring(var.gateway_max_instances)
         "run.googleapis.com/cpu-throttling" = "true"
       }
 
@@ -175,6 +180,11 @@ resource "google_cloud_run_service" "slack_webhook" {
         }
 
         env {
+          name  = "DEPLOYMENT_ENV"
+          value = var.environment
+        }
+
+        env {
           name  = "PORT"
           value = "8080"
         }
@@ -208,8 +218,8 @@ resource "google_cloud_run_service" "slack_webhook" {
 
     metadata {
       annotations = {
-        "autoscaling.knative.dev/minScale" = "0"
-        "autoscaling.knative.dev/maxScale" = tostring(var.gateway_max_instances)
+        "autoscaling.knative.dev/minScale"  = "0"
+        "autoscaling.knative.dev/maxScale"  = tostring(var.gateway_max_instances)
         "run.googleapis.com/cpu-throttling" = "true"
       }
 

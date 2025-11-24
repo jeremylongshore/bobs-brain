@@ -15,7 +15,7 @@
 variable "knowledge_hub_project_id" {
   description = "The GCP project ID for the org-wide knowledge hub"
   type        = string
-  default     = "datahub-intent"  # Our actual project name
+  default     = "datahub-intent" # Our actual project name
 }
 
 variable "knowledge_hub_location" {
@@ -27,7 +27,7 @@ variable "knowledge_hub_location" {
 variable "knowledge_bucket_prefix" {
   description = "Prefix for knowledge bucket names"
   type        = string
-  default     = "datahub-intent"  # Using project name as prefix
+  default     = "datahub-intent" # Using project name as prefix
 }
 
 variable "enable_versioning" {
@@ -46,20 +46,20 @@ variable "lifecycle_age_days" {
 variable "bobs_brain_runtime_sa" {
   description = "Bob's Brain Agent Engine runtime service account"
   type        = string
-  default     = ""  # TODO: Wire from bobs-brain project
+  default     = "" # TODO: Wire from bobs-brain project
 }
 
 variable "bobs_brain_search_sa" {
   description = "Bob's Brain Vertex AI Search service account"
   type        = string
-  default     = ""  # TODO: Wire from bobs-brain project
+  default     = "" # TODO: Wire from bobs-brain project
 }
 
 variable "consumer_service_accounts" {
   description = "Additional service accounts that need read access"
   type = list(object({
     email  = string
-    prefix = string  # Which prefix they can access
+    prefix = string # Which prefix they can access
   }))
   default = []
 }
@@ -78,13 +78,11 @@ resource "google_storage_bucket" "knowledge_hub_dev" {
   location = var.knowledge_hub_location
 
   # Uniform bucket-level access (no ACLs)
-  uniform_bucket_level_access {
-    enabled = true
-  }
+  uniform_bucket_level_access = true
 
   # Soft delete for recovery
   soft_delete_policy {
-    retention_duration_seconds = 2592000  # 30 days
+    retention_duration_seconds = 2592000 # 30 days
   }
 
   versioning {
@@ -103,7 +101,7 @@ resource "google_storage_bucket" "knowledge_hub_dev" {
 
   lifecycle_rule {
     condition {
-      age = 365  # 1 year
+      age = 365 # 1 year
     }
     action {
       type          = "SetStorageClass"
@@ -123,20 +121,18 @@ resource "google_storage_bucket" "knowledge_hub_prod" {
   # TODO: Uncomment when ready to manage via Terraform
   # count = 0  # Disabled - bucket exists, managed manually for now
 
-  name     = "${var.knowledge_bucket_prefix}"  # Main bucket uses project name
+  name     = var.knowledge_bucket_prefix # Main bucket uses project name
   project  = var.knowledge_hub_project_id
   location = var.knowledge_hub_location
 
-  uniform_bucket_level_access {
-    enabled = true
-  }
+  uniform_bucket_level_access = true
 
   soft_delete_policy {
-    retention_duration_seconds = 2592000  # 30 days
+    retention_duration_seconds = 2592000 # 30 days
   }
 
   versioning {
-    enabled = true  # Always enabled in prod
+    enabled = true # Always enabled in prod
   }
 
   lifecycle_rule {
@@ -166,10 +162,10 @@ resource "google_storage_bucket" "knowledge_hub_prod" {
   }
 
   labels = {
-    environment  = "prod"
-    purpose      = "knowledge-hub"
-    managed-by   = "terraform"
-    compliance   = "7-year-retention"
+    environment = "prod"
+    purpose     = "knowledge-hub"
+    managed-by  = "terraform"
+    compliance  = "7-year-retention"
   }
 }
 
@@ -182,7 +178,7 @@ resource "google_storage_bucket_iam_member" "bobs_brain_runtime_prod" {
   # TODO: Uncomment and wire actual SA when ready
   # count = var.bobs_brain_runtime_sa != "" ? 1 : 0
 
-  bucket = var.knowledge_bucket_prefix  # Prod bucket
+  bucket = var.knowledge_bucket_prefix # Prod bucket
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${var.bobs_brain_runtime_sa}"
 
@@ -206,14 +202,19 @@ resource "google_storage_bucket_iam_member" "bobs_brain_search_prod" {
 
 # Dynamic IAM for additional consumers
 resource "google_storage_bucket_iam_member" "consumer_access" {
+  count = 0 # Disabled - uncomment when ready to add more consumers
+
   # TODO: Uncomment when ready to add more consumers
   # for_each = { for sa in var.consumer_service_accounts : sa.email => sa }
 
-  # bucket = var.knowledge_bucket_prefix
-  # role   = "roles/storage.objectViewer"
-  # member = "serviceAccount:${each.value.email}"
+  bucket = "" # Placeholder when count = 0
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:placeholder@example.iam.gserviceaccount.com"
 
-  # TODO: Add prefix-based conditions when needed
+  # TODO: Replace with actual values when enabling:
+  # bucket = var.knowledge_bucket_prefix
+  # member = "serviceAccount:${each.value.email}"
+  # Add prefix-based conditions when needed
 }
 
 # ============================================================================
@@ -226,7 +227,7 @@ resource "google_storage_bucket_iam_member" "consumer_access" {
 locals {
   vertex_search_config = {
     datastore_id = "universal-knowledge-store"
-    project_id   = "bobs-brain"  # Datastore lives in consumer project
+    project_id   = "bobs-brain" # Datastore lives in consumer project
     location     = "us"
     data_source  = "gs://${var.knowledge_bucket_prefix}/bobs-brain/**"
     type         = "unstructured"
@@ -236,7 +237,7 @@ locals {
 # Output the configuration for documentation
 output "vertex_search_setup_command" {
   description = "Command to create Vertex AI Search datastore"
-  value = <<-EOT
+  value       = <<-EOT
     # Run this in bobs-brain project to create the datastore:
 
     gcloud ai search datastores create ${local.vertex_search_config.datastore_id} \
@@ -275,11 +276,11 @@ output "knowledge_bucket_prod" {
 output "knowledge_bucket_structure" {
   description = "Expected bucket prefix structure"
   value = {
-    bobs_brain     = "gs://${var.knowledge_bucket_prefix}/bobs-brain/"
-    iam_agents     = "gs://${var.knowledge_bucket_prefix}/iam-agents/"
-    diagnosticpro  = "gs://${var.knowledge_bucket_prefix}/diagnosticpro/"
-    pipelinepilot  = "gs://${var.knowledge_bucket_prefix}/pipelinepilot/"
-    shared         = "gs://${var.knowledge_bucket_prefix}/shared/"
+    bobs_brain    = "gs://${var.knowledge_bucket_prefix}/bobs-brain/"
+    iam_agents    = "gs://${var.knowledge_bucket_prefix}/iam-agents/"
+    diagnosticpro = "gs://${var.knowledge_bucket_prefix}/diagnosticpro/"
+    pipelinepilot = "gs://${var.knowledge_bucket_prefix}/pipelinepilot/"
+    shared        = "gs://${var.knowledge_bucket_prefix}/shared/"
   }
 }
 

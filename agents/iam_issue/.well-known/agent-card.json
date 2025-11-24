@@ -1,0 +1,295 @@
+{
+  "name": "iam-issue",
+  "version": "0.10.0",
+  "url": "https://iam-issue.intent.solutions",
+  "description": "iam-issue - Issue Author & Formatter Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-issue/dev/us-central1/0.10.0\n\niam-issue specializes in converting audit findings and analysis results into well-formatted GitHub issues. Core expertise includes:\n- Converting AuditReports and findings into GitHub IssueSpecs\n- Formatting issues with proper markdown structure and sections\n- Validating issue specs for completeness and clarity\n- Generating appropriate labels based on severity and category\n- Creating high-quality issue bodies ready for GitHub submission\n- Ensuring issues follow repository standards and conventions\n\nThis agent produces structured IssueSpec artifacts that can be directly submitted to GitHub or reviewed by QA.\n",
+  "capabilities": [
+    "issue_authoring",
+    "markdown_formatting",
+    "issue_validation",
+    "label_generation",
+    "github_issue_formatting"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_issue.convert_finding_to_issue",
+      "name": "Convert Finding to Issue",
+      "description": "Convert audit finding or compliance violation into GitHub issue spec",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "finding"
+        ],
+        "properties": {
+          "finding": {
+            "type": "object",
+            "required": [
+              "message",
+              "severity"
+            ],
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "CRITICAL",
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW"
+                ]
+              },
+              "file": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            }
+          },
+          "repo_context": {
+            "type": "object",
+            "properties": {
+              "repo_name": {
+                "type": "string"
+              },
+              "branch": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "issue_spec"
+        ],
+        "properties": {
+          "issue_spec": {
+            "type": "object",
+            "required": [
+              "title",
+              "body",
+              "labels"
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "assignees": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "milestone": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_issue.format_issue_body",
+      "name": "Format Issue Body",
+      "description": "Format issue body with markdown structure and required sections",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "title",
+          "description"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "steps_to_reproduce": {
+            "type": "string"
+          },
+          "expected_behavior": {
+            "type": "string"
+          },
+          "actual_behavior": {
+            "type": "string"
+          },
+          "additional_context": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "formatted_body"
+        ],
+        "properties": {
+          "formatted_body": {
+            "type": "string",
+            "description": "Markdown-formatted issue body"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of included sections"
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_issue.generate_labels",
+      "name": "Generate Issue Labels",
+      "description": "Generate appropriate labels based on issue content and severity",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "issue_content"
+        ],
+        "properties": {
+          "issue_content": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "CRITICAL",
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "labels"
+        ],
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "priority_label": {
+            "type": "string"
+          },
+          "type_label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_issue.validate_issue_spec",
+      "name": "Validate Issue Spec",
+      "description": "Validate issue spec for completeness and quality before submission",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "issue_spec"
+        ],
+        "properties": {
+          "issue_spec": {
+            "type": "object",
+            "required": [
+              "title",
+              "body"
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "valid",
+          "validation_results"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "validation_results": {
+            "type": "object",
+            "required": [
+              "errors",
+              "warnings"
+            ],
+            "properties": {
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "suggestions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-issue/dev/us-central1/0.10.0"
+}

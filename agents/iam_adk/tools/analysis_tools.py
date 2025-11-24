@@ -375,7 +375,7 @@ from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
 
 session_service = VertexAiSessionService(
-    project_id=PROJECT_ID,
+    project=PROJECT_ID,
     location=LOCATION,
     agent_engine_id=AGENT_ENGINE_ID
 )

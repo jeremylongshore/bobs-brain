@@ -38,6 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Environment configuration
+SLACK_BOB_ENABLED = os.getenv("SLACK_BOB_ENABLED", "false").lower() == "true"
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -45,46 +46,78 @@ LOCATION = os.getenv("LOCATION")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 PORT = int(os.getenv("PORT", "8080"))
 
-# Agent Engine REST API endpoint
-AGENT_ENGINE_URL = os.getenv(
-    "AGENT_ENGINE_URL",
-    f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
-)
+# A2A Gateway URL (SLACK-ENDTOEND-DEV: S2)
+# Preferred routing: Slack → a2a_gateway → Agent Engine
+A2A_GATEWAY_URL = os.getenv("A2A_GATEWAY_URL")
 
-# Phase AE2: SWE Pipeline Mode Configuration
-# Controls how SWE pipeline commands are routed
-SLACK_SWE_PIPELINE_MODE = os.getenv("SLACK_SWE_PIPELINE_MODE", "local").lower()
-# Options:
-#   - "local" (default): Forward directly to Agent Engine (current behavior)
-#   - "engine": Call a2a_gateway for SWE pipeline orchestration (Phase AE3)
-
-# A2A Gateway URL (for future Option B in Phase AE3)
-A2A_GATEWAY_URL = os.getenv(
-    "A2A_GATEWAY_URL",
-    "https://a2a-gateway-SERVICE_HASH-uc.a.run.app"  # Placeholder
-)
+# Agent Engine REST API endpoint (fallback/legacy)
+AGENT_ENGINE_URL = None
+if LOCATION and PROJECT_ID and AGENT_ENGINE_ID:
+    AGENT_ENGINE_URL = os.getenv(
+        "AGENT_ENGINE_URL",
+        f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{AGENT_ENGINE_ID}:query",
+    )
 
 # Validate required environment variables
-if not all(
-    [SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, PROJECT_ID, LOCATION, AGENT_ENGINE_ID]
-):
-    raise ValueError("Missing required environment variables")
+def validate_config() -> tuple[bool, list[str]]:
+    """
+    Validate Slack bot configuration.
+
+    Returns:
+        (is_valid, missing_vars): Tuple of validation status and list of missing variables
+    """
+    if not SLACK_BOB_ENABLED:
+        logger.info("Slack bot is DISABLED (SLACK_BOB_ENABLED=false)")
+        return True, []  # Valid config when disabled
+
+    missing = []
+
+    # Required for Slack signature verification and API calls
+    if not SLACK_BOT_TOKEN:
+        missing.append("SLACK_BOT_TOKEN")
+    if not SLACK_SIGNING_SECRET:
+        missing.append("SLACK_SIGNING_SECRET")
+
+    # Required for routing to Agent Engine
+    # Option A: Via a2a_gateway (preferred)
+    # Option B: Direct to Agent Engine (legacy)
+    has_gateway = bool(A2A_GATEWAY_URL)
+    has_direct = all([PROJECT_ID, LOCATION, AGENT_ENGINE_ID])
+
+    if not has_gateway and not has_direct:
+        missing.append("A2A_GATEWAY_URL or (PROJECT_ID + LOCATION + AGENT_ENGINE_ID)")
+
+    if missing:
+        logger.error(
+            f"Slack bot ENABLED but missing required variables: {', '.join(missing)}"
+        )
+        return False, missing
+
+    logger.info(
+        f"Slack bot ENABLED and configured "
+        f"(routing: {'a2a_gateway' if has_gateway else 'direct Agent Engine'})"
+    )
+    return True, []
+
+config_valid, missing_vars = validate_config()
 
 # Create FastAPI app
 app = FastAPI(
     title="Bob's Brain Slack Webhook",
     description="Slack event handler proxying to Vertex AI Agent Engine",
-    version="0.6.0",
+    version="0.7.0",  # SLACK-ENDTOEND-DEV
 )
 
-# Slack API client
-slack_client = httpx.AsyncClient(
-    base_url="https://slack.com/api",
-    headers={
-        "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-        "Content-Type": "application/json",
-    },
-)
+# Slack API client (only if bot is enabled and configured)
+slack_client = None
+if SLACK_BOB_ENABLED and SLACK_BOT_TOKEN:
+    slack_client = httpx.AsyncClient(
+        base_url="https://slack.com/api",
+        headers={
+            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            "Content-Type": "application/json",
+        },
+    )
 
 
 def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
@@ -221,9 +254,9 @@ async def query_agent_engine(query: str, session_id: str) -> str:
 
     R3 Compliance: Proxies to Agent Engine, does not run locally.
 
-    Phase AE2: Added Option B path (commented) for future SWE pipeline mode.
-    When SLACK_SWE_PIPELINE_MODE=engine, queries will route through a2a_gateway
-    instead of directly to Agent Engine.
+    SLACK-ENDTOEND-DEV S2: Implements routing via A2A gateway (Option B).
+    - Option B (preferred): Route through a2a_gateway for consistency
+    - Option A (fallback): Direct Agent Engine proxy
 
     Args:
         query: User query text
@@ -234,82 +267,105 @@ async def query_agent_engine(query: str, session_id: str) -> str:
     """
     try:
         # ===========================================================================
-        # PHASE AE2: OPTION B PATH (COMMENTED - NOT YET ENABLED)
+        # SLACK-ENDTOEND-DEV S2: OPTION B ROUTING (IMPLEMENTED)
         # ===========================================================================
-        # Phase AE3 will enable this path for SWE pipeline commands
-        #
-        # if SLACK_SWE_PIPELINE_MODE == "engine":
-        #     # Option B: Route through a2a_gateway for multi-agent orchestration
-        #     logger.info(
-        #         "Routing to a2a_gateway (Option B - SWE Pipeline Mode)",
-        #         extra={"query_length": len(query), "session_id": session_id}
-        #     )
-        #
-        #     # Build A2A call payload
-        #     a2a_payload = {
-        #         "agent_role": "foreman",  # Route to iam-senior-adk-devops-lead
-        #         "prompt": query,
-        #         "session_id": session_id,
-        #         "caller_spiffe_id": "spiffe://intent.solutions/slack/webhook",
-        #         "env": os.getenv("DEPLOYMENT_ENV", "prod"),
-        #     }
-        #
-        #     async with httpx.AsyncClient(timeout=60.0) as client:
-        #         response = await client.post(
-        #             f"{A2A_GATEWAY_URL}/a2a/run",
-        #             json=a2a_payload,
-        #             headers={"Content-Type": "application/json"}
-        #         )
-        #         response.raise_for_status()
-        #         result = response.json()
-        #
-        #     return result.get("response", "No response from A2A gateway")
-        # else:
-        #     # Option A (default): Direct Agent Engine proxy (current behavior)
-        #     logger.info(
-        #         "Routing directly to Agent Engine (Option A - current)",
-        #         extra={"query_length": len(query), "session_id": session_id}
-        #     )
-        # ===========================================================================
-
-        # CURRENT BEHAVIOR (Option A): Direct Agent Engine proxy
-        payload = {"query": query, "session_id": session_id}
-
-        logger.info(
-            "Querying Agent Engine",
-            extra={"agent_engine_url": AGENT_ENGINE_URL, "session_id": session_id},
-        )
-
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                AGENT_ENGINE_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
+        if A2A_GATEWAY_URL:
+            # Option B: Route through a2a_gateway for consistency with other frontends
+            logger.info(
+                "Routing to a2a_gateway (Option B - via a2a protocol)",
+                extra={
+                    "query_length": len(query),
+                    "session_id": session_id,
+                    "a2a_gateway_url": A2A_GATEWAY_URL,
+                },
             )
 
-            response.raise_for_status()
-            result = response.json()
+            # Build A2A call payload following A2AAgentCall schema
+            a2a_payload = {
+                "agent_role": "bob",  # Target Bob orchestrator
+                "prompt": query,
+                "session_id": session_id,
+                "caller_spiffe_id": "spiffe://intent.solutions/slack/webhook",
+                "env": os.getenv("DEPLOYMENT_ENV", "dev"),
+            }
 
-        # Extract response text (adjust based on Agent Engine response format)
-        response_text = result.get("response", "I couldn't generate a response.")
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{A2A_GATEWAY_URL}/a2a/run",
+                    json=a2a_payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                result = response.json()
 
-        logger.info(
-            "Agent Engine response received",
-            extra={"response_length": len(response_text), "session_id": session_id},
-        )
+            # Extract response from A2AAgentResult
+            response_text = result.get("response", "No response from A2A gateway")
 
-        return response_text
+            # Check for errors in A2A result
+            if result.get("error"):
+                logger.error(
+                    "A2A gateway returned error",
+                    extra={
+                        "error": result.get("error"),
+                        "session_id": session_id,
+                    },
+                )
+                return "Sorry, I encountered an error processing your request."
+
+            logger.info(
+                "A2A gateway response received",
+                extra={
+                    "response_length": len(response_text),
+                    "session_id": result.get("session_id"),
+                    "correlation_id": result.get("correlation_id"),
+                },
+            )
+
+            return response_text
+
+        else:
+            # Option A (fallback): Direct Agent Engine proxy
+            logger.info(
+                "Routing directly to Agent Engine (Option A - fallback)",
+                extra={
+                    "query_length": len(query),
+                    "session_id": session_id,
+                    "agent_engine_url": AGENT_ENGINE_URL,
+                },
+            )
+
+            payload = {"query": query, "session_id": session_id}
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    AGENT_ENGINE_URL,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+
+                response.raise_for_status()
+                result = response.json()
+
+            # Extract response text (adjust based on Agent Engine response format)
+            response_text = result.get("response", "I couldn't generate a response.")
+
+            logger.info(
+                "Agent Engine response received",
+                extra={"response_length": len(response_text), "session_id": session_id},
+            )
+
+            return response_text
 
     except httpx.HTTPStatusError as e:
         logger.error(
-            f"Agent Engine returned error: {e.response.status_code}",
+            f"HTTP error during agent call: {e.response.status_code}",
             extra={"detail": e.response.text},
             exc_info=True,
         )
         return "Sorry, I encountered an error processing your request."
 
     except httpx.RequestError as e:
-        logger.error(f"Failed to connect to Agent Engine: {e}", exc_info=True)
+        logger.error(f"Failed to connect to backend: {e}", exc_info=True)
         return "Sorry, I'm having trouble connecting to my backend."
 
     except Exception as e:
@@ -345,18 +401,33 @@ async def post_slack_message(channel: str, text: str, thread_ts: str = None) -> 
 
 
 @app.get("/health")
-async def health() -> Dict[str, str]:
+async def health() -> Dict[str, Any]:
     """
-    Health check endpoint.
+    Health check endpoint with configuration status.
 
     Returns:
-        dict: Service health status
+        dict: Service health status and configuration
     """
+    # Determine routing method
+    routing = "disabled"
+    if SLACK_BOB_ENABLED:
+        if A2A_GATEWAY_URL:
+            routing = "a2a_gateway"
+        elif AGENT_ENGINE_URL:
+            routing = "direct_agent_engine"
+        else:
+            routing = "misconfigured"
+
     return {
-        "status": "healthy",
+        "status": "healthy" if (not SLACK_BOB_ENABLED or config_valid) else "degraded",
         "service": "slack-webhook",
-        "version": "0.6.0",
-        "agent_engine_url": AGENT_ENGINE_URL,
+        "version": "0.7.0",
+        "slack_bot_enabled": SLACK_BOB_ENABLED,
+        "config_valid": config_valid,
+        "missing_vars": missing_vars if not config_valid else [],
+        "routing": routing,
+        "a2a_gateway_url": A2A_GATEWAY_URL if A2A_GATEWAY_URL else None,
+        "agent_engine_url": AGENT_ENGINE_URL if AGENT_ENGINE_URL and not A2A_GATEWAY_URL else None,
     }
 
 

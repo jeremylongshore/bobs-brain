@@ -1,0 +1,188 @@
+name: Deploy to Staging
+
+# ========================================
+# STAGING ENVIRONMENT DEPLOYMENT (SKELETON)
+# ========================================
+# This is a SKELETON workflow for staging deployments.
+# It follows the same pattern as deploy-dev.yml but with:
+# - Stricter ARV thresholds
+# - Manual approval required
+# - More comprehensive smoke tests
+# - Staging-specific configurations
+#
+# TODO (CICD-DEPT Phase): Fully implement staging deployment logic
+# TODO: Add smoke test suite
+# TODO: Configure staging protection rules in GitHub
+#
+# This workflow should be triggered MANUALLY after successful dev testing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_arv:
+        description: 'Skip ARV checks (NOT RECOMMENDED FOR STAGING)'
+        required: false
+        default: false
+        type: boolean
+      run_smoke_tests:
+        description: 'Run smoke tests after deployment'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation (R4)
+
+env:
+  DEPLOYMENT_ENV: staging
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ARV Gate: Stricter checks for staging
+  arv-gate:
+    name: ARV Readiness Gate (Staging)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_arv != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run ARV Department Check (Staging)
+        run: |
+          echo "🚦 Running ARV for staging environment..."
+          echo "⚠️ Staging has STRICTER requirements than dev"
+          make arv-department
+        env:
+          DEPLOYMENT_ENV: staging
+
+      # TODO: Add additional staging-specific checks
+      # - name: Run extended smoke tests
+      # - name: Check for critical issues
+      # - name: Verify production readiness
+
+      - name: ARV Gate Summary
+        run: |
+          echo "## ✅ ARV Gate Passed (Staging)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All readiness checks passed for staging environment." >> $GITHUB_STEP_SUMMARY
+
+  # Manual approval checkpoint
+  approval-gate:
+    name: Manual Approval Required
+    runs-on: ubuntu-latest
+    needs: [arv-gate]
+    environment: staging  # GitHub environment (requires approval)
+
+    steps:
+      - name: Approval checkpoint
+        run: |
+          echo "✅ Manual approval granted for staging deployment"
+          echo ""
+          echo "## ✅ Staging Deployment Approved" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment to staging environment has been manually approved." >> $GITHUB_STEP_SUMMARY
+
+  # Deploy Agent Engine (Bob agent) - Staging
+  deploy-agent-engine:
+    name: Deploy Agent Engine (Staging)
+    runs-on: ubuntu-latest
+    needs: [arv-gate, approval-gate]
+    if: always() && (needs.arv-gate.result == 'success' || needs.arv-gate.result == 'skipped') && needs.approval-gate.result == 'success'
+    environment: staging
+
+    steps:
+      - name: Staging deployment placeholder
+        run: |
+          echo "🚧 SKELETON: Staging Agent Engine deployment"
+          echo ""
+          echo "TODO: Implement full staging deployment logic"
+          echo "See deploy-dev.yml for reference implementation"
+          echo ""
+          echo "Required:"
+          echo "- WIF authentication"
+          echo "- ADK CLI deployment to staging project"
+          echo "- Staging-specific configurations"
+          echo ""
+          echo "## 🚧 Staging Deployment (Skeleton)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This is a SKELETON workflow. Full implementation pending." >> $GITHUB_STEP_SUMMARY
+
+      # TODO: Implement staging deployment
+      # - Authenticate to GCP (WIF)
+      # - Deploy with adk deploy agent_engine
+      # - Use STAGING_PROJECT_ID, STAGING_REGION, etc.
+
+  # Deploy Cloud Run Gateways - Staging
+  deploy-gateways:
+    name: Deploy Cloud Run Gateways (Staging)
+    runs-on: ubuntu-latest
+    needs: [arv-gate, approval-gate, deploy-agent-engine]
+    if: always() && (needs.arv-gate.result == 'success' || needs.arv-gate.result == 'skipped') && needs.approval-gate.result == 'success' && needs.deploy-agent-engine.result == 'success'
+    environment: staging
+
+    steps:
+      - name: Staging gateways placeholder
+        run: |
+          echo "🚧 SKELETON: Staging gateway deployment"
+          echo ""
+          echo "TODO: Implement staging gateway deployment"
+          echo "See deploy-dev.yml for reference"
+
+      # TODO: Implement gateway deployment
+      # - Deploy Slack webhook to staging
+      # - Deploy A2A gateway to staging
+      # - Verify endpoints
+
+  # Smoke tests (optional)
+  smoke-tests:
+    name: Smoke Tests (Staging)
+    runs-on: ubuntu-latest
+    needs: [deploy-agent-engine, deploy-gateways]
+    if: github.event.inputs.run_smoke_tests == 'true' && needs.deploy-agent-engine.result == 'success' && needs.deploy-gateways.result == 'success'
+    environment: staging
+
+    steps:
+      - name: Smoke test placeholder
+        run: |
+          echo "🚧 SKELETON: Smoke tests for staging"
+          echo ""
+          echo "TODO: Implement smoke test suite"
+          echo "- Test Agent Engine endpoint"
+          echo "- Test Slack webhook"
+          echo "- Verify basic functionality"
+
+  # Deployment summary
+  deployment-success:
+    name: Deployment Summary (Staging)
+    runs-on: ubuntu-latest
+    needs: [arv-gate, approval-gate, deploy-agent-engine, deploy-gateways]
+    if: always()
+
+    steps:
+      - name: Staging deployment summary
+        run: |
+          echo "## 📊 Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚧 **This is a SKELETON workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Full staging deployment logic will be implemented in CICD-DEPT phase." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Required for Full Implementation" >> $GITHUB_STEP_SUMMARY
+          echo "1. Staging GCP project setup" >> $GITHUB_STEP_SUMMARY
+          echo "2. GitHub Environment variables (\`STAGING_*\`)" >> $GITHUB_STEP_SUMMARY
+          echo "3. Manual approval configuration" >> $GITHUB_STEP_SUMMARY
+          echo "4. Smoke test suite" >> $GITHUB_STEP_SUMMARY
+          echo "5. Rollback procedures" >> $GITHUB_STEP_SUMMARY

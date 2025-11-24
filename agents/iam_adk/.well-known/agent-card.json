@@ -1,0 +1,339 @@
+{
+  "name": "iam-adk",
+  "version": "0.10.0",
+  "url": "https://iam-adk.intent.solutions",
+  "description": "iam-adk - ADK/Vertex Design & Static Analysis Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0\n\niam-adk specializes in analyzing ADK agent implementations for pattern compliance and best practices. Core expertise includes:\n- Reviewing ADK agent code against Hard Mode rules (R1-R8)\n- Analyzing Agent-to-Agent (A2A) communication patterns\n- Validating AgentCard schemas and skill definitions\n- Detecting ADK anti-patterns and architectural issues\n- Producing structured AuditReports and IssueSpecs\n- Recommending ADK best practices and improvements\n\nThis agent enforces google-adk patterns, Vertex AI Agent Engine compliance, and department adk iam standards.\n",
+  "capabilities": [
+    "adk_pattern_analysis",
+    "agentcard_validation",
+    "hard_mode_compliance_checking",
+    "audit_report_generation",
+    "issue_spec_creation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_adk.check_adk_compliance",
+      "name": "Check ADK Compliance",
+      "description": "Analyze agent code for ADK pattern compliance and Hard Mode rule violations",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "File path or directory to analyze"
+          },
+          "focus_rules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R6",
+                "R7",
+                "R8"
+              ]
+            },
+            "description": "Specific Hard Mode rules to focus on (optional)"
+          },
+          "severity_threshold": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ],
+            "default": "LOW",
+            "description": "Only report issues at or above this severity"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "compliance_status",
+          "violations"
+        ],
+        "properties": {
+          "compliance_status": {
+            "type": "string",
+            "enum": [
+              "COMPLIANT",
+              "NON_COMPLIANT",
+              "WARNING"
+            ]
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "severity",
+                "message"
+              ],
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "CRITICAL",
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW"
+                  ]
+                },
+                "rule": {
+                  "type": "string",
+                  "description": "Hard Mode rule violated (R1-R8) or null"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "file": {
+                  "type": "string"
+                },
+                "line_number": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_adk.validate_agentcard",
+      "name": "Validate AgentCard",
+      "description": "Validate AgentCard structure, schemas, and compliance with A2A standards",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "agentcard_path"
+        ],
+        "properties": {
+          "agentcard_path": {
+            "type": "string",
+            "description": "Path to agent directory or agentcard.json file"
+          },
+          "check_skills": {
+            "type": "boolean",
+            "default": true,
+            "description": "Validate skill schemas"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "valid",
+          "errors"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "message"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "ERROR",
+                    "WARNING"
+                  ]
+                }
+              }
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_adk.analyze_agent_architecture",
+      "name": "Analyze Agent Architecture",
+      "description": "Analyze agent architecture for ADK best practices and design patterns",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "agent_directory"
+        ],
+        "properties": {
+          "agent_directory": {
+            "type": "string",
+            "description": "Path to agent directory"
+          },
+          "check_lazy_loading": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check 6767-LAZY lazy loading pattern compliance"
+          },
+          "check_memory_wiring": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check R5 dual memory wiring"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "analysis_status",
+          "findings"
+        ],
+        "properties": {
+          "analysis_status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "WARNING"
+            ]
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "category",
+                "message",
+                "severity"
+              ],
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "Finding category (lazy_loading, memory, tools, etc.)"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "CRITICAL",
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW",
+                    "INFO"
+                  ]
+                },
+                "recommendation": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_adk.generate_audit_report",
+      "name": "Generate Audit Report",
+      "description": "Generate comprehensive ADK compliance audit report",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "Audit scope (repo, directory, agent)"
+          },
+          "include_recommendations": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include fix recommendations"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "audit_summary",
+          "findings_count",
+          "findings"
+        ],
+        "properties": {
+          "audit_summary": {
+            "type": "object",
+            "required": [
+              "compliant_agents",
+              "non_compliant_agents",
+              "total_agents"
+            ],
+            "properties": {
+              "compliant_agents": {
+                "type": "integer"
+              },
+              "non_compliant_agents": {
+                "type": "integer"
+              },
+              "total_agents": {
+                "type": "integer"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ]
+              }
+            }
+          },
+          "findings_count": {
+            "type": "integer"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Individual compliance findings"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0"
+}

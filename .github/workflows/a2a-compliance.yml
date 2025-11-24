@@ -1,0 +1,177 @@
+name: A2A Compliance (Scaffold)
+
+# This is a SCAFFOLD ONLY workflow for future A2A compliance testing.
+# It does NOT run a2a-tck yet - it only prints instructions and TODOs.
+#
+# Status: Disabled by default (workflow_dispatch only)
+#
+# To enable automated a2a-tck runs:
+#   1. Deploy at least one agent to Agent Engine dev environment
+#   2. Configure A2A_TCK_SUT_URL secret in GitHub repository settings
+#   3. Uncomment the TODO sections below
+#   4. Test manually with workflow_dispatch first
+#   5. After validation, add additional triggers (e.g., on: [push, pull_request])
+
+on:
+  workflow_dispatch:  # Manual trigger only (no automatic runs)
+    inputs:
+      category:
+        description: 'TCK test category (mandatory, optional, all)'
+        required: false
+        default: 'mandatory'
+        type: choice
+        options:
+          - mandatory
+          - optional
+          - all
+
+jobs:
+  a2a-tck-scaffold:
+    name: A2A TCK Scaffold (Instructions Only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Print scaffold information
+        run: |
+          echo "========================================="
+          echo "A2A Compliance Testing Scaffold"
+          echo "========================================="
+          echo ""
+          echo "✅ Status: This workflow is a SCAFFOLD ONLY"
+          echo ""
+          echo "📚 Purpose:"
+          echo "   This workflow prepares for future A2A compliance testing"
+          echo "   using a2a-tck (Technology Compatibility Kit)."
+          echo ""
+          echo "⚠️  What This Workflow Does NOT Do Yet:"
+          echo "   - Does NOT clone a2a-tck repository"
+          echo "   - Does NOT start a dev A2A endpoint"
+          echo "   - Does NOT run a2a-tck tests"
+          echo "   - Does NOT block on compliance failures"
+          echo ""
+          echo "📖 Key Documentation:"
+          echo "   - Standard: 000-docs/6767-121-DR-STND-a2a-compliance-tck-and-inspector.md"
+          echo "   - Local Script: scripts/run_a2a_tck_local.sh"
+          echo "   - Master Index: 000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md"
+          echo ""
+          echo "🔗 External Resources:"
+          echo "   - a2a-tck GitHub: https://github.com/a2aproject/a2a-tck"
+          echo "   - A2A Protocol Spec: https://a2a-protocol.org/latest/specification/"
+          echo ""
+          echo "🚀 Next Steps to Enable Automated Testing:"
+          echo ""
+          echo "1. Deploy agents to Agent Engine dev environment"
+          echo "   (Provides live A2A endpoints for testing)"
+          echo ""
+          echo "2. Configure GitHub repository secrets:"
+          echo "   - A2A_TCK_SUT_URL: URL of A2A endpoint under test"
+          echo "   - (Example: https://dev-bob-a2a.example.com)"
+          echo ""
+          echo "3. Uncomment TODO sections in this workflow file:"
+          echo "   - Clone a2a-tck repository"
+          echo "   - Install a2a-tck dependencies"
+          echo "   - Run ./run_tck.py against A2A_TCK_SUT_URL"
+          echo "   - Parse compliance report"
+          echo "   - Fail workflow if compliance < 100%"
+          echo ""
+          echo "4. Test manually with workflow_dispatch first"
+          echo ""
+          echo "5. After validation, add automatic triggers:"
+          echo "   - on: [push, pull_request] (for continuous compliance)"
+          echo "   - Schedule: cron (for periodic compliance checks)"
+          echo ""
+          echo "========================================="
+          echo "Selected TCK category: ${{ inputs.category }}"
+          echo "========================================="
+
+      # TODO: Clone a2a-tck repository
+      # - name: Clone a2a-tck
+      #   run: |
+      #     git clone https://github.com/a2aproject/a2a-tck.git ~/a2a-tck
+      #     cd ~/a2a-tck
+      #     echo "Cloned a2a-tck repository"
+
+      # TODO: Install a2a-tck dependencies
+      # - name: Install a2a-tck dependencies
+      #   run: |
+      #     cd ~/a2a-tck
+      #     pip install -r requirements.txt
+      #     echo "Installed a2a-tck dependencies"
+
+      # TODO: Verify A2A_TCK_SUT_URL is configured
+      # - name: Verify A2A endpoint URL
+      #   env:
+      #     A2A_TCK_SUT_URL: ${{ secrets.A2A_TCK_SUT_URL }}
+      #   run: |
+      #     if [ -z "$A2A_TCK_SUT_URL" ]; then
+      #       echo "❌ ERROR: A2A_TCK_SUT_URL secret not configured"
+      #       echo "Configure this secret in GitHub repository settings"
+      #       exit 1
+      #     fi
+      #     echo "✅ A2A_TCK_SUT_URL is configured"
+      #     echo "Endpoint: $A2A_TCK_SUT_URL"
+
+      # TODO: Run a2a-tck against A2A endpoint
+      # - name: Run a2a-tck
+      #   env:
+      #     A2A_TCK_SUT_URL: ${{ secrets.A2A_TCK_SUT_URL }}
+      #   run: |
+      #     cd ~/a2a-tck
+      #     ./run_tck.py \
+      #       --sut-url "$A2A_TCK_SUT_URL" \
+      #       --category ${{ inputs.category }} \
+      #       --compliance-report a2a_tck_report.json \
+      #       --verbose
+
+      # TODO: Parse and display compliance report
+      # - name: Display compliance report
+      #   if: always()
+      #   run: |
+      #     if [ -f ~/a2a-tck/a2a_tck_report.json ]; then
+      #       echo "========================================="
+      #       echo "A2A Compliance Report"
+      #       echo "========================================="
+      #       cat ~/a2a-tck/a2a_tck_report.json | jq .
+      #
+      #       # Extract compliance score
+      #       SCORE=$(cat ~/a2a-tck/a2a_tck_report.json | jq -r '.compliance_score')
+      #       echo ""
+      #       echo "Compliance Score: $SCORE%"
+      #
+      #       # Fail if compliance < 100% (adjust threshold as needed)
+      #       if (( $(echo "$SCORE < 100" | bc -l) )); then
+      #         echo "❌ FAIL: A2A compliance below 100%"
+      #         exit 1
+      #       else
+      #         echo "✅ PASS: Full A2A compliance achieved"
+      #       fi
+      #     else
+      #       echo "⚠️  No compliance report generated"
+      #     fi
+
+      # TODO: Upload compliance report as artifact
+      # - name: Upload compliance report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: a2a-tck-report-${{ inputs.category }}
+      #     path: ~/a2a-tck/a2a_tck_report.json
+      #     if-no-files-found: warn
+
+      - name: Scaffold complete
+        run: |
+          echo "========================================="
+          echo "✅ Scaffold workflow complete"
+          echo ""
+          echo "This workflow did NOT run actual a2a-tck tests."
+          echo "Follow the instructions above to enable automated testing."
+          echo ""
+          echo "For local testing, use:"
+          echo "  ./scripts/run_a2a_tck_local.sh"
+          echo ""
+          echo "For documentation, see:"
+          echo "  000-docs/6767-121-DR-STND-a2a-compliance-tck-and-inspector.md"
+          echo "========================================="

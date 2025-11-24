@@ -275,11 +275,10 @@ async def query(request: Request) -> Dict[str, Any]:
 @app.post("/a2a/run")
 async def a2a_run(call: A2AAgentCall) -> A2AAgentResult:
     """
-    A2A Protocol: Agent-to-Agent call endpoint (Phase AE2).
+    A2A Protocol: Agent-to-Agent call endpoint (AE2).
 
-    This endpoint is the future shape for internal agent-to-agent calls.
-    Currently STUBBED - returns placeholder response.
-    Real Agent Engine integration will be added when feature flags enable it.
+    Routes agent-to-agent calls to Vertex AI Agent Engine using the
+    centralized agent_engine.py config module.
 
     Body:
         A2AAgentCall with:
@@ -292,76 +291,90 @@ async def a2a_run(call: A2AAgentCall) -> A2AAgentResult:
         - env: Optional target environment
 
     Returns:
-        A2AAgentResult: Agent response (currently stubbed)
+        A2AAgentResult: Agent response from Agent Engine
 
-    Phase AE2: Stubbed implementation.
-    Phase AE3: Real implementation behind feature flags.
+    Phase AE2: Real Agent Engine integration implemented.
     """
     try:
+        # Import agent_engine_client (local import to avoid issues)
+        from agent_engine_client import call_agent_engine
+
+        # Generate correlation ID if not provided
+        correlation_id = call.correlation_id or str(uuid.uuid4())
+
         logger.info(
-            "A2A call received (STUB)",
+            "A2A call received",
             extra={
                 "agent_role": call.agent_role,
                 "caller_spiffe_id": call.caller_spiffe_id,
-                "correlation_id": call.correlation_id,
+                "correlation_id": correlation_id,
                 "prompt_length": len(call.prompt),
                 "env": call.env or "current",
+                "session_id": call.session_id,
             },
         )
 
-        # Generate IDs if not provided
-        correlation_id = call.correlation_id or str(uuid.uuid4())
-        session_id = call.session_id or str(uuid.uuid4())
-
-        # STUBBED: Return placeholder response (Phase AE2)
-        # Real implementation in Phase AE3 with feature flags:
-        # - Check feature flag for agent_role + env
-        # - If enabled: Use agents.utils.a2a_adapter to call Agent Engine
-        # - If disabled: Return this stub or error
-
-        stub_response = (
-            f"[STUB - Phase AE2] A2A call to {call.agent_role}\n\n"
-            f"This endpoint is ready for A2A protocol but not yet wired to Agent Engine.\n"
-            f"Phase AE3 will enable real Agent Engine calls behind feature flags.\n\n"
-            f"Request Details:\n"
-            f"  - Agent Role: {call.agent_role}\n"
-            f"  - Environment: {call.env or 'current (detected)'}\n"
-            f"  - Caller: {call.caller_spiffe_id or 'unknown'}\n"
-            f"  - Correlation ID: {correlation_id}\n"
-            f"  - Prompt: {call.prompt[:100]}{'...' if len(call.prompt) > 100 else ''}\n"
-        )
-
-        result = A2AAgentResult(
-            response=stub_response,
-            session_id=session_id,
+        # Call Agent Engine
+        result = await call_agent_engine(
+            agent_role=call.agent_role,
+            prompt=call.prompt,
+            session_id=call.session_id,
             correlation_id=correlation_id,
-            target_spiffe_id=f"spiffe://intent.solutions/agent/bobs-brain-{call.agent_role}/stub/us-central1/0.9.0",
-            metadata={
-                "stub": True,
-                "phase": "AE2",
-                "agent_role": call.agent_role,
-                "env": call.env or "current",
-            },
+            context=call.context,
+            env=call.env,
         )
 
-        logger.info(
-            "A2A call completed (STUB)",
-            extra={
-                "correlation_id": correlation_id,
-                "agent_role": call.agent_role,
-                "stub": True,
-            },
+        # Convert to A2A result format
+        a2a_result = A2AAgentResult(
+            response=result.response,
+            session_id=result.session_id,
+            correlation_id=correlation_id,
+            target_spiffe_id=result.metadata.get("spiffe_id") if result.metadata else None,
+            metadata=result.metadata,
+            error=result.error,
         )
 
-        return result
+        if result.error:
+            logger.error(
+                "A2A call completed with error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "agent_role": call.agent_role,
+                    "error": result.error,
+                },
+            )
+        else:
+            logger.info(
+                "A2A call completed successfully",
+                extra={
+                    "correlation_id": correlation_id,
+                    "agent_role": call.agent_role,
+                    "response_length": len(result.response),
+                    "session_id": result.session_id,
+                },
+            )
+
+        return a2a_result
 
     except Exception as e:
-        logger.error(f"A2A call failed: {e}", exc_info=True)
+        logger.error(
+            f"A2A call failed with exception: {e}",
+            exc_info=True,
+            extra={
+                "agent_role": call.agent_role,
+                "correlation_id": call.correlation_id or "unknown",
+            },
+        )
         return A2AAgentResult(
             response="",
             error=f"A2A call failed: {str(e)}",
-            correlation_id=call.correlation_id,
-            metadata={"stub": True, "phase": "AE2", "error": True},
+            correlation_id=call.correlation_id or str(uuid.uuid4()),
+            metadata={
+                "phase": "AE2",
+                "error": True,
+                "exception_type": type(e).__name__,
+                "agent_role": call.agent_role,
+            },
         )
 
 
@@ -391,18 +404,20 @@ async def root() -> Dict[str, str]:
     """
     return {
         "name": "Bob's Brain A2A Gateway",
-        "version": "0.6.0",
+        "version": "0.9.0",
         "description": "A2A Protocol gateway to Vertex AI Agent Engine",
         "endpoints": {
             "agent_card": "/.well-known/agent.json",
             "query": "/query",
-            "a2a_run": "/a2a/run",  # Phase AE2: A2A protocol endpoint (stubbed)
+            "a2a_run": "/a2a/run",  # Phase AE2: A2A protocol endpoint (implemented)
             "health": "/health",
         },
-        "phase": "AE2",
+        "phase": "AE2-complete",
         "features": {
-            "a2a_protocol": "stubbed",  # Real implementation in Phase AE3
+            "a2a_protocol": "enabled",  # AE2: Real Agent Engine integration
             "agent_engine_proxy": "enabled",
+            "centralized_config": "enabled",  # Uses agents.config.agent_engine
+            "multi_agent_routing": "enabled",  # Routes to bob, foreman, iam-*
         },
     }
 

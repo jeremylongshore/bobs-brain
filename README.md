@@ -214,7 +214,7 @@ bobs-brain/
 
 ## ⚡️ Hard Mode Explained
 
-"Hard Mode" means we enforce strict rules that keep this agent system maintainable as it scales. Here's what that looks like:
+"Hard Mode" means we enforce strict rules that keep this agent system maintainable as it scales. This repository follows the **[6767 ADK/Agent Engine Specification](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md)** as its guiding architectural standard. Here's what that looks like:
 
 ### The 8 Rules (R1-R8)
 
@@ -548,7 +548,7 @@ When you port Bob's Brain to your product (DiagnosticPro, PipelinePilot, etc.):
 - ✅ **Gateway services** - A2A and Slack endpoints
 - ✅ **Terraform infrastructure** - Agent Engine, Cloud Run, IAM
 - ✅ **CI/CD workflows** - Drift check, tests, deploy
-- ✅ **Documentation system** - 000-docs/ with filing standards
+- ✅ **Documentation system** - 000-docs/ with [filing standards v3.0](000-docs/6767-DR-STND-document-filing-system-standard-v3.md)
 
 ### Time to Port
 
@@ -640,33 +640,49 @@ gcloud run deploy slack-webhook --source .
 
 All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 
-### Key Documents
+### 🎯 Start Here (New to the Repo?)
 
-**Architecture & Hard Mode:**
-- [CLAUDE.md](CLAUDE.md) - Hard Mode rules and enforcement (800+ lines)
-- [Hardmode Baseline AAR](000-docs/6767-053-AA-REPT-hardmode-baseline.md) - Phase 1-2 implementation
-- [Notebook Alignment](000-docs/6767-054-AT-ALIG-notebook-alignment-checklist.md) - Google Cloud patterns
-- [Import Path Corrections](000-docs/6767-055-AA-CRIT-import-path-corrections.md) - ADK import verification
+**For Developers:**
+1. **[Master Index](000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md)** - Complete reference map for Agent Engine/A2A/Inline Deployment
+2. **[ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md)** - Hard Mode rules (R1-R8) and architecture
+3. **[CLAUDE.md](CLAUDE.md)** - How Claude Code works with this repo
 
-**Deployment & Operations:**
-- [Deployment Plan](000-docs/6767-067-PM-PLAN-vertex-ai-deployment-plan.md) - Complete setup guide
-- [GitHub Secrets](000-docs/6767-068-OD-CONF-github-secrets-configuration.md) - WIF configuration
-- [Observability](000-docs/6767-069-OD-TELE-observability-telemetry-guide.md) - Cloud Trace, Logging
-- [Deployment Runbook](000-docs/6767-070-OD-RBOK-deployment-runbook.md) - Step-by-step procedures
+**For Operators:**
+1. **[DevOps Playbook](000-docs/120-AA-AUDT-appaudit-devops-playbook.md)** - Complete operator guide from /appaudit analysis
+2. **[Operations Runbook](000-docs/6767-RB-OPS-adk-department-operations-runbook.md)** - Day-to-day operations
+3. **[Inline Deployment Standard](000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md)** - Agent Engine deployment guide
+
+**For Template Adopters:**
+1. **[Porting Guide](000-docs/6767-DR-GUIDE-porting-iam-department-to-new-repo.md)** - Copy department to new repo
+2. **[Integration Checklist](000-docs/6767-DR-STND-iam-department-integration-checklist.md)** - Don't miss anything
+3. **[Template Standards](000-docs/6767-DR-STND-iam-department-template-scope-and-rules.md)** - Customization rules
+
+### Key Standards (6767 Canonical Docs)
+
+**Agent Engine & Deployment (v0.10.0):**
+- **[Master Index](000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md)** - Complete reference map (START HERE)
+- [ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md) - Hard Mode rules (R1-R8)
+- [Inline Source Deployment](000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md) - Deploy pattern, ARV gates
+- [ARV Minimum Gate](000-docs/6767-DR-STND-arv-minimum-gate.md) - Agent Readiness Verification baseline
+- [Lazy-Loading App Pattern](000-docs/6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md) - Module-level app pattern
+
+**A2A Protocol & AgentCards (v0.10.0):**
+- [AgentCards & A2A Contracts](000-docs/6767-DR-STND-agentcards-and-a2a-contracts.md) - Contract structure, skill patterns
+- [Prompt Design & A2A](000-docs/6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md) - 5-part template, contract-first
+- [a2a-inspector Integration](000-docs/6767-A2AINSP-AA-REPT-a2a-inspector-integration-for-department-adk-iam.md) - Runtime validation
 
 **Portfolio & Org Storage (v0.9.0):**
 - [Portfolio Scope](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md) - PORT1/PORT2/PORT3 plan
 - [Portfolio Orchestrator AAR](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md) - Implementation
-- [CI/Slack Integration](000-docs/6767-111-AT-ARCH-portfolio-ci-slack-integration-design.md) - Future design
 - [Org Storage Architecture](000-docs/6767-112-AT-ARCH-org-storage-architecture.md) - GCS hub design
 - [LIVE1-GCS AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md) - v0.9.0 implementation
 
-**IAM Department Templates (v0.9.0):**
-- [Template Standards](000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md)
-- [Porting Guide](000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md)
-- [Integration Checklist](000-docs/6767-106-DR-STND-iam-department-integration-checklist.md)
-- [Operations Runbook](000-docs/6767-107-RB-OPS-adk-department-operations-runbook.md)
-- [User Guide](000-docs/6767-108-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md)
+**IAM Department Templates:**
+- [Operations Runbook](000-docs/6767-RB-OPS-adk-department-operations-runbook.md) - Day-to-day operations
+- [Porting Guide](000-docs/6767-DR-GUIDE-porting-iam-department-to-new-repo.md) - Step-by-step instructions
+- [Integration Checklist](000-docs/6767-DR-STND-iam-department-integration-checklist.md) - Complete checklist
+- [Template Standards](000-docs/6767-DR-STND-iam-department-template-scope-and-rules.md) - Scope and customization
+- [User Guide](000-docs/6767-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md) - How to use this department
 
 ### Document Filing System
 
@@ -773,13 +789,13 @@ Required in `.env`:
 PROJECT_ID=your-gcp-project
 LOCATION=us-central1
 AGENT_ENGINE_ID=your-engine-id
-AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.9.0
+AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0
 
 # Application
 APP_NAME=bobs-brain
-APP_VERSION=0.9.0
+APP_VERSION=0.10.0
 
-# Org Storage (v0.9.0+)
+# Org Storage (v0.10.0+)
 ORG_STORAGE_WRITE_ENABLED=true
 ORG_STORAGE_BUCKET=intent-org-knowledge-hub-dev
 
@@ -791,6 +807,27 @@ PUBLIC_URL=https://your-a2a-gateway.run.app
 ```
 
 See [.env.example](.env.example) for full template.
+
+### Slack Integration (Dev)
+
+Talk to Bob via @mentions in Slack (dev environment only):
+
+```bash
+# Enable Slack bot
+SLACK_BOB_ENABLED=true
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_SIGNING_SECRET=your-signing-secret
+A2A_GATEWAY_URL=https://a2a-gateway-xxx.run.app  # Preferred routing
+```
+
+**Quick Start:**
+1. Get credentials from [Slack API Apps](https://api.slack.com/apps) → bobs_brain (`A099YKLCM1N`)
+2. Set env vars in `.env` or GitHub Secrets
+3. Deploy: `gh workflow run deploy-slack-webhook.yml`
+4. Test: `make slack-dev-smoke`
+5. Mention in Slack: `@bobs_brain Hello!`
+
+**Full Guide:** See [000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md](000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md)
 
 ### Terraform Variables
 
@@ -876,11 +913,24 @@ gcloud ai agent-engines list --region=us-central1
 
 ## 📊 Project Status
 
-**Current Version:** v0.9.0
+**Current Version:** v0.10.0 – Agent Engine / A2A Preview (Dev-Ready, Not Deployed)
 
-**Status:** ✅ Production-ready
+**Deployment Status:**
+- ✅ **Agent Engine**: Wired and documented, dev-ready; prod rollout gated on GCP access and ARV checks
+- ✅ **A2A / AgentCard**: Foreman + workers designed; validation via a2a-inspector planned
+- ✅ **Inline Source Deployment**: Complete with ARV gates, smoke tests, and CI workflows
+- ⏸️ **Production Deployment**: Infrastructure ready, awaiting first dev deployment to Agent Engine
+
+**Key Features Ready Today:**
+- ✅ IAM specialist agents (iam-senior-adk-devops-lead → iam-adk, iam-issue, iam-fix, iam-qa)
+- ✅ 6767 doc suite (architecture, operations, standards)
+- ✅ Org-level storage + portfolio audit support
+- ✅ Agent Engine + A2A design complete (non-deployed)
 
 **Recent Updates:**
+- ✅ Agent Engine inline source deployment infrastructure (v0.10.0)
+- ✅ AgentCard alignment & contract-first prompt design (v0.10.0)
+- ✅ ARV (Agent Readiness Verification) gates (v0.10.0)
 - ✅ LIVE1-GCS: Org-wide storage with GCS (v0.9.0)
 - ✅ PORT1-3: Multi-repo portfolio orchestration (v0.9.0)
 - ✅ IAM Templates: Reusable multi-agent framework (v0.9.0)

@@ -1,0 +1,161 @@
+{
+  "name": "iam-fix-impl",
+  "version": "0.10.0",
+  "url": "https://iam-fix-impl.intent.solutions",
+  "description": "iam-fix-impl - Implementation Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-fix-impl/dev/us-central1/0.10.0\n\niam-fix-impl implements fixes from FixPlan specifications, writes code changes, creates unit tests, and ensures Hard Mode compliance.\n",
+  "capabilities": [
+    "code_implementation",
+    "test_writing",
+    "hard_mode_compliance",
+    "implementation_documentation"
+  ],
+  "default_input_modes": [
+    "text"
+  ],
+  "default_output_modes": [
+    "text"
+  ],
+  "skills": [
+    {
+      "skill_id": "iam_fix_impl.implement_fix",
+      "name": "Implement Fix",
+      "description": "Implement code changes according to FixPlan specification",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "fix_plan"
+        ],
+        "properties": {
+          "fix_plan": {
+            "type": "object"
+          },
+          "target_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "implementation_result"
+        ],
+        "properties": {
+          "implementation_result": {
+            "type": "object",
+            "required": [
+              "status",
+              "files_modified"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SUCCESS",
+                  "PARTIAL",
+                  "FAILED"
+                ]
+              },
+              "files_modified": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "changes_summary": {
+                "type": "string"
+              },
+              "test_files_created": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_fix_impl.generate_code_diff",
+      "name": "Generate Code Diff",
+      "description": "Generate unified diff for proposed code changes",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "file_path",
+          "proposed_changes"
+        ],
+        "properties": {
+          "file_path": {
+            "type": "string"
+          },
+          "proposed_changes": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "diff"
+        ],
+        "properties": {
+          "diff": {
+            "type": "string"
+          },
+          "lines_added": {
+            "type": "integer"
+          },
+          "lines_removed": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "iam_fix_impl.create_unit_tests",
+      "name": "Create Unit Tests",
+      "description": "Create unit tests for implemented changes",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "implementation"
+        ],
+        "properties": {
+          "implementation": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "test_files"
+        ],
+        "properties": {
+          "test_files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "test_count": {
+                  "type": "integer"
+                },
+                "coverage": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "spiffe_id": "spiffe://intent.solutions/agent/iam-fix-impl/dev/us-central1/0.10.0"
+}

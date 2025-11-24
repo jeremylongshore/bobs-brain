@@ -16,8 +16,8 @@ agent_machine_type = "n1-standard-4"
 agent_max_replicas = 3
 
 # Gateway Configuration
-a2a_gateway_image   = "gcr.io/bobs-brain-staging/a2a-gateway:0.6.0"
-slack_webhook_image = "gcr.io/bobs-brain-staging/slack-webhook:0.6.0"
+a2a_gateway_image     = "gcr.io/bobs-brain-staging/a2a-gateway:0.6.0"
+slack_webhook_image   = "gcr.io/bobs-brain-staging/slack-webhook:0.6.0"
 gateway_max_instances = 10
 
 # Slack Configuration (staging credentials)
@@ -50,7 +50,7 @@ labels = {
 # Disabled by default; enable explicitly to test GCS integration
 # ==============================================================================
 
-org_storage_enabled     = false  # Set to true to enable org storage bucket
+org_storage_enabled     = false # Set to true to enable org storage bucket
 org_storage_bucket_name = "intent-org-knowledge-hub-staging"
 org_storage_location    = "US"
 

@@ -96,6 +96,24 @@ type-check: ## Run type checking with mypy
 	@echo "$(GREEN)✅ Type check completed!$(NC)"
 
 #################################
+# A2A Contract Validation
+#################################
+
+check-a2a-contracts: ## Validate all AgentCard JSON files for A2A protocol compliance
+	@echo "$(BLUE)🔍 Validating A2A contracts...$(NC)"
+	$(PYTHON) scripts/check_a2a_contracts.py --all
+	@echo "$(GREEN)✅ A2A contract validation passed!$(NC)"
+
+check-a2a-single: ## Validate a single AgentCard (usage: make check-a2a-single CARD=path/to/agent-card.json)
+	@echo "$(BLUE)🔍 Validating AgentCard: $(CARD)$(NC)"
+	$(PYTHON) scripts/check_a2a_contracts.py $(CARD)
+
+smoke-agents: ## Smoke test all agents for lazy-loading App pattern (6774)
+	@echo "$(BLUE)🧪 Running agent lazy-loading smoke test...$(NC)"
+	$(PYTHON) scripts/smoke_check_agents.py
+	@echo "$(GREEN)✅ All agents follow lazy-loading pattern!$(NC)"
+
+#################################
 # Testing
 #################################
 
@@ -261,6 +279,10 @@ crawl-test: ## Test crawler configuration without uploading
 # RAG Readiness & ARV Gates
 #################################
 
+check-config: ## Validate environment configuration for current DEPLOYMENT_ENV
+	@echo "$(BLUE)🔍 Validating config for DEPLOYMENT_ENV=$${DEPLOYMENT_ENV:-dev}...$(NC)"
+	@$(PYTHON) scripts/check_config_all.py
+
 check-rag-readiness: ## Check RAG readiness for Bob and foreman (ARV gate)
 	@echo "$(BLUE)🔍 Checking RAG Readiness...$(NC)"
 	@$(PYTHON) scripts/check_rag_readiness.py
@@ -296,6 +318,26 @@ check-arv-engine-flags-verbose: ## Verbose ARV engine flags check with details
 	@$(PYTHON) scripts/check_arv_engine_flags.py --verbose
 	@echo ""
 
+check-arv-agents: ## Check agent structure and ADK compliance (R1 - SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)🤖 Checking Agent Structure and ADK Compliance (R1)...$(NC)"
+	@$(PYTHON) scripts/check_arv_agents.py
+	@echo ""
+
+check-arv-services: ## Check gateway separation and service compliance (R3 - SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)🚪 Checking Gateway Separation and Service Compliance (R3)...$(NC)"
+	@$(PYTHON) scripts/check_arv_services.py
+	@echo ""
+
+check-arv-config: ## Check configuration and feature flag defaults (SPEC-ALIGN-ARV-EXPANSION)
+	@echo "$(BLUE)⚙️  Checking Configuration and Feature Flag Defaults...$(NC)"
+	@$(PYTHON) scripts/check_arv_config.py
+	@echo ""
+
+check-arv-spec: check-arv-agents check-arv-services check-arv-config ## Run all ADK spec compliance checks (R1, R3, config)
+	@echo "$(BLUE)📋 Running ADK Spec Compliance Checks...$(NC)"
+	@echo "$(GREEN)✅ All ADK spec checks passed!$(NC)"
+	@echo ""
+
 print-rag-config: ## Print current RAG configuration (dry-run)
 	@echo "$(BLUE)📋 Current RAG Configuration:$(NC)"
 	@$(PYTHON) scripts/print_rag_config.py
@@ -311,7 +353,83 @@ print-agent-engine-config-verbose: ## Verbose Agent Engine config with full deta
 	@$(PYTHON) scripts/print_agent_engine_config.py --verbose
 	@echo ""
 
-arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags ## Run all ARV gates (RAG + minimum + engine flags)
+agent-engine-dev-smoke: ## Run dev smoke test for Agent Engine wiring (AE3)
+	@echo "$(BLUE)🧪 Running Agent Engine Dev Smoke Test (AE3)...$(NC)"
+	@$(PYTHON) scripts/run_agent_engine_dev_smoke.py
+	@echo ""
+
+agent-engine-dev-smoke-verbose: ## Run dev smoke test with detailed output
+	@echo "$(BLUE)🧪 Running Agent Engine Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_agent_engine_dev_smoke.py --verbose
+	@echo ""
+
+## ============================================================================
+## Inline Source Deployment (Phase 3+4) - ARV gates and safe deployment
+## ============================================================================
+
+check-inline-deploy-ready: ## ARV check: Validate readiness for inline source deployment (Phase 4)
+	@echo "$(BLUE)🔍 ARV: Checking inline deploy readiness...$(NC)"
+	@$(PYTHON) scripts/check_inline_deploy_ready.py \
+		--agent-name $${AGENT_NAME:-bob} \
+		--env $${ENV:-dev}
+	@echo ""
+
+deploy-inline-dry-run: ## Dry-run validation for inline source deploy (DEFAULT, safe)
+	@echo "$(BLUE)🔍 Inline Source Deploy - DRY RUN (Validation Only)...$(NC)"
+	@echo "$(YELLOW)ℹ️  This validates config without deploying. Use deploy-inline-dev-execute for actual deploy.$(NC)"
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env dev
+	@echo ""
+
+deploy-inline-dev-execute: check-inline-deploy-ready ## MANUAL ONLY: Execute inline deploy to dev (ARV gate enforced)
+	@echo "$(GREEN)✅ ARV checks passed$(NC)"
+	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO DEV - This will create real Agent Engine resources!$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
+	@sleep 5
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env dev \
+		--execute
+	@echo ""
+
+deploy-inline-staging-execute: check-inline-deploy-ready ## MANUAL ONLY: Execute inline deploy to staging (ARV gate enforced)
+	@echo "$(GREEN)✅ ARV checks passed$(NC)"
+	@echo "$(RED)⚠️  EXECUTING INLINE DEPLOY TO STAGING$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C now to cancel, or wait 5 seconds to continue...$(NC)"
+	@sleep 5
+	@$(PYTHON) -m agents.agent_engine.deploy_inline_source \
+		--agent-name bob \
+		--project $${GCP_PROJECT_ID:-test-project-placeholder} \
+		--location $${GCP_LOCATION:-us-central1} \
+		--env staging \
+		--execute
+	@echo ""
+
+smoke-bob-agent-engine-dev: ## Run dev smoke test against Bob's Agent Engine instance (Phase 5)
+	@echo "$(BLUE)🚦 Running Bob Agent Engine dev smoke test...$(NC)"
+	@echo "$(YELLOW)ℹ️  Requires BOB_AGENT_ENGINE_NAME_DEV to be set after dev deployment$(NC)"
+	@$(PYTHON) -m scripts.smoke_test_bob_agent_engine_dev
+	@echo ""
+
+## ============================================================================
+
+arv-department: ## Run comprehensive ARV for IAM/ADK department (ARIV-DEPT)
+	@echo "$(BLUE)🚦 Running ARV for IAM/ADK department (DEPLOYMENT_ENV=$${DEPLOYMENT_ENV:-dev})...$(NC)"
+	@$(PYTHON) scripts/run_arv_department.py --env "$${DEPLOYMENT_ENV:-dev}"
+
+arv-department-verbose: ## Run ARV with detailed output
+	@echo "$(BLUE)🚦 Running ARV for IAM/ADK department (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_arv_department.py --env "$${DEPLOYMENT_ENV:-dev}" --verbose
+
+arv-department-list: ## List all ARV checks
+	@$(PYTHON) scripts/run_arv_department.py --list
+
+arv-gates: check-rag-readiness check-arv-minimum check-arv-engine-flags check-arv-spec ## Run all ARV gates (RAG + minimum + engine flags + spec)
 	@echo "$(BLUE)🚦 Running Agent Readiness Verification (ARV) Gates...$(NC)"
 	@echo "$(GREEN)✅ All ARV gates passed!$(NC)"
 
@@ -350,6 +468,207 @@ run-swe-pipeline-interactive: ## Run interactive SWE pipeline
 		print(f'  - Issues fixed: {result.issues_fixed}'); \
 		print(f'  - Duration: {result.pipeline_duration_seconds:.2f}s')"
 
+#################################
+# LIVE3 End-to-End Testing (E2E)
+#################################
+
+live3-dev-smoke: ## Run LIVE3 dev smoke test (E2E validation of LIVE3 features)
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test...$(NC)"
+	@echo "$(YELLOW)Testing: Portfolio audit + GCS + Slack + GitHub$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo bobs-brain
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+live3-dev-smoke-verbose: ## Run LIVE3 smoke test with detailed output
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo bobs-brain --verbose
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+live3-dev-smoke-all: ## Run LIVE3 smoke test on all local repos
+	@echo "$(BLUE)🧪 Running LIVE3 Dev Smoke Test (All Repos)...$(NC)"
+	@$(PYTHON) scripts/run_live3_dev_smoke.py --repo all --verbose
+	@echo "$(GREEN)✅ LIVE3 smoke test completed!$(NC)"
+
+#################################
+# Slack Integration Testing (SLACK-ENDTOEND-DEV)
+#################################
+
+slack-dev-smoke: ## Run Slack webhook dev smoke test (SLACK-ENDTOEND-DEV S3)
+	@echo "$(BLUE)🧪 Running Slack Webhook Dev Smoke Test...$(NC)"
+	@echo "$(YELLOW)Testing: Slack webhook → A2A gateway → Agent Engine$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py
+	@echo "$(GREEN)✅ Slack smoke test completed!$(NC)"
+
+slack-dev-smoke-verbose: ## Run Slack smoke test with detailed output
+	@echo "$(BLUE)🧪 Running Slack Webhook Dev Smoke Test (Verbose)...$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py --verbose
+	@echo "$(GREEN)✅ Slack smoke test completed!$(NC)"
+
+slack-dev-smoke-health: ## Run Slack smoke test (health check only)
+	@echo "$(BLUE)🩺 Checking Slack Webhook Health...$(NC)"
+	@$(PYTHON) scripts/run_slack_dev_smoke.py --health-only
+	@echo "$(GREEN)✅ Health check completed!$(NC)"
+
+slack-dev-smoke-cloud: ## Run Slack smoke test against Cloud Run deployment
+	@echo "$(BLUE)🧪 Running Slack Webhook Smoke Test (Cloud Run)...$(NC)"
+	@command -v gcloud >/dev/null 2>&1 || { echo "$(RED)❌ gcloud CLI not installed$(NC)"; exit 1; }
+	@SERVICE_URL=$$(gcloud run services describe slack-webhook --region=us-central1 --format='value(status.url)' 2>/dev/null); \
+	if [ -z "$$SERVICE_URL" ]; then \
+		echo "$(RED)❌ Slack webhook service not found in Cloud Run$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(YELLOW)Testing Cloud Run service: $$SERVICE_URL$(NC)"; \
+	$(PYTHON) scripts/run_slack_dev_smoke.py --url $$SERVICE_URL --verbose
+	@echo "$(GREEN)✅ Cloud Run smoke test completed!$(NC)"
+
+#################################
+# A2A Inspector (Debugging & Validation)
+#################################
+
+a2a-inspector-dev: ## Run A2A Inspector against dev gateway (Docker method)
+	@echo "$(BLUE)🔍 Starting A2A Inspector for Development...$(NC)"
+	@echo "$(YELLOW)See: 000-docs/123-DR-STND-a2a-inspector-usage-and-local-setup.md$(NC)"
+	@echo ""
+	@# Check if Docker is available
+	@command -v docker >/dev/null 2>&1 || { echo "$(RED)❌ Docker not installed$(NC)"; exit 1; }
+	@# Check if a2a-inspector image exists, build if not
+	@if ! docker images | grep -q a2a-inspector; then \
+		echo "$(YELLOW)Building a2a-inspector Docker image...$(NC)"; \
+		if [ -d /tmp/a2a-inspector ]; then \
+			cd /tmp/a2a-inspector && git pull; \
+		else \
+			git clone https://github.com/a2aproject/a2a-inspector.git /tmp/a2a-inspector; \
+		fi; \
+		cd /tmp/a2a-inspector && docker build -t a2a-inspector .; \
+	fi
+	@# Stop existing container if running
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker stop 2>/dev/null || true
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker rm 2>/dev/null || true
+	@# Start new container
+	@echo "$(BLUE)Starting a2a-inspector on port 8080...$(NC)"
+	@docker run -d -p 8080:8080 --name a2a-inspector a2a-inspector
+	@echo ""
+	@echo "$(GREEN)✅ A2A Inspector running!$(NC)"
+	@echo ""
+	@echo "$(BLUE)Access:$(NC) http://127.0.0.1:8080"
+	@echo ""
+	@if [ -n "$$A2A_GATEWAY_DEV_URL" ]; then \
+		echo "$(BLUE)Dev Gateway URL (from .env):$(NC) $$A2A_GATEWAY_DEV_URL"; \
+	else \
+		echo "$(YELLOW)⚠ A2A_GATEWAY_DEV_URL not set in .env$(NC)"; \
+		echo "$(YELLOW)Set it to your dev A2A gateway endpoint$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)To stop:$(NC) make a2a-inspector-stop"
+
+a2a-inspector-stop: ## Stop A2A Inspector container
+	@echo "$(BLUE)🛑 Stopping A2A Inspector...$(NC)"
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker stop 2>/dev/null || true
+	@docker ps -a | grep a2a-inspector | awk '{print $$1}' | xargs -r docker rm 2>/dev/null || true
+	@echo "$(GREEN)✅ A2A Inspector stopped$(NC)"
+
+a2a-inspector-logs: ## View A2A Inspector logs
+	@docker logs a2a-inspector
+
+a2a-inspector-status: ## Check A2A Inspector status
+	@echo "$(BLUE)🔍 A2A Inspector Status:$(NC)"
+	@if docker ps | grep -q a2a-inspector; then \
+		echo "$(GREEN)✅ Running on http://127.0.0.1:8080$(NC)"; \
+		docker ps | grep a2a-inspector; \
+	else \
+		echo "$(YELLOW)⚠ Not running$(NC)"; \
+		echo "$(YELLOW)Start with: make a2a-inspector-dev$(NC)"; \
+	fi
+
+#################################
+# Deployment Operations (CICD-DEPT)
+#################################
+
+deploy-dev: ## Trigger dev deployment via GitHub Actions
+	@echo "$(BLUE)🚀 Triggering deployment to dev environment...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "⚠️  This will deploy to dev. Continue? [y/N] " && read ans && [ $${ans:-N} = y ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-dev.yml
+	@echo "$(GREEN)✅ Deployment triggered! Check status with: make deploy-status$(NC)"
+
+deploy-staging: ## Trigger staging deployment via GitHub Actions
+	@echo "$(BLUE)🚀 Triggering deployment to staging environment...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "⚠️  This will deploy to STAGING. Continue? [y/N] " && read ans && [ $${ans:-N} = y ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-staging.yml
+	@echo "$(GREEN)✅ Deployment triggered! Check status with: make deploy-status$(NC)"
+
+deploy-prod: ## Trigger production deployment via GitHub Actions (CAUTION!)
+	@echo "$(RED)⚠️ WARNING: PRODUCTION DEPLOYMENT$(NC)"
+	@echo "$(RED)This will deploy to PRODUCTION and requires multiple approvals.$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@echo "$(RED)Are you ABSOLUTELY SURE? Type 'DEPLOY_TO_PRODUCTION' to confirm: $(NC)" && read ans && [ "$$ans" = "DEPLOY_TO_PRODUCTION" ] || { echo "Cancelled"; exit 1; }
+	@gh workflow run deploy-prod.yml
+	@echo "$(GREEN)✅ Production deployment triggered!$(NC)"
+	@echo "$(YELLOW)⚠️ Remember: Multiple approvals required before deployment proceeds.$(NC)"
+
+deploy-status: ## Check deployment workflow status
+	@echo "$(BLUE)📊 Checking deployment workflow status...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@gh run list --workflow=deploy-dev.yml --limit=3
+	@echo ""
+	@gh run list --workflow=deploy-staging.yml --limit=3
+	@echo ""
+	@gh run list --workflow=deploy-prod.yml --limit=3
+
+deploy-logs: ## View logs from latest deployment (specify ENV=dev|staging|prod)
+	@echo "$(BLUE)📜 Viewing deployment logs for $(ENV:-dev)...$(NC)"
+	@command -v gh >/dev/null 2>&1 || { echo "$(RED)❌ GitHub CLI (gh) not installed$(NC)"; exit 1; }
+	@gh run view --workflow=deploy-$(ENV:-dev).yml --log
+
+deploy-list: ## List all deployment workflows
+	@echo "$(BLUE)📋 Available deployment workflows:$(NC)"
+	@echo ""
+	@echo "  $(GREEN)deploy-dev.yml$(NC)      - Deploy to dev environment"
+	@echo "  $(GREEN)deploy-staging.yml$(NC)  - Deploy to staging (requires approval)"
+	@echo "  $(GREEN)deploy-prod.yml$(NC)     - Deploy to production (multiple approvals)"
+	@echo ""
+	@echo "$(YELLOW)Trigger deployments with:$(NC)"
+	@echo "  make deploy-dev"
+	@echo "  make deploy-staging"
+	@echo "  make deploy-prod"
+	@echo ""
+	@echo "$(YELLOW)Check status with:$(NC)"
+	@echo "  make deploy-status"
+
+deploy-help: ## Show deployment help and requirements
+	@echo "$(BLUE)🚀 Deployment Help$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Prerequisites:$(NC)"
+	@echo "  1. GitHub CLI (gh) installed"
+	@echo "  2. Authenticated to GitHub (gh auth login)"
+	@echo "  3. CI checks passing (make ci or check GitHub Actions)"
+	@echo "  4. ARV checks passing (make arv-department)"
+	@echo ""
+	@echo "$(YELLOW)Deployment Flow:$(NC)"
+	@echo "  1. Code changes pushed to main/develop"
+	@echo "  2. CI workflow runs (ci.yml)"
+	@echo "  3. All checks pass (drift, ARV, tests, security)"
+	@echo "  4. Trigger deployment: make deploy-dev"
+	@echo "  5. ARV gate runs in deployment workflow"
+	@echo "  6. Deployment proceeds if ARV passes"
+	@echo "  7. Check status: make deploy-status"
+	@echo ""
+	@echo "$(YELLOW)Environment Requirements:$(NC)"
+	@echo "  $(GREEN)dev$(NC)      - Automatic after ARV gate"
+	@echo "  $(GREEN)staging$(NC)  - Manual approval + ARV gate"
+	@echo "  $(GREEN)prod$(NC)     - Multiple approvals + strict ARV"
+	@echo ""
+	@echo "$(YELLOW)GitHub Environment Variables Required:$(NC)"
+	@echo "  DEV_PROJECT_ID, DEV_REGION, DEV_STAGING_BUCKET"
+	@echo "  STAGING_PROJECT_ID, STAGING_REGION, STAGING_STAGING_BUCKET"
+	@echo "  PROD_PROJECT_ID, PROD_REGION, PROD_STAGING_BUCKET"
+	@echo ""
+	@echo "$(YELLOW)GitHub Secrets Required:$(NC)"
+	@echo "  GCP_WORKLOAD_IDENTITY_PROVIDER"
+	@echo "  GCP_SERVICE_ACCOUNT"
+	@echo "  SLACK_SIGNING_SECRET"
+	@echo "  SLACK_BOT_TOKEN"
+
 .PHONY: help setup test lint format clean docker version benchmark ci all
 .PHONY: install-hooks deps format-check type-check
 .PHONY: test-v1 test-v2 test-coverage
@@ -357,7 +676,10 @@ run-swe-pipeline-interactive: ## Run interactive SWE pipeline
 .PHONY: docker-build docker-v1 docker-v2 docker-all docker-stop docker-clean
 .PHONY: safe-commit pre-release clean-all version logs dev prod
 .PHONY: crawl-adk-docs crawl-test
-.PHONY: check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates
-.PHONY: print-agent-engine-config print-agent-engine-config-verbose
+.PHONY: check-config check-rag-readiness check-rag-readiness-verbose print-rag-config arv-gates arv-department arv-department-verbose arv-department-list
+.PHONY: print-agent-engine-config print-agent-engine-config-verbose deploy-inline-dry-run deploy-inline-dev-execute deploy-inline-staging-execute
 .PHONY: test-swe-pipeline test-swe-pipeline-verbose test-swe-pipeline-coverage
 .PHONY: run-swe-pipeline-demo run-swe-pipeline-interactive
+.PHONY: live3-dev-smoke live3-dev-smoke-verbose live3-dev-smoke-all
+.PHONY: slack-dev-smoke slack-dev-smoke-verbose slack-dev-smoke-health slack-dev-smoke-cloud
+.PHONY: deploy-dev deploy-staging deploy-prod deploy-status deploy-logs deploy-list deploy-help

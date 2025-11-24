@@ -10,13 +10,19 @@ Enforces:
 - R2: Designed for Vertex AI Agent Engine runtime
 - R5: Dual memory (Session + Memory Bank) with auto-save callback
 - R7: SPIFFE ID propagation in logs
+
+LAZY-LOADING PATTERN (6767-LAZY):
+- Uses create_agent() for lazy agent instantiation
+- Uses create_app() to wrap in App for Agent Engine
+- Exposes module-level `app` (not agent!)
+- No import-time validation or heavy work
 """
 
 from google.adk.agents import LlmAgent
+from google.adk.apps import App
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from agents.shared_tools import BOB_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -27,22 +33,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# CONFIGURATION (Cheap reads, no validation yet)
+# ============================================================================
+
 # Environment variables (R7: SPIFFE ID required)
+# Note: os.getenv() is cheap - no validation at import time
 PROJECT_ID = os.getenv("PROJECT_ID")
 LOCATION = os.getenv("LOCATION", "us-central1")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 APP_NAME = os.getenv("APP_NAME", "bobs-brain")
 AGENT_SPIFFE_ID = os.getenv("AGENT_SPIFFE_ID")
-
-# Validate required environment variables
-if not PROJECT_ID:
-    raise ValueError("PROJECT_ID environment variable is required")
-if not LOCATION:
-    raise ValueError("LOCATION environment variable is required")
-if not AGENT_ENGINE_ID:
-    raise ValueError("AGENT_ENGINE_ID environment variable is required")
-if not AGENT_SPIFFE_ID:
-    raise ValueError("AGENT_SPIFFE_ID environment variable is required (R7)")
 
 
 def auto_save_session_to_memory(ctx):
@@ -91,9 +92,16 @@ def auto_save_session_to_memory(ctx):
         # Never block agent execution
 
 
-def get_agent() -> LlmAgent:
+# ============================================================================
+# LAZY AGENT CREATION (6767-LAZY Pattern)
+# ============================================================================
+
+def create_agent() -> LlmAgent:
     """
     Create and configure the LlmAgent.
+
+    Called by create_app() on first use (module-level app creation).
+    Do NOT call this at module import time from external code.
 
     Enforces:
     - R1: Uses google-adk LlmAgent (no alternative frameworks)
@@ -101,12 +109,16 @@ def get_agent() -> LlmAgent:
     - R7: Includes SPIFFE ID in agent description
 
     Returns:
-        LlmAgent: Configured agent instance
+        LlmAgent: Configured agent instance specialized in ADK expertise
 
     Note:
         This agent is designed to run in Vertex AI Agent Engine (R2).
-        Do NOT instantiate a Runner here - that happens in create_runner().
+        Environment variable validation removed - ADK handles this on invocation.
+        Agent creation is cheap (no GCP calls) - safe for module-level app creation.
     """
+    # ✅ No validation - let ADK handle it on actual invocation
+    # ✅ Cheap to call - just creates object, no GCP calls
+
     logger.info(
         f"Creating LlmAgent for {APP_NAME}", extra={"spiffe_id": AGENT_SPIFFE_ID}
     )
@@ -208,6 +220,9 @@ When users ask about ADK, provide expert guidance with accurate code examples, d
 
 Be concise, accurate, and helpful. Focus on teaching developers to build production-ready agents."""
 
+    # ✅ Lazy import to avoid circular dependency (Phase 13)
+    from agents.shared_tools import BOB_TOOLS
+
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="bobs_brain",  # Required: Valid Python identifier (no hyphens)
@@ -224,12 +239,65 @@ Be concise, accurate, and helpful. Focus on teaching developers to build product
     return agent
 
 
+def create_app() -> App:
+    """
+    Create the App container for Agent Engine deployment.
+
+    The App wraps the agent for Vertex AI Agent Engine. When deployed to
+    Agent Engine, the runtime automatically provides session and memory services.
+
+    For local testing with dual memory, use create_runner() instead.
+
+    Enforces:
+    - R2: App designed for Vertex AI Agent Engine deployment
+    - R7: SPIFFE ID propagation in logs
+
+    Returns:
+        App: Configured app instance for Agent Engine
+
+    Note:
+        - Agent is created here (cheap - no validation, no GCP calls)
+        - Session/memory services NOT configured (Agent Engine provides them)
+        - For local testing with dual memory, use create_runner()
+    """
+    logger.info(
+        "Creating App container for Bob",
+        extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
+
+    # ✅ Call create_agent() to get instance (cheap operation)
+    agent_instance = create_agent()
+
+    # ✅ NEW API - Pydantic App with name and root_agent
+    app_instance = App(
+        name=APP_NAME,
+        root_agent=agent_instance,
+    )
+
+    logger.info(
+        "✅ App created successfully for Bob",
+        extra={
+            "spiffe_id": AGENT_SPIFFE_ID,
+            "app_name": APP_NAME,
+        }
+    )
+
+    return app_instance
+
+
+# ============================================================================
+# BACKWARDS COMPATIBILITY (Optional)
+# ============================================================================
+
 def create_runner() -> Runner:
     """
     Create Runner with dual memory wiring (Session + Memory Bank).
 
+    DEPRECATED: Use create_app() for Agent Engine deployment.
+    This function is kept for backwards compatibility with local testing and CI.
+
     Enforces:
-    - R2: Runner designed for Vertex AI Agent Engine deployment
+    - R2: Runner designed for local testing (NOT Agent Engine deployment)
     - R5: Dual memory wiring (Session + Memory Bank)
     - R7: SPIFFE ID propagation in logs
 
@@ -237,9 +305,16 @@ def create_runner() -> Runner:
         Runner: Configured runner with dual memory services
 
     Note:
-        This runner is created in the Agent Engine container.
+        This runner is for LOCAL/CI testing only.
+        For Agent Engine deployment, use create_app() which returns an App.
         Gateway code in service/ MUST NOT import or call this (R3).
     """
+    logger.warning(
+        "⚠️  create_runner() is deprecated for Agent Engine deployment. "
+        "Use create_app() for Agent Engine. create_runner() is for local/CI testing only.",
+        extra={"spiffe_id": AGENT_SPIFFE_ID}
+    )
+
     logger.info(
         f"Creating Runner with dual memory for {APP_NAME}",
         extra={
@@ -250,9 +325,13 @@ def create_runner() -> Runner:
         },
     )
 
+    # ✅ Validate env vars HERE (Runner requires them for memory services)
+    if not PROJECT_ID or not AGENT_ENGINE_ID:
+        raise ValueError("PROJECT_ID and AGENT_ENGINE_ID required for Runner with dual memory")
+
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
+        project=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
     )
     logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
 
@@ -265,7 +344,7 @@ def create_runner() -> Runner:
     )
 
     # Get agent with after_agent_callback configured
-    agent = get_agent()
+    agent = create_agent()
 
     # R5: Wire dual memory to Runner
     runner = Runner(
@@ -288,17 +367,24 @@ def create_runner() -> Runner:
     return runner
 
 
-# Create the root agent for ADK CLI deployment
-# ADK CLI expects a variable named 'root_agent' at module level
-root_agent = get_agent()
+# ============================================================================
+# AGENT ENGINE ENTRYPOINT (6767-LAZY Pattern)
+# ============================================================================
+
+# ✅ Module-level App (lazy initialization)
+# Agent Engine will access this on first request
+app = create_app()
 
 logger.info(
-    "✅ root_agent created for ADK deployment",
-    extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"},
+    "✅ App instance created for Agent Engine deployment (Bob)",
+    extra={"spiffe_id": AGENT_SPIFFE_ID}
 )
 
 
-# Entry point for Agent Engine container
+# ============================================================================
+# MAIN (For local testing only)
+# ============================================================================
+
 if __name__ == "__main__":
     """
     This entry point is used when the container is deployed to
@@ -318,20 +404,27 @@ if __name__ == "__main__":
         )
 
     try:
-        runner = create_runner()
+        # Use new App pattern
         logger.info(
-            "🚀 Agent Engine runner ready", extra={"spiffe_id": AGENT_SPIFFE_ID}
+            "🚀 Testing App-based deployment (Bob)",
+            extra={"spiffe_id": AGENT_SPIFFE_ID},
+        )
+
+        # App is already created at module level
+        logger.info(
+            "✅ App instance ready for Agent Engine",
+            extra={"spiffe_id": AGENT_SPIFFE_ID}
         )
 
         # For local testing only - Agent Engine manages this in production
         if os.getenv("GITHUB_ACTIONS") != "true":
             logger.info(
-                "Local test mode - Runner created but not started. "
-                "In production, Agent Engine manages the runner lifecycle."
+                "Local test mode - App created successfully. "
+                "In production, Agent Engine manages the app lifecycle."
             )
     except Exception as e:
         logger.error(
-            f"❌ Failed to create runner: {e}",
+            f"❌ Failed to create app: {e}",
             extra={"spiffe_id": AGENT_SPIFFE_ID},
             exc_info=True,
         )

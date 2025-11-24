@@ -5,6 +5,25 @@ This module defines the data contracts passed between iam-* agents
 in the SWE pipeline orchestrated by iam-senior-adk-devops-lead.
 
 All contracts are serializable dataclasses with clear type annotations.
+
+Validation Strategy:
+- These contracts define the data structures for internal agent communication
+- AgentCard JSON schemas (in .well-known/agent-card.json) define the A2A protocol interface
+- Two-layer validation ensures contract compliance:
+  1. Static validation (scripts/check_a2a_contracts.py):
+     - Validates AgentCard structure before runtime
+     - Ensures skill schemas match these contract types
+     - Runs in CI/CD for fast feedback
+  2. Runtime validation (a2a-inspector web UI):
+     - Validates actual agent behavior and protocol compliance
+     - Tests task envelope handling matches AgentCard specifications
+     - Optional for dev/test, used for debugging
+
+See: tools/a2a-inspector/README.md for validation strategy details
+
+TODO (A2A-1/2/3): Add A2ATaskEnvelope and A2AResultEnvelope wrappers
+- When implemented, these will wrap the contracts below for A2A protocol messages
+- Validation helpers will check envelopes against AgentCard schemas
 """
 
 from dataclasses import dataclass, field
@@ -153,6 +172,10 @@ class PortfolioResult:
     total_repos_errored: int = 0
     total_issues_found: int = 0
     total_issues_fixed: int = 0
+
+    # GitHub issue creation (LIVE3B/LIVE3C-GITHUB-ISSUES)
+    issues_planned: int = 0
+    issues_created: int = 0
 
     # Issue breakdown
     issues_by_severity: Dict[str, int] = field(default_factory=dict)

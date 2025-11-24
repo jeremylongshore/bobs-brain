@@ -26,15 +26,15 @@
 # Enable required Google Cloud APIs
 resource "google_project_service" "required_apis" {
   for_each = toset([
-    "aiplatform.googleapis.com",       # Vertex AI Agent Engine
-    "run.googleapis.com",              # Cloud Run
-    "compute.googleapis.com",          # Compute Engine
-    "storage-api.googleapis.com",      # Cloud Storage
-    "storage.googleapis.com",          # Cloud Storage (JSON API)
-    "discoveryengine.googleapis.com",  # Vertex AI Search (Phase 3)
-    "iam.googleapis.com",              # IAM
+    "aiplatform.googleapis.com",           # Vertex AI Agent Engine
+    "run.googleapis.com",                  # Cloud Run
+    "compute.googleapis.com",              # Compute Engine
+    "storage-api.googleapis.com",          # Cloud Storage
+    "storage.googleapis.com",              # Cloud Storage (JSON API)
+    "discoveryengine.googleapis.com",      # Vertex AI Search (Phase 3)
+    "iam.googleapis.com",                  # IAM
     "cloudresourcemanager.googleapis.com", # Resource Manager
-    "serviceusage.googleapis.com",     # Service Usage
+    "serviceusage.googleapis.com",         # Service Usage
   ])
 
   project = var.project_id

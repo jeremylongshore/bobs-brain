@@ -13,18 +13,18 @@ app_version = "0.6.0"
 # Agent Engine Configuration
 agent_docker_image = "gcr.io/bobs-brain/agent:0.6.0"
 agent_machine_type = "n1-standard-4"
-agent_max_replicas = 5  # Higher for production
+agent_max_replicas = 5 # Higher for production
 
 # Gateway Configuration
-a2a_gateway_image   = "gcr.io/bobs-brain/a2a-gateway:0.6.0"
-slack_webhook_image = "gcr.io/bobs-brain/slack-webhook:0.6.0"
-gateway_max_instances = 20  # More instances for production
+a2a_gateway_image     = "gcr.io/bobs-brain/a2a-gateway:0.6.0"
+slack_webhook_image   = "gcr.io/bobs-brain/slack-webhook:0.6.0"
+gateway_max_instances = 20 # More instances for production
 
 # Slack Configuration (production credentials)
 # CRITICAL: Use Secret Manager or secure CI/CD secrets for production
 # These are placeholders - replace with actual values or use Secret Manager
-slack_bot_token      = "xoxb-prod-placeholder"  # REPLACE WITH ACTUAL TOKEN
-slack_signing_secret = "prod-placeholder"       # REPLACE WITH ACTUAL SECRET
+slack_bot_token      = "xoxb-prod-placeholder" # REPLACE WITH ACTUAL TOKEN
+slack_signing_secret = "prod-placeholder"      # REPLACE WITH ACTUAL SECRET
 
 # SPIFFE ID (R7)
 agent_spiffe_id = "spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/0.6.0"
@@ -48,12 +48,12 @@ labels = {
 # Knowledge Hub Configuration (org-wide knowledge repository)
 # Production uses the actual datahub-intent project
 knowledge_hub_project_id = "datahub-intent"
-knowledge_bucket_prefix  = "datahub-intent"  # Main prod bucket
+knowledge_bucket_prefix  = "datahub-intent" # Main prod bucket
 
 # Service accounts that need knowledge hub access
 # TODO: Replace with actual production service account emails
-bobs_brain_runtime_sa = ""  # TODO: serviceAccount:bob-runtime@bobs-brain.iam.gserviceaccount.com
-bobs_brain_search_sa  = ""  # TODO: serviceAccount:vertex-search@bobs-brain.iam.gserviceaccount.com
+bobs_brain_runtime_sa = "" # TODO: serviceAccount:bob-runtime@bobs-brain.iam.gserviceaccount.com
+bobs_brain_search_sa  = "" # TODO: serviceAccount:vertex-search@bobs-brain.iam.gserviceaccount.com
 
 # Production consumers - add as projects onboard
 consumer_service_accounts = [

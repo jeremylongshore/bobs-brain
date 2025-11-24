@@ -274,23 +274,23 @@ def get_delegation_tools() -> List[Any]:
     """
     Get delegation tools from iam-senior-adk-devops-lead implementation.
 
+    Phase 17: Updated to use real A2A delegation functions.
+
     Returns:
         List of delegation tools
     """
     try:
         from agents.iam_senior_adk_devops_lead.tools.delegation import (
             delegate_to_specialist,
-            aggregate_results,
-        )
-        from agents.iam_senior_adk_devops_lead.tools.planning import (
-            verify_adk_compliance,
-            manage_department,
+            delegate_to_multiple,
+            check_specialist_availability,
+            get_specialist_capabilities,
         )
         return [
             delegate_to_specialist,
-            aggregate_results,
-            verify_adk_compliance,
-            manage_department,
+            delegate_to_multiple,
+            check_specialist_availability,
+            get_specialist_capabilities,
         ]
     except ImportError:
         # Try with hyphenated directory name
@@ -307,20 +307,12 @@ def get_delegation_tools() -> List[Any]:
                 delegation = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(delegation)
 
-                spec2 = importlib.util.spec_from_file_location(
-                    "planning",
-                    "agents/iam-senior-adk-devops-lead/tools/planning.py"
-                )
-                if spec2 and spec2.loader:
-                    planning = importlib.util.module_from_spec(spec2)
-                    spec2.loader.exec_module(planning)
-
-                    return [
-                        delegation.delegate_to_specialist,
-                        delegation.aggregate_results,
-                        planning.verify_adk_compliance,
-                        planning.manage_department,
-                    ]
+                return [
+                    delegation.delegate_to_specialist,
+                    delegation.delegate_to_multiple,
+                    delegation.check_specialist_availability,
+                    delegation.get_specialist_capabilities,
+                ]
         except Exception as e:
             logger.warning(f"Could not import delegation tools: {e}")
 

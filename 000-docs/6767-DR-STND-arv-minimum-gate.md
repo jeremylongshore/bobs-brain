@@ -64,7 +64,10 @@ arv-check:
 
 **Execution Order:**
 1. `drift-check` (R8: Hard Mode violations)
-2. **`arv-check`** ← ARV minimum gate
+2. **`arv-check`** ← Configuration and ARV gates
+   - Configuration validation (CONF2) - see `116-DR-STND-config-and-feature-flags-standard-v1.md`
+   - ARV minimum requirements (this doc)
+   - ARV engine flags (Phase AE3)
 3. `lint`, `test`, `security` (only if drift and ARV pass)
 
 **Blocking Behavior:**
@@ -83,8 +86,10 @@ make arv-gates                   # Run all ARV gates (RAG + minimum)
 
 **Combined ARV Gates:**
 The `arv-gates` target runs all Agent Readiness Verification checks:
+- `check-config`: Validates environment configuration (CONF2)
 - `check-rag-readiness`: Validates RAG configuration (Phase RC1)
 - `check-arv-minimum`: Validates minimum requirements (Phase RC2)
+- `check-arv-engine-flags`: Validates engine flags safety (Phase AE3)
 
 ## Exit Codes
 

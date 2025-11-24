@@ -1,11 +1,18 @@
 """
-iam-senior-adk-devops-lead - ADK Department Foreman Agent
+iam-senior-adk-devops-lead - Departmental Foreman
 
-This agent orchestrates the iam-* specialist team within the ADK/Agent Engineering Department.
-It receives high-level requests from Bob and delegates to specialized worker agents.
+This agent coordinates the work of specialist agents in the ADK department.
+
+Enforces R1 (ADK only), R2 (Agent Engine runtime), R5 (dual memory).
+
+Phase 12 Update: Migrated to google-adk 1.18+ API (App pattern)
 """
 
-from .agent import get_agent, create_runner
+from .agent import create_agent, create_runner, auto_save_session_to_memory, app
 
-__all__ = ["get_agent", "create_runner"]
-__version__ = "0.1.0"
+__all__ = [
+    "create_agent",  # Phase 12: renamed from get_agent
+    "create_runner",
+    "auto_save_session_to_memory",
+    "app",  # Phase 12: App pattern for Agent Engine (was root_agent)
+]

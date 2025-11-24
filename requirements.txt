@@ -3,7 +3,7 @@
 # Last Updated: 2025-11-11
 
 # Core ADK (R1: Agent implementation framework)
-google-adk>=0.1.0
+google-adk>=1.18.0,<1.19.0  # Pinned to 1.18.x (google-adk 1.18+ API)
 
 # A2A Protocol (R7: Agent-to-Agent communication)
 a2a-sdk>=0.3.0

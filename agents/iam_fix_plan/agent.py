@@ -20,7 +20,6 @@ from google.adk.agents import LlmAgent
 from google.adk import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
-from agents.shared_tools import IAM_FIX_PLAN_TOOLS  # Use shared tools profile
 import os
 import logging
 from typing import Optional
@@ -40,15 +39,6 @@ AGENT_SPIFFE_ID = os.getenv(
     "AGENT_SPIFFE_ID",
     "spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.8.0",
 )
-
-# Validate required environment variables
-if not PROJECT_ID:
-    raise ValueError("PROJECT_ID environment variable is required")
-if not LOCATION:
-    raise ValueError("LOCATION environment variable is required")
-if not AGENT_ENGINE_ID:
-    raise ValueError("AGENT_ENGINE_ID environment variable is required")
-
 
 def auto_save_session_to_memory(ctx):
     """
@@ -94,7 +84,6 @@ def auto_save_session_to_memory(ctx):
             exc_info=True,
         )
         # Never block agent execution
-
 
 def get_agent() -> LlmAgent:
     """
@@ -245,6 +234,9 @@ When planning fixes, be thorough and realistic. A good fix plan:
 - Defines clear success criteria
 - Can be executed confidently by the implementation team"""
 
+    # ✅ Lazy import to avoid circular dependency (Phase 13)
+    from agents.shared_tools import IAM_FIX_PLAN_TOOLS
+
     agent = LlmAgent(
         model="gemini-2.0-flash-exp",  # Fast, cost-effective model
         name="iam_fix_plan",  # Required: Valid Python identifier (no hyphens)
@@ -260,7 +252,6 @@ When planning fixes, be thorough and realistic. A good fix plan:
 
     return agent
 
-
 def create_runner() -> Runner:
     """
     Create Runner with dual memory wiring (Session + Memory Bank).
@@ -274,7 +265,8 @@ def create_runner() -> Runner:
         Runner: Configured runner with dual memory services
 
     Note:
-        This runner is created in the Agent Engine container.
+        This runner is for LOCAL/CI testing only.
+        For Agent Engine deployment, use create_app() which returns an App.
         Gateway code in service/ MUST NOT import or call this (R3).
     """
     logger.info(
@@ -289,7 +281,7 @@ def create_runner() -> Runner:
 
     # R5: VertexAiSessionService (short-term conversation cache)
     session_service = VertexAiSessionService(
-        project_id=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
+        project=PROJECT_ID, location=LOCATION, agent_engine_id=AGENT_ENGINE_ID
     )
     logger.info("✅ Session service initialized", extra={"spiffe_id": AGENT_SPIFFE_ID})
 
@@ -324,7 +316,6 @@ def create_runner() -> Runner:
 
     return runner
 
-
 # Create the root agent for ADK CLI deployment
 # ADK CLI expects a variable named 'root_agent' at module level
 root_agent = get_agent()
@@ -333,7 +324,6 @@ logger.info(
     "✅ root_agent created for ADK deployment (iam-fix-plan)",
     extra={"spiffe_id": AGENT_SPIFFE_ID, "model": "gemini-2.0-flash-exp"},
 )
-
 
 # Entry point for Agent Engine container
 if __name__ == "__main__":
