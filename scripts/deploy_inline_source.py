@@ -128,6 +128,11 @@ def deploy_with_inline_source(config: Dict) -> str:
 
     Raises:
         SystemExit: If deployment fails (exit code 1 or 3)
+
+    Environment Variables (Observability/Telemetry):
+        GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY: Enable Agent Engine telemetry (default: true)
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: Capture LLM message content in traces (default: false)
+            WARNING: May include sensitive user data, use with care in dev-only environments
     """
     # Check dependencies
     try:
@@ -138,11 +143,19 @@ def deploy_with_inline_source(config: Dict) -> str:
         print("   Install with: pip install google-cloud-aiplatform[adk,agent_engines]")
         sys.exit(3)
 
+    # Read telemetry configuration from environment
+    # These control observability and tracing for Agent Engine deployments
+    enable_telemetry = os.getenv("GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", "true").lower() == "true"
+    capture_message_content = os.getenv("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "false").lower() == "true"
+
     print(f"🚀 Deploying {config['agent']} to Vertex AI Agent Engine...")
     print(f"   Environment: {config['environment']}")
     print(f"   Project: {config['project']}")
     print(f"   Region: {config['region']}")
     print(f"   Display Name: {config['display_name']}")
+    print(f"   Telemetry Enabled: {enable_telemetry}")
+    if capture_message_content:
+        print(f"   ⚠️  Message Content Capture: {capture_message_content} (dev-only, may include sensitive data)")
 
     try:
         # Initialize Vertex AI
@@ -165,10 +178,15 @@ def deploy_with_inline_source(config: Dict) -> str:
             agent = module.get_agent()
             agent_app = agent_engines.AdkApp(
                 agent=agent,
-                enable_tracing=True,
+                enable_tracing=enable_telemetry,  # Use telemetry config from env
             )
         else:
             raise ValueError(f"Cannot find '{app_name}' or 'get_agent()' in {module_path}")
+
+        # Set OTEL env var for message content capture (if enabled)
+        # This must be set before agent execution for OpenTelemetry to pick it up
+        if capture_message_content:
+            os.environ["OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"] = "true"
 
         print(f"✅ Agent loaded successfully")
 
