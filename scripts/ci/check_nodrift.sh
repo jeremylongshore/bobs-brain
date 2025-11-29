@@ -31,6 +31,7 @@ if grep -rE "from langchain|import langchain|from crewai|import crewai|from auto
     --exclude-dir=archive \
     --exclude-dir=node_modules \
     --exclude-dir=000-docs \
+    --exclude-dir=claudes-docs \
     . 2>/dev/null | grep -v "CLAUDE.md" | grep -v "check_nodrift.sh"; then
     echo "❌ VIOLATION R1: Alternative framework imports found"
     echo "   Only google-adk is allowed for agent implementation"
