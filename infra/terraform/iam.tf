@@ -83,6 +83,13 @@ resource "google_project_iam_member" "slack_webhook_logging" {
   member  = "serviceAccount:${google_service_account.slack_webhook.email}"
 }
 
+# Secret Manager access for Slack tokens
+resource "google_project_iam_member" "slack_webhook_secrets" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.slack_webhook.email}"
+}
+
 # Service Account for GitHub Actions (Workload Identity Federation)
 # R4: CI-only deployments
 resource "google_service_account" "github_actions" {
