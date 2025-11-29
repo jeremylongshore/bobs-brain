@@ -135,128 +135,51 @@ resource "google_cloud_run_service_iam_member" "a2a_gateway_public" {
   member   = "allUsers"
 }
 
-# Slack Webhook Service
-resource "google_cloud_run_service" "slack_webhook" {
-  name     = "${var.app_name}-slack-webhook-${var.environment}"
-  location = var.region
-  project  = var.project_id
+# Slack Bob Gateway Module
+# R3: Cloud Run as gateway only (proxy to Agent Engine via REST)
+# Conditionally deployed based on slack_bob_enabled feature flag
+module "slack_bob_gateway" {
+  source = "./modules/slack_bob_gateway"
 
-  template {
-    spec {
-      service_account_name = google_service_account.slack_webhook.email
+  enable      = var.slack_bob_enabled
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  app_name    = var.app_name
 
-      containers {
-        image = var.slack_webhook_image
+  # Docker image (set by CI)
+  image = var.slack_webhook_image
 
-        # Environment variables
-        env {
-          name  = "PROJECT_ID"
-          value = var.project_id
-        }
+  # Agent Engine configuration
+  agent_engine_name = google_vertex_ai_reasoning_engine.bob.name
+  agent_engine_id   = tostring(google_vertex_ai_reasoning_engine.bob.id)
 
-        env {
-          name  = "LOCATION"
-          value = var.region
-        }
+  # Secret Manager references (production best practice)
+  slack_signing_secret_id = var.slack_signing_secret_id
+  slack_bot_token_secret_id = var.slack_bot_token_secret_id
 
-        env {
-          name  = "AGENT_ENGINE_ID"
-          value = google_vertex_ai_reasoning_engine.bob.id
-        }
+  # Service account
+  service_account_email = google_service_account.slack_webhook.email
 
-        env {
-          name  = "AGENT_ENGINE_URL"
-          value = "https://${var.region}-aiplatform.googleapis.com/v1/projects/${var.project_id}/locations/${var.region}/reasoningEngines/${google_vertex_ai_reasoning_engine.bob.id}:query"
-        }
+  # Networking
+  allow_unauthenticated = var.allow_public_access
 
-        env {
-          name  = "SLACK_BOT_TOKEN"
-          value = var.slack_bot_token
-        }
+  # Scaling
+  max_instances = var.gateway_max_instances
+  min_instances = 0
 
-        env {
-          name  = "SLACK_SIGNING_SECRET"
-          value = var.slack_signing_secret
-        }
+  # Resource limits
+  cpu_limit    = "1000m"
+  memory_limit = "512Mi"
 
-        env {
-          name  = "DEPLOYMENT_ENV"
-          value = var.environment
-        }
-
-        env {
-          name  = "PORT"
-          value = "8080"
-        }
-
-        # Resource limits
-        resources {
-          limits = {
-            cpu    = "1000m"
-            memory = "512Mi"
-          }
-        }
-
-        # Health check
-        liveness_probe {
-          http_get {
-            path = "/health"
-          }
-          initial_delay_seconds = 10
-          timeout_seconds       = 3
-          period_seconds        = 10
-          failure_threshold     = 3
-        }
-      }
-
-      # Scaling
-      container_concurrency = 80
-
-      # Timeout
-      timeout_seconds = 300
-    }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/minScale"  = "0"
-        "autoscaling.knative.dev/maxScale"  = tostring(var.gateway_max_instances)
-        "run.googleapis.com/cpu-throttling" = "true"
-      }
-
-      labels = merge(
-        var.labels,
-        {
-          environment = var.environment
-          app         = var.app_name
-          version     = replace(var.app_version, ".", "-")
-          component   = "slack-webhook"
-        }
-      )
-    }
-  }
-
-  traffic {
-    percent         = 100
-    latest_revision = true
-  }
-
-  autogenerate_revision_name = true
+  # Labels
+  labels = var.labels
 
   depends_on = [
     google_service_account.slack_webhook,
     google_project_iam_member.slack_webhook_aiplatform,
     google_vertex_ai_reasoning_engine.bob,
   ]
-}
-
-# Slack Webhook IAM Policy (allow unauthenticated access for Slack events)
-resource "google_cloud_run_service_iam_member" "slack_webhook_public" {
-  count = var.allow_public_access ? 1 : 0
-
-  service  = google_cloud_run_service.slack_webhook.name
-  location = google_cloud_run_service.slack_webhook.location
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }
 
 # Data source for project number (needed for Cloud Run URLs)

@@ -20,11 +20,18 @@ a2a_gateway_image     = "gcr.io/bobs-brain/a2a-gateway:0.6.0"
 slack_webhook_image   = "gcr.io/bobs-brain/slack-webhook:0.6.0"
 gateway_max_instances = 20 # More instances for production
 
-# Slack Configuration (production credentials)
-# CRITICAL: Use Secret Manager or secure CI/CD secrets for production
-# These are placeholders - replace with actual values or use Secret Manager
-slack_bot_token      = "xoxb-prod-placeholder" # REPLACE WITH ACTUAL TOKEN
-slack_signing_secret = "prod-placeholder"      # REPLACE WITH ACTUAL SECRET
+# Slack Configuration (production)
+# Feature flag to enable Slack Bob gateway (R3 Cloud Run proxy)
+slack_bob_enabled = true
+
+# Secret Manager references (production best practice)
+# Secrets must exist in Secret Manager before deployment
+slack_bot_token_secret_id      = "slack-bot-token"
+slack_signing_secret_id        = "slack-signing-secret"
+
+# DEPRECATED: Direct token variables (use Secret Manager instead)
+slack_bot_token      = "" # Ignored when slack_bot_token_secret_id is set
+slack_signing_secret = "" # Ignored when slack_signing_secret_id is set
 
 # SPIFFE ID (R7)
 agent_spiffe_id = "spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/0.6.0"

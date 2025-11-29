@@ -85,16 +85,40 @@ variable "gateway_max_instances" {
 }
 
 # Slack Configuration
+# Feature flag to enable/disable Slack gateway
+variable "slack_bob_enabled" {
+  description = "Enable Slack Bob gateway (R3 Cloud Run proxy to Agent Engine)"
+  type        = bool
+  default     = false
+}
+
+# Secret Manager references (recommended for production)
+variable "slack_bot_token_secret_id" {
+  description = "Secret Manager secret ID for Slack bot token"
+  type        = string
+  default     = "slack-bot-token"
+}
+
+variable "slack_signing_secret_id" {
+  description = "Secret Manager secret ID for Slack signing secret"
+  type        = string
+  default     = "slack-signing-secret"
+}
+
+# DEPRECATED: Direct token variables (only for dev/testing)
+# Use Secret Manager in production via slack_bot_token_secret_id
 variable "slack_bot_token" {
-  description = "Slack bot OAuth token (use Secret Manager in production)"
+  description = "DEPRECATED: Use Secret Manager (slack_bot_token_secret_id) in production"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "slack_signing_secret" {
-  description = "Slack app signing secret (use Secret Manager in production)"
+  description = "DEPRECATED: Use Secret Manager (slack_signing_secret_id) in production"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 # SPIFFE ID (R7)
