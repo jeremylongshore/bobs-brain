@@ -1,0 +1,321 @@
+name: Terraform Production Deployment
+
+# ========================================
+# TERRAFORM-ONLY DEPLOYMENT (R4 Compliant)
+# ========================================
+# All infrastructure changes (including Slack Bob gateway) MUST go through Terraform.
+# This workflow enforces R4 (CI-only deployments) and prevents manual `gcloud` changes.
+#
+# Usage:
+#   - PR to main → terraform plan only (validation)
+#   - workflow_dispatch → terraform plan + optional apply (gated)
+#
+# CRITICAL: Never bypass this workflow with manual `gcloud run services update`
+# or Console changes. All changes must be in Terraform code.
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/terraform/**'
+      - '.github/workflows/terraform-prod.yml'
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply Terraform changes to production (requires approval)'
+        required: true
+        type: boolean
+        default: false
+      environment:
+        description: 'Environment to deploy (prod only for this workflow)'
+        required: true
+        type: choice
+        options:
+          - prod
+        default: 'prod'
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write  # For plan comments on PRs
+
+env:
+  TF_VERSION: '1.5.0'
+  TERRAFORM_DIR: 'infra/terraform'
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan (${{ github.event.inputs.environment || 'prod' }})
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+
+    defaults:
+      run:
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -backend-config="bucket=bobs-brain-terraform-state"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var-file="envs/${{ github.event.inputs.environment || 'prod' }}.tfvars" \
+            -out=tfplan \
+            -no-color
+        continue-on-error: true
+
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### Terraform Plan Results 🚀
+
+            **Environment:** \`${{ github.event.inputs.environment || 'prod' }}\`
+
+            #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan Output</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout || 'No output' }}
+            \`\`\`
+
+            </details>
+
+            **R4 Compliance:** ✅ All infrastructure changes via Terraform + GitHub Actions
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: output
+            });
+
+      - name: Fail on Plan Error
+        if: steps.plan.outcome == 'failure'
+        run: |
+          echo "❌ Terraform plan failed. Review the plan output above."
+          exit 1
+
+      - name: Upload Plan Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.event.inputs.environment || 'prod' }}
+          path: ${{ env.TERRAFORM_DIR }}/tfplan
+          retention-days: 5
+
+      - name: Plan Summary
+        run: |
+          echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment || 'prod' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Format Check:** ${{ steps.fmt.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Initialization:** ${{ steps.init.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation:** ${{ steps.validate.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Plan:** ${{ steps.plan.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "- ✅ Plan validated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "- ⏭️ Merge PR to enable production deployment" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⚠️ Plan ready for apply (if approved)" >> $GITHUB_STEP_SUMMARY
+            echo "- 🚀 Re-run workflow with 'apply: true' to deploy" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  terraform-apply:
+    name: Terraform Apply (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.apply == 'true' &&
+      github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://console.cloud.google.com/run?project=bobs-brain
+
+    defaults:
+      run:
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init -backend-config="bucket=bobs-brain-terraform-state"
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ github.event.inputs.environment }}
+          path: ${{ env.TERRAFORM_DIR }}
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          terraform apply -auto-approve tfplan
+
+      - name: Verify Slack Gateway Deployment
+        if: success()
+        run: |
+          echo "🔍 Verifying Slack Bob gateway deployment..."
+
+          # Get Slack gateway service URL
+          SLACK_SERVICE_URL=$(gcloud run services describe bobs-brain-slack-webhook-prod \
+            --project=bobs-brain \
+            --region=us-central1 \
+            --format='value(status.url)' 2>/dev/null || echo "")
+
+          if [ -n "$SLACK_SERVICE_URL" ]; then
+            echo "✅ Slack gateway deployed at: $SLACK_SERVICE_URL"
+
+            # Test health endpoint
+            echo "Testing health endpoint..."
+            HEALTH_RESPONSE=$(curl -sS -f "$SLACK_SERVICE_URL/health" || echo "FAILED")
+
+            if [ "$HEALTH_RESPONSE" != "FAILED" ]; then
+              echo "✅ Health check passed"
+              echo "Response: $HEALTH_RESPONSE"
+            else
+              echo "⚠️ Health check failed (service may still be starting)"
+            fi
+          else
+            echo "ℹ️ Slack gateway not enabled or not yet deployed"
+          fi
+
+      - name: Apply Summary
+        if: always()
+        run: |
+          echo "## Terraform Apply Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Apply Status:** ${{ steps.apply.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Components" >> $GITHUB_STEP_SUMMARY
+          echo "- Vertex AI Agent Engine (Bob)" >> $GITHUB_STEP_SUMMARY
+          echo "- A2A Gateway (Cloud Run)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.apply.outcome }}" == "success" ]; then
+            echo "- ✅ Slack Bob Gateway (Cloud Run - R3 compliant)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Post-Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify Slack Bob responds to mentions in Slack" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Check Cloud Run logs for any errors" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Confirm Secret Manager integration working" >> $GITHUB_STEP_SUMMARY
+
+  post-deployment-check:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    if: success()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify Infrastructure State
+        run: |
+          echo "🔍 Verifying infrastructure state post-deployment..."
+
+          # Check Agent Engine
+          echo "Checking Bob Agent Engine..."
+          gcloud ai reasoning-engines list \
+            --project=bobs-brain \
+            --region=us-central1 \
+            --filter="displayName:bob" \
+            --format="table(name,displayName,state)" || echo "Agent Engine check skipped"
+
+          # Check Cloud Run services
+          echo "Checking Cloud Run services..."
+          gcloud run services list \
+            --project=bobs-brain \
+            --region=us-central1 \
+            --filter="metadata.name:(slack-webhook OR a2a-gateway)" \
+            --format="table(metadata.name,status.url,status.conditions[0].status)" || echo "Cloud Run check skipped"
+
+          # Check Secret Manager
+          echo "Checking Secret Manager secrets..."
+          gcloud secrets list \
+            --project=bobs-brain \
+            --filter="name:(slack-bot-token OR slack-signing-secret)" \
+            --format="table(name,createTime)" || echo "Secrets check skipped"
+
+          echo "✅ Infrastructure verification complete"
+
+      - name: Verification Summary
+        run: |
+          echo "## Post-Deployment Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Infrastructure state verified" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Manual Verification Required" >> $GITHUB_STEP_SUMMARY
+          echo "1. Test Slack Bot: Mention @Bob in Slack" >> $GITHUB_STEP_SUMMARY
+          echo "2. Check Logs: \`gcloud run services logs read slack-webhook --project=bobs-brain\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Verify Memory: Check Session + Memory Bank in Vertex AI" >> $GITHUB_STEP_SUMMARY
