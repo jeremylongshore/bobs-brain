@@ -612,27 +612,84 @@ git push origin main
 # 6. Deploys Cloud Run gateways
 ```
 
-### Manual Deployment (Local Testing)
+### Terraform Infrastructure Deployment (R4-Compliant)
+
+**All infrastructure (including Slack gateway) is deployed via Terraform only:**
 
 ```bash
-# For local development only
-# Production MUST use CI
+# ⚠️ NEVER use manual gcloud commands for Slack Bob
+# ❌ WRONG: gcloud run services update slack-webhook ...
+# ✅ CORRECT: Use Terraform + GitHub Actions
 
-cd agents/bob
-adk deploy agent_engine \
-  --project-id=$PROJECT_ID \
-  --region=$LOCATION \
-  --staging-bucket=gs://$PROJECT_ID-adk-staging
-
-# Deploy gateways
-cd service/a2a_gateway
-gcloud run deploy a2a-gateway --source .
-
-cd ../slack_webhook
-gcloud run deploy slack-webhook --source .
+# Deploy via GitHub Actions (RECOMMENDED):
+# 1. Update Terraform code in infra/terraform/
+# 2. Create PR → terraform plan runs automatically
+# 3. Merge PR to main
+# 4. Trigger workflow: .github/workflows/terraform-prod.yml
+#    - Set apply=true for production deployment
 ```
 
-**Important:** Manual deployments skip drift checks and don't generate proper audit trails. Use CI for production.
+**Local Terraform Testing (Validation Only):**
+```bash
+# Validate Terraform changes locally (no apply)
+cd infra/terraform
+terraform init -backend-config="bucket=bobs-brain-terraform-state"
+terraform validate
+terraform plan -var-file=envs/prod.tfvars
+
+# ⚠️ NEVER run terraform apply locally for production
+# Always use GitHub Actions for actual deployments
+```
+
+**Important:** R4 enforces **CI-only deployments**. Manual `gcloud` or local `terraform apply` commands create deployment drift and violate Hard Mode rules.
+
+---
+
+## 💬 Slack Integration
+
+Bob communicates via Slack through an **R3-compliant Cloud Run gateway** that proxies to Agent Engine.
+
+### Architecture
+
+```
+Slack Events API
+    ↓
+Cloud Run: slack-webhook (R3 gateway - HTTP proxy only)
+    ├─ Verifies Slack signature
+    ├─ Transforms to Agent Engine format
+    └─ POST /reasoningEngines/{id}:query
+        ↓
+Vertex AI Agent Engine: Bob
+    ├─ ADK agent (google-adk)
+    ├─ Dual Memory (Session + Memory Bank)
+    └─ Returns response
+        ↓
+Cloud Run: slack-webhook
+    └─ Formats response for Slack
+```
+
+### Deployment (R4-Compliant)
+
+**✅ Correct Method:**
+```bash
+# Use Terraform + GitHub Actions workflow
+# Workflow: .github/workflows/terraform-prod.yml
+# Module: infra/terraform/modules/slack_bob_gateway/
+```
+
+**❌ Banned Methods (R4 Violations):**
+```bash
+# NEVER DO THIS:
+gcloud run services update slack-webhook ...  # Violates R4
+gcloud run deploy slack-webhook --source .    # Violates R4
+```
+
+**Configuration:**
+- Secrets: Stored in Secret Manager (`slack-bot-token`, `slack-signing-secret`)
+- Feature Flag: `slack_bob_enabled = true` in `envs/prod.tfvars`
+- Environment: `SLACK_BOB_ENABLED=true` set by Terraform module
+
+**Operator Guide:** See `000-docs/164-AA-REPT-phase-24-slack-bob-ci-deploy-and-restore.md` for complete deployment instructions.
 
 ---
 

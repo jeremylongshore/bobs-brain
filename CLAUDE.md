@@ -41,6 +41,12 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 - See: `000-docs/6767-DR-STND-agentcards-and-a2a-contracts.md`
 - See: `000-docs/6767-121-DR-STND-a2a-compliance-tck-and-inspector.md`
 
+**Slack Bob Deployment (Phase 24 - R4 Compliant):**
+- ✅ **Deploy via Terraform only**: `.github/workflows/terraform-prod.yml`
+- ⛔ **NEVER use**: `.github/workflows/deploy-slack-webhook.yml` (deprecated - R4 violation)
+- ⛔ **NEVER run**: `gcloud run services update slack-webhook` (manual deploys violate R4)
+- 📖 **Operator Guide**: `000-docs/164-AA-REPT-phase-24-slack-bob-ci-deploy-and-restore.md`
+
 ---
 
 ## 2. Repo Context (Short)
