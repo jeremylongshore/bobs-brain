@@ -52,6 +52,9 @@ jobs:
         run: make check-config
         env:
           DEPLOYMENT_ENV: dev
+          PROJECT_ID: bobs-brain
+          LOCATION: us-central1
+          AGENT_SPIFFE_ID: spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0
 
       - name: Run ARV minimum check
         run: make check-arv-minimum
@@ -88,6 +91,9 @@ jobs:
         run: make arv-department
         env:
           DEPLOYMENT_ENV: dev
+          PROJECT_ID: bobs-brain
+          LOCATION: us-central1
+          AGENT_SPIFFE_ID: spiffe://intent.solutions/agent/bobs-brain/dev/us-central1/0.10.0
         # Note: Includes LIVE3 config readiness check (non-blocking)
 
   # EXPERIMENTAL: A2A Contract Validation (INSPECTOR-2)
@@ -253,7 +259,7 @@ jobs:
           test -f CHANGELOG.md || { echo "❌ CHANGELOG.md missing"; exit 1; }
 
           # Required directories (canonical structure)
-          for dir in .github 000-docs adk my_agent service infra scripts tests; do
+          for dir in .github 000-docs agents service infra scripts tests; do
             test -d "$dir" || { echo "❌ Canonical directory $dir missing"; exit 1; }
           done
 

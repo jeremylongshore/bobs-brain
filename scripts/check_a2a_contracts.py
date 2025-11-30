@@ -44,7 +44,7 @@ REQUIRED_AGENTCARD_FIELDS = [
 ]
 
 REQUIRED_SKILL_FIELDS = [
-    "skill_id",
+    "id",  # A2A v0.3.0 uses "id" instead of "skill_id"
     "name",
     "description",
     "input_schema",
