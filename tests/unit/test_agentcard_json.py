@@ -59,11 +59,11 @@ class TestForemanAgentCard:
         assert len(card["skills"]) > 0
 
     def test_skill_has_required_structure(self):
-        """Each skill has required fields (skill_id, name, description, input_schema, output_schema)."""
+        """Each skill has required fields (id, name, description, input_schema, output_schema)."""
         card = load_agentcard("iam-senior-adk-devops-lead")
 
         for skill in card["skills"]:
-            assert "skill_id" in skill
+            assert "id" in skill  # Changed from skill_id to id for A2A v0.3.0 compliance
             assert "name" in skill
             assert "description" in skill
             assert "input_schema" in skill
@@ -136,7 +136,7 @@ class TestSpecialistAgentCard:
         card = load_agentcard("iam_adk")
 
         for skill in card["skills"]:
-            assert "skill_id" in skill
+            assert "id" in skill  # Changed from skill_id to id for A2A v0.3.0 compliance
             assert "name" in skill
             assert "description" in skill
             assert "input_schema" in skill

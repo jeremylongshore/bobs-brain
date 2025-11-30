@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-fix-impl",
   "version": "0.10.0",
-  "url": "https://iam-fix-impl.intent.solutions",
   "description": "iam-fix-impl - Implementation Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-fix-impl/dev/us-central1/0.10.0\n\niam-fix-impl implements fixes from FixPlan specifications, writes code changes, creates unit tests, and ensures Hard Mode compliance.\n",
+  "url": "https://iam-fix-impl.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-fix-impl.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "code_implementation",
     "test_writing",
@@ -17,7 +31,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_fix_impl.implement_fix",
       "name": "Implement Fix",
       "description": "Implement code changes according to FixPlan specification",
       "input_schema": {
@@ -76,10 +89,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_fix_impl.implement_fix",
+      "tags": [
+        "iam_fix_impl",
+        "implement_fix"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_fix_impl.generate_code_diff",
       "name": "Generate Code Diff",
       "description": "Generate unified diff for proposed code changes",
       "input_schema": {
@@ -113,10 +131,15 @@
             "type": "integer"
           }
         }
-      }
+      },
+      "id": "iam_fix_impl.generate_code_diff",
+      "tags": [
+        "iam_fix_impl",
+        "generate_code_diff"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_fix_impl.create_unit_tests",
       "name": "Create Unit Tests",
       "description": "Create unit tests for implemented changes",
       "input_schema": {
@@ -154,8 +177,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_fix_impl.create_unit_tests",
+      "tags": [
+        "iam_fix_impl",
+        "create_unit_tests"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-fix-impl/dev/us-central1/0.10.0"
 }

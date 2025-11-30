@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-senior-adk-devops-lead",
   "version": "0.11.0",
+  "description": "IAM Senior ADK DevOps Lead - Foreman Agent\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.11.0\n\nThe Foreman agent orchestrates a department of specialized IAM worker agents for ADK-based software engineering tasks:\n- Routes tasks to appropriate specialist workers (iam-adk, iam-issue, iam-fix, iam-qa, iam-docs)\n- Coordinates multi-step workflows across worker agents\n- Aggregates results from distributed agent teams\n- Enforces ADK/Vertex AI compliance standards (Hard Mode rules R1-R8)\n- Provides unified task tracking and status reporting\n\nThe Foreman operates as a middle-tier orchestrator in the bob \u2192 foreman \u2192 workers architecture, implementing the Agent Factory pattern with A2A protocol for agent-to-agent communication.",
   "url": "https://bob.intent.solutions/foreman",
-  "description": "IAM Senior ADK DevOps Lead - Foreman Agent\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.11.0\n\nThe Foreman agent orchestrates a department of specialized IAM worker agents for ADK-based software engineering tasks:\n- Routes tasks to appropriate specialist workers (iam-adk, iam-issue, iam-fix, iam-qa, iam-docs)\n- Coordinates multi-step workflows across worker agents\n- Aggregates results from distributed agent teams\n- Enforces ADK/Vertex AI compliance standards (Hard Mode rules R1-R8)\n- Provides unified task tracking and status reporting\n\nThe Foreman operates as a middle-tier orchestrator in the bob → foreman → workers architecture, implementing the Agent Factory pattern with A2A protocol for agent-to-agent communication.",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://bob.intent.solutions/foreman",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "task_routing",
     "worker_coordination",
@@ -18,7 +32,6 @@
   ],
   "skills": [
     {
-      "skill_id": "foreman.route_task",
       "name": "Route Task to Worker",
       "description": "Analyze task requirements and route to appropriate IAM specialist worker",
       "input_schema": {
@@ -80,10 +93,15 @@
             "description": "Breakdown of task into subtasks (if applicable)"
           }
         }
-      }
+      },
+      "id": "foreman.route_task",
+      "tags": [
+        "foreman",
+        "route_task"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "foreman.coordinate_workflow",
       "name": "Coordinate Multi-Agent Workflow",
       "description": "Orchestrate a multi-step workflow across multiple IAM worker agents",
       "input_schema": {
@@ -161,10 +179,15 @@
             "description": "Estimated workflow completion time"
           }
         }
-      }
+      },
+      "id": "foreman.coordinate_workflow",
+      "tags": [
+        "foreman",
+        "coordinate_workflow"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "foreman.aggregate_results",
       "name": "Aggregate Worker Results",
       "description": "Collect and synthesize results from multiple worker agents",
       "input_schema": {
@@ -244,10 +267,15 @@
             }
           }
         }
-      }
+      },
+      "id": "foreman.aggregate_results",
+      "tags": [
+        "foreman",
+        "aggregate_results"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "foreman.enforce_compliance",
       "name": "Enforce ADK/Vertex Compliance",
       "description": "Validate worker outputs against Hard Mode rules (R1-R8) and ADK standards",
       "input_schema": {
@@ -309,8 +337,17 @@
             }
           }
         }
-      }
+      },
+      "id": "foreman.enforce_compliance",
+      "tags": [
+        "foreman",
+        "enforce_compliance"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.11.0"
 }

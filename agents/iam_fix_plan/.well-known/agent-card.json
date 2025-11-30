@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-fix-plan",
   "version": "0.10.0",
-  "url": "https://iam-fix-plan.intent.solutions",
   "description": "iam-fix-plan - Fix Planning & Implementation Strategy Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-fix-plan/dev/us-central1/0.10.0\n\niam-fix-plan converts IssueSpecs into concrete FixPlan implementations with clear strategies, risk assessments, and testing plans.\n",
+  "url": "https://iam-fix-plan.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-fix-plan.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "fix_strategy_design",
     "risk_assessment",
@@ -18,7 +32,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_fix_plan.create_fix_plan",
       "name": "Create Fix Plan",
       "description": "Convert IssueSpec into detailed FixPlan with implementation steps",
       "input_schema": {
@@ -76,10 +89,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_fix_plan.create_fix_plan",
+      "tags": [
+        "iam_fix_plan",
+        "create_fix_plan"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_fix_plan.assess_fix_risk",
       "name": "Assess Fix Risk",
       "description": "Assess risk level and impact of proposed fix",
       "input_schema": {
@@ -124,10 +142,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_fix_plan.assess_fix_risk",
+      "tags": [
+        "iam_fix_plan",
+        "assess_fix_risk"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_fix_plan.design_testing_strategy",
       "name": "Design Testing Strategy",
       "description": "Design comprehensive testing strategy for fix validation",
       "input_schema": {
@@ -172,8 +195,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_fix_plan.design_testing_strategy",
+      "tags": [
+        "iam_fix_plan",
+        "design_testing_strategy"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-fix-plan/dev/us-central1/0.10.0"
 }

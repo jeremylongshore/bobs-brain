@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-qa",
   "version": "0.10.0",
-  "url": "https://iam-qa.intent.solutions",
   "description": "iam-qa - Testing & Quality Assurance Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-qa/dev/us-central1/0.10.0\n\niam-qa designs test suites, validates coverage, runs smoke tests, and produces QAVerdict verdicts for deployment decisions.\n",
+  "url": "https://iam-qa.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-qa.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "test_design",
     "coverage_validation",
@@ -17,7 +31,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_qa.design_test_suite",
       "name": "Design Test Suite",
       "description": "Design comprehensive test suite for implemented changes",
       "input_schema": {
@@ -66,10 +79,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_qa.design_test_suite",
+      "tags": [
+        "iam_qa",
+        "design_test_suite"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_qa.validate_test_coverage",
       "name": "Validate Test Coverage",
       "description": "Validate that test coverage meets quality standards",
       "input_schema": {
@@ -107,10 +125,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_qa.validate_test_coverage",
+      "tags": [
+        "iam_qa",
+        "validate_test_coverage"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_qa.run_smoke_tests",
       "name": "Run Smoke Tests",
       "description": "Execute smoke tests for basic functionality validation",
       "input_schema": {
@@ -163,10 +186,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_qa.run_smoke_tests",
+      "tags": [
+        "iam_qa",
+        "run_smoke_tests"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_qa.generate_qa_verdict",
       "name": "Generate QA Verdict",
       "description": "Produce QA verdict for deployment decision",
       "input_schema": {
@@ -228,8 +256,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_qa.generate_qa_verdict",
+      "tags": [
+        "iam_qa",
+        "generate_qa_verdict"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-qa/dev/us-central1/0.10.0"
 }

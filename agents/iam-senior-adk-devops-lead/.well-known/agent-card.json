@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-senior-adk-devops-lead",
   "version": "0.10.0",
-  "url": "https://iam-senior-adk-devops-lead.intent.solutions",
   "description": "iam-senior-adk-devops-lead - ADK Department Foreman\n\n**Identity:** spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0\n\niam-senior-adk-devops-lead orchestrates the IAM specialist agents, delegates tasks, coordinates workflows, and ensures quality across the department.\n",
+  "url": "https://iam-senior-adk-devops-lead.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-senior-adk-devops-lead.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "task_orchestration",
     "specialist_delegation",
@@ -18,7 +32,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_foreman.plan_task",
       "name": "Plan Task",
       "description": "Break down high-level task into specialist assignments",
       "input_schema": {
@@ -74,10 +87,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_foreman.plan_task",
+      "tags": [
+        "iam_foreman",
+        "plan_task"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_foreman.delegate_to_specialist",
       "name": "Delegate to Specialist",
       "description": "Assign task to appropriate IAM specialist agent",
       "input_schema": {
@@ -142,10 +160,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_foreman.delegate_to_specialist",
+      "tags": [
+        "iam_foreman",
+        "delegate_to_specialist"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_foreman.coordinate_workflow",
       "name": "Coordinate Workflow",
       "description": "Orchestrate multi-step workflow across specialists",
       "input_schema": {
@@ -209,10 +232,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_foreman.coordinate_workflow",
+      "tags": [
+        "iam_foreman",
+        "coordinate_workflow"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_foreman.aggregate_results",
       "name": "Aggregate Results",
       "description": "Combine and synthesize results from multiple specialists",
       "input_schema": {
@@ -265,10 +293,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_foreman.aggregate_results",
+      "tags": [
+        "iam_foreman",
+        "aggregate_results"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_foreman.check_quality",
       "name": "Check Quality",
       "description": "Validate work quality and compliance before delivery",
       "input_schema": {
@@ -325,8 +358,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_foreman.check_quality",
+      "tags": [
+        "iam_foreman",
+        "check_quality"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-senior-adk-devops-lead/dev/us-central1/0.10.0"
 }

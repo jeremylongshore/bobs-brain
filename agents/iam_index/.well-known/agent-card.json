@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-index",
   "version": "0.10.0",
-  "url": "https://iam-index.intent.solutions",
   "description": "iam-index - Knowledge Management Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.10.0\n\niam-index manages Vertex AI Search integration, indexes code and documentation, and maintains the knowledge base for department access.\n",
+  "url": "https://iam-index.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-index.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "vertex_search_management",
     "code_indexing",
@@ -17,7 +31,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_index.index_code_repository",
       "name": "Index Code Repository",
       "description": "Index code repository for searchability in Vertex AI Search",
       "input_schema": {
@@ -76,10 +89,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_index.index_code_repository",
+      "tags": [
+        "iam_index",
+        "index_code_repository"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_index.index_documentation",
       "name": "Index Documentation",
       "description": "Index documentation files into Vertex AI Search datastore",
       "input_schema": {
@@ -124,10 +142,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_index.index_documentation",
+      "tags": [
+        "iam_index",
+        "index_documentation"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_index.search_knowledge_base",
       "name": "Search Knowledge Base",
       "description": "Search indexed knowledge base using Vertex AI Search",
       "input_schema": {
@@ -187,10 +210,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_index.search_knowledge_base",
+      "tags": [
+        "iam_index",
+        "search_knowledge_base"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_index.update_knowledge_base",
       "name": "Update Knowledge Base",
       "description": "Update knowledge base with new or modified content",
       "input_schema": {
@@ -248,8 +276,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_index.update_knowledge_base",
+      "tags": [
+        "iam_index",
+        "update_knowledge_base"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-index/dev/us-central1/0.10.0"
 }

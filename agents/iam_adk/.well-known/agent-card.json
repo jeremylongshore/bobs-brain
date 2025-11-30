@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-adk",
   "version": "0.10.0",
-  "url": "https://iam-adk.intent.solutions",
   "description": "iam-adk - ADK/Vertex Design & Static Analysis Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0\n\niam-adk specializes in analyzing ADK agent implementations for pattern compliance and best practices. Core expertise includes:\n- Reviewing ADK agent code against Hard Mode rules (R1-R8)\n- Analyzing Agent-to-Agent (A2A) communication patterns\n- Validating AgentCard schemas and skill definitions\n- Detecting ADK anti-patterns and architectural issues\n- Producing structured AuditReports and IssueSpecs\n- Recommending ADK best practices and improvements\n\nThis agent enforces google-adk patterns, Vertex AI Agent Engine compliance, and department adk iam standards.\n",
+  "url": "https://iam-adk.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-adk.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "adk_pattern_analysis",
     "agentcard_validation",
@@ -18,7 +32,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_adk.check_adk_compliance",
       "name": "Check ADK Compliance",
       "description": "Analyze agent code for ADK pattern compliance and Hard Mode rule violations",
       "input_schema": {
@@ -120,10 +133,15 @@
             ]
           }
         }
-      }
+      },
+      "id": "iam_adk.check_adk_compliance",
+      "tags": [
+        "iam_adk",
+        "check_adk_compliance"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_adk.validate_agentcard",
       "name": "Validate AgentCard",
       "description": "Validate AgentCard structure, schemas, and compliance with A2A standards",
       "input_schema": {
@@ -185,10 +203,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_adk.validate_agentcard",
+      "tags": [
+        "iam_adk",
+        "validate_agentcard"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_adk.analyze_agent_architecture",
       "name": "Analyze Agent Architecture",
       "description": "Analyze agent architecture for ADK best practices and design patterns",
       "input_schema": {
@@ -262,10 +285,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_adk.analyze_agent_architecture",
+      "tags": [
+        "iam_adk",
+        "analyze_agent_architecture"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_adk.generate_audit_report",
       "name": "Generate Audit Report",
       "description": "Generate comprehensive ADK compliance audit report",
       "input_schema": {
@@ -332,8 +360,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_adk.generate_audit_report",
+      "tags": [
+        "iam_adk",
+        "generate_audit_report"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-adk/dev/us-central1/0.10.0"
 }

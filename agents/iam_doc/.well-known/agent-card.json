@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-doc",
   "version": "0.10.0",
-  "url": "https://iam-doc.intent.solutions",
   "description": "iam-doc - Documentation Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-doc/dev/us-central1/0.10.0\n\niam-doc generates After-Action Reports (AARs), updates README files, creates design docs, and manages 000-docs/ structure.\n",
+  "url": "https://iam-doc.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-doc.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "aar_generation",
     "readme_maintenance",
@@ -17,7 +31,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_doc.generate_aar",
       "name": "Generate After-Action Report",
       "description": "Generate comprehensive AAR for completed phase",
       "input_schema": {
@@ -94,10 +107,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_doc.generate_aar",
+      "tags": [
+        "iam_doc",
+        "generate_aar"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_doc.update_readme",
       "name": "Update README",
       "description": "Update README files with latest information",
       "input_schema": {
@@ -160,10 +178,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_doc.update_readme",
+      "tags": [
+        "iam_doc",
+        "update_readme"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_doc.create_design_doc",
       "name": "Create Design Document",
       "description": "Create architecture or design documentation",
       "input_schema": {
@@ -223,8 +246,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_doc.create_design_doc",
+      "tags": [
+        "iam_doc",
+        "create_design_doc"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-doc/dev/us-central1/0.10.0"
 }

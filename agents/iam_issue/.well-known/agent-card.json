@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-issue",
   "version": "0.10.0",
-  "url": "https://iam-issue.intent.solutions",
   "description": "iam-issue - Issue Author & Formatter Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-issue/dev/us-central1/0.10.0\n\niam-issue specializes in converting audit findings and analysis results into well-formatted GitHub issues. Core expertise includes:\n- Converting AuditReports and findings into GitHub IssueSpecs\n- Formatting issues with proper markdown structure and sections\n- Validating issue specs for completeness and clarity\n- Generating appropriate labels based on severity and category\n- Creating high-quality issue bodies ready for GitHub submission\n- Ensuring issues follow repository standards and conventions\n\nThis agent produces structured IssueSpec artifacts that can be directly submitted to GitHub or reviewed by QA.\n",
+  "url": "https://iam-issue.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-issue.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "issue_authoring",
     "markdown_formatting",
@@ -18,7 +32,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_issue.convert_finding_to_issue",
       "name": "Convert Finding to Issue",
       "description": "Convert audit finding or compliance violation into GitHub issue spec",
       "input_schema": {
@@ -108,10 +121,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_issue.convert_finding_to_issue",
+      "tags": [
+        "iam_issue",
+        "convert_finding_to_issue"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_issue.format_issue_body",
       "name": "Format Issue Body",
       "description": "Format issue body with markdown structure and required sections",
       "input_schema": {
@@ -159,10 +177,15 @@
             "description": "List of included sections"
           }
         }
-      }
+      },
+      "id": "iam_issue.format_issue_body",
+      "tags": [
+        "iam_issue",
+        "format_issue_body"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_issue.generate_labels",
       "name": "Generate Issue Labels",
       "description": "Generate appropriate labels based on issue content and severity",
       "input_schema": {
@@ -215,10 +238,15 @@
             "type": "string"
           }
         }
-      }
+      },
+      "id": "iam_issue.generate_labels",
+      "tags": [
+        "iam_issue",
+        "generate_labels"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_issue.validate_issue_spec",
       "name": "Validate Issue Spec",
       "description": "Validate issue spec for completeness and quality before submission",
       "input_schema": {
@@ -288,8 +316,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_issue.validate_issue_spec",
+      "tags": [
+        "iam_issue",
+        "validate_issue_spec"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-issue/dev/us-central1/0.10.0"
 }

@@ -1,8 +1,22 @@
 {
+  "protocol_version": "0.3.0",
   "name": "iam-cleanup",
   "version": "0.10.0",
-  "url": "https://iam-cleanup.intent.solutions",
   "description": "iam-cleanup - Repository Hygiene & Cleanup Specialist\n\n**Identity:** spiffe://intent.solutions/agent/iam-cleanup/dev/us-central1/0.10.0\n\niam-cleanup detects dead code, finds duplicated code, identifies structural issues, and proposes CleanupTask specifications.\n",
+  "url": "https://iam-cleanup.intent.solutions",
+  "preferred_transport": "JSONRPC",
+  "additional_interfaces": [
+    {
+      "url": "https://iam-cleanup.intent.solutions",
+      "transport": "JSONRPC"
+    }
+  ],
+  "provider": {
+    "organization": "Intent Solutions",
+    "url": "https://intent.solutions"
+  },
+  "documentation_url": "https://github.com/jeremylongshore/bobs-brain",
+  "icon_url": null,
   "capabilities": [
     "dead_code_detection",
     "duplication_detection",
@@ -17,7 +31,6 @@
   ],
   "skills": [
     {
-      "skill_id": "iam_cleanup.detect_dead_code",
       "name": "Detect Dead Code",
       "description": "Identify unused code, functions, and dependencies",
       "input_schema": {
@@ -85,10 +98,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_cleanup.detect_dead_code",
+      "tags": [
+        "iam_cleanup",
+        "detect_dead_code"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_cleanup.find_code_duplication",
       "name": "Find Code Duplication",
       "description": "Detect duplicated code blocks and refactoring opportunities",
       "input_schema": {
@@ -145,10 +163,15 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_cleanup.find_code_duplication",
+      "tags": [
+        "iam_cleanup",
+        "find_code_duplication"
+      ],
+      "examples": []
     },
     {
-      "skill_id": "iam_cleanup.generate_cleanup_tasks",
       "name": "Generate Cleanup Tasks",
       "description": "Generate prioritized cleanup task specifications",
       "input_schema": {
@@ -208,8 +231,17 @@
             }
           }
         }
-      }
+      },
+      "id": "iam_cleanup.generate_cleanup_tasks",
+      "tags": [
+        "iam_cleanup",
+        "generate_cleanup_tasks"
+      ],
+      "examples": []
     }
   ],
+  "security": null,
+  "security_schemes": null,
+  "supports_authenticated_extended_card": false,
   "spiffe_id": "spiffe://intent.solutions/agent/iam-cleanup/dev/us-central1/0.10.0"
 }
