@@ -527,8 +527,8 @@ python3 scripts/run_portfolio_swe.py
 - ✅ **IAM-secured** - Service account-based access control
 
 **Documentation:**
-- [Org Storage Architecture](000-docs/6767-112-AT-ARCH-org-storage-architecture.md)
-- [LIVE1-GCS Implementation AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md)
+- [Org Storage Architecture](000-docs/6767-AT-ARCH-org-storage-architecture.md)
+<!-- - [LIVE1-GCS Implementation AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md) (FILE NOT FOUND) -->
 
 ---
 
@@ -559,9 +559,9 @@ When you port Bob's Brain to your product (DiagnosticPro, PipelinePilot, etc.):
 ### Porting Guides
 
 Start here:
-1. [Porting Guide](000-docs/6767-105-DR-GUIDE-porting-iam-department-to-new-repo.md) - Step-by-step instructions
-2. [Integration Checklist](000-docs/6767-106-DR-STND-iam-department-integration-checklist.md) - Don't miss anything
-3. [Template Scope](000-docs/6767-104-DR-STND-iam-department-template-scope-and-rules.md) - What to customize
+1. [Porting Guide](000-docs/6767-DR-GUIDE-porting-iam-department-to-new-repo.md) - Step-by-step instructions
+2. [Integration Checklist](000-docs/6767-DR-STND-iam-department-integration-checklist.md) - Don't miss anything
+3. [Template Scope](000-docs/6767-DR-STND-iam-department-template-scope-and-rules.md) - What to customize
 4. [Template Files](templates/iam-department/README.md) - Reusable components
 
 ### Original Template
@@ -677,11 +677,23 @@ Cloud Run: slack-webhook
 # Module: infra/terraform/modules/slack_bob_gateway/
 ```
 
-**❌ Banned Methods (R4 Violations):**
+**❌ DEPRECATED - DO NOT USE (R4 Violations):**
 ```bash
-# NEVER DO THIS:
-gcloud run services update slack-webhook ...  # Violates R4
-gcloud run deploy slack-webhook --source .    # Violates R4
+# ⛔ THESE COMMANDS ARE BANNED - R4 HARD MODE VIOLATION
+# Manual deployments create drift and violate CI-only deployment rules
+
+# NEVER USE THESE:
+gcloud run services update slack-webhook ...  # R4 VIOLATION - Use Terraform
+gcloud run deploy slack-webhook --source .    # R4 VIOLATION - Use Terraform
+
+# ⚠️  Using these commands will:
+# - Create configuration drift (dev != prod)
+# - Bypass CI quality gates (drift detection, ARV, tests)
+# - Leave orphaned resources (service accounts, secrets)
+# - Violate audit trail requirements
+# - Block future Terraform deploys (state mismatch)
+
+# ✅ CORRECT METHOD: See above - Use Terraform + GitHub Actions workflow
 ```
 
 **Configuration:**
@@ -700,7 +712,7 @@ All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 ### 🎯 Start Here (New to the Repo?)
 
 **For Developers:**
-1. **[Master Index](000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md)** - Complete reference map for Agent Engine/A2A/Inline Deployment
+1. **[Master Index](000-docs/6767-DR-INDEX-agent-engine-a2a-inline-deploy.md)** - Complete reference map for Agent Engine/A2A/Inline Deployment
 2. **[ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md)** - Hard Mode rules (R1-R8) and architecture
 3. **[CLAUDE.md](CLAUDE.md)** - How Claude Code works with this repo
 
@@ -717,7 +729,7 @@ All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 ### Key Standards (6767 Canonical Docs)
 
 **Agent Engine & Deployment (v0.10.0):**
-- **[Master Index](000-docs/6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md)** - Complete reference map (START HERE)
+- **[Master Index](000-docs/6767-DR-INDEX-agent-engine-a2a-inline-deploy.md)** - Complete reference map (START HERE)
 - [ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md) - Hard Mode rules (R1-R8)
 - [Inline Source Deployment](000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md) - Deploy pattern, ARV gates
 - [ARV Minimum Gate](000-docs/6767-DR-STND-arv-minimum-gate.md) - Agent Readiness Verification baseline
@@ -725,21 +737,21 @@ All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 
 **A2A Protocol & AgentCards (v0.10.0):**
 - [AgentCards & A2A Contracts](000-docs/6767-DR-STND-agentcards-and-a2a-contracts.md) - Contract structure, skill patterns
-- [Prompt Design & A2A](000-docs/6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md) - 5-part template, contract-first
+- [Prompt Design & A2A](000-docs/6767-DR-STND-prompt-design-a2a-contracts-iam-dept.md) - 5-part template, contract-first
 - [a2a-inspector Integration](000-docs/6767-A2AINSP-AA-REPT-a2a-inspector-integration-for-department-adk-iam.md) - Runtime validation
 
 **Portfolio & Org Storage (v0.9.0):**
-- [Portfolio Scope](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md) - PORT1/PORT2/PORT3 plan
-- [Portfolio Orchestrator AAR](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md) - Implementation
-- [Org Storage Architecture](000-docs/6767-112-AT-ARCH-org-storage-architecture.md) - GCS hub design
-- [LIVE1-GCS AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md) - v0.9.0 implementation
+<!-- - [Portfolio Scope](000-docs/6767-109-PP-PLAN-multi-repo-swe-portfolio-scope.md) - PORT1/PORT2/PORT3 plan (FILE NOT FOUND) -->
+<!-- - [Portfolio Orchestrator AAR](000-docs/6767-110-AA-REPT-portfolio-orchestrator-implementation.md) - Implementation (FILE NOT FOUND) -->
+- [Org Storage Architecture](000-docs/6767-AT-ARCH-org-storage-architecture.md) - GCS hub design
+<!-- - [LIVE1-GCS AAR](000-docs/6767-113-AA-REPT-live1-gcs-implementation.md) - v0.9.0 implementation (FILE NOT FOUND) -->
 
 **IAM Department Templates:**
 - [Operations Runbook](000-docs/6767-RB-OPS-adk-department-operations-runbook.md) - Day-to-day operations
 - [Porting Guide](000-docs/6767-DR-GUIDE-porting-iam-department-to-new-repo.md) - Step-by-step instructions
 - [Integration Checklist](000-docs/6767-DR-STND-iam-department-integration-checklist.md) - Complete checklist
 - [Template Standards](000-docs/6767-DR-STND-iam-department-template-scope-and-rules.md) - Scope and customization
-- [User Guide](000-docs/6767-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md) - How to use this department
+<!-- - [User Guide](000-docs/6767-DR-GUIDE-how-to-use-bob-and-iam-department-for-swe.md) - How to use this department (FILE NOT FOUND) -->
 
 ### Document Filing System
 
@@ -750,7 +762,7 @@ Format: `NNN-CC-ABCD-description.md`
 - **ABCD:** Document type (ARCH, REPT, ALIG, CRIT, CONF, etc.)
 - **description:** 1-4 words in kebab-case
 
-**Example:** `6767-112-AT-ARCH-org-storage-architecture.md`
+**Example:** `6767-AT-ARCH-org-storage-architecture.md`
 
 ---
 
@@ -884,7 +896,7 @@ A2A_GATEWAY_URL=https://a2a-gateway-xxx.run.app  # Preferred routing
 4. Test: `make slack-dev-smoke`
 5. Mention in Slack: `@bobs_brain Hello!`
 
-**Full Guide:** See [000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md](000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md)
+<!-- **Full Guide:** See [000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md](000-docs/6772-DR-GUIDE-slack-dev-integration-operator-guide.md) (FILE NOT FOUND) -->
 
 ### Terraform Variables
 

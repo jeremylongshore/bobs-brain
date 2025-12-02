@@ -405,11 +405,175 @@ gh workflow run deploy-prod.yml \
 - Slack response times
 
 **Rollback Protocol**:
+
+> ⚠️ **DEPRECATED (R4 Violation):** Manual `gcloud` traffic updates are banned.
+> ✅ **Use instead:** Terraform-based rollback (see 6767-122 SOP)
+
 ```bash
-gcloud run services update-traffic slack-webhook \
-  --to-revisions=PREVIOUS_REVISION=100 \
-  --region=us-central1
+# ❌ DEPRECATED - DO NOT USE (R4 Violation)
+# gcloud run services update-traffic slack-webhook \
+#   --to-revisions=PREVIOUS_REVISION=100 \
+#   --region=us-central1
+
+# ✅ CORRECT: Terraform-based rollback
+# 1. Revert Terraform code to previous version
+# 2. Update tfvars with previous image tag
+# 3. Deploy via workflow: gh workflow run deploy-slack-gateway-prod.yml --field apply=true
+# See: 000-docs/6767-122-DR-STND-slack-gateway-deploy-pattern.md (Rollback Procedures)
 ```
+
+#### Slack Gateway Deployment (Phase 25 - Terraform+CI Only)
+
+**Overview**: As of Phase 25, Slack Bob Gateway deployments are **locked to Terraform+CI only** to enforce R4 compliance and eliminate configuration drift.
+
+**Key Changes:**
+- ✅ **Terraform-First**: All infrastructure changes via `infra/terraform/modules/slack_bob_gateway/`
+- ✅ **CI-Only Deployments**: GitHub Actions workflows with WIF authentication (no manual gcloud)
+- ✅ **Automated Validation**: ARV checks run before every deployment
+- ✅ **Approval Gates**: Production requires 2 manual approvals
+- ❌ **BANNED**: `gcloud run deploy`, `gcloud run services update`, Console changes
+
+**Canonical SOP**: `000-docs/6767-122-DR-STND-slack-gateway-deploy-pattern.md`
+
+**Quick Start:**
+
+**Dev Deployment (Automatic):**
+```bash
+# Triggered automatically on push to main (Slack gateway changes)
+# OR manual trigger:
+gh workflow run deploy-slack-gateway-dev.yml
+
+# Monitor:
+gh run list --workflow=deploy-slack-gateway-dev.yml --limit=5
+```
+
+**Production Deployment (Manual Approval Gates):**
+```bash
+# Step 1: Trigger plan (review changes)
+gh workflow run deploy-slack-gateway-prod.yml \
+  --field apply=false
+
+# Step 2: Review plan output in Actions UI
+# Step 3: Trigger apply (requires 2 approvals)
+gh workflow run deploy-slack-gateway-prod.yml \
+  --field apply=true
+
+# Step 4: Approve in GitHub UI (Environments → production)
+# Step 5: Monitor deployment
+gh run view --workflow=deploy-slack-gateway-prod.yml --log
+```
+
+**Validation:**
+```bash
+# Validate configuration locally before deployment
+make check-slack-gateway-config ENV=dev
+make check-slack-gateway-config ENV=prod
+
+# ARV checks run automatically in:
+# - ci.yml (on all PRs)
+# - deploy-slack-gateway-*.yml (pre-deployment)
+```
+
+**Post-Deployment Verification:**
+```bash
+# Get service URL
+SERVICE_URL=$(gcloud run services describe bobs-brain-slack-webhook-prod \
+  --project=bobs-brain \
+  --region=us-central1 \
+  --format='value(status.url)')
+
+# Test health endpoint
+curl "$SERVICE_URL/health"
+
+# Check logs
+gcloud run services logs read bobs-brain-slack-webhook-prod \
+  --project=bobs-brain \
+  --limit=50
+
+# Test in Slack
+# @Bob hello (in production Slack workspace)
+```
+
+**Troubleshooting:**
+
+*Issue: ARV check fails with "Missing required variables"*
+```bash
+# Validate locally to see specific errors
+make check-slack-gateway-config ENV=prod
+
+# Fix in tfvars file
+vim infra/terraform/envs/prod.tfvars
+
+# Re-validate
+make check-slack-gateway-config ENV=prod
+```
+
+*Issue: Health check fails after deployment*
+```bash
+# Wait for cold start (2-3 minutes)
+sleep 180
+
+# Retry health check
+curl "$SERVICE_URL/health"
+
+# Check service logs for errors
+gcloud run services logs read bobs-brain-slack-webhook-prod \
+  --project=bobs-brain \
+  --log-filter='severity>=ERROR' \
+  --limit=100
+```
+
+*Issue: Slack bot not responding*
+```bash
+# Verify Slack webhook URL matches Cloud Run URL
+# Slack App → Event Subscriptions → Request URL should be:
+echo "$SERVICE_URL/slack/events"
+
+# Check Secret Manager secrets
+gcloud secrets list \
+  --project=bobs-brain \
+  --filter="name:(slack-bot-token OR slack-signing-secret)"
+
+# Test webhook manually (see 6767-122 for curl example)
+```
+
+**Rollback Procedures:**
+
+*Scenario 1: Failed Terraform apply*
+```bash
+# Fix configuration issue, re-run workflow
+vim infra/terraform/envs/prod.tfvars
+gh workflow run deploy-slack-gateway-prod.yml --field apply=true
+```
+
+*Scenario 2: Production issues post-deployment*
+```bash
+# Roll back to previous Docker image
+vim infra/terraform/envs/prod.tfvars
+# Change: slack_webhook_image = "gcr.io/bobs-brain/slack-webhook:PREVIOUS_VERSION"
+
+# Deploy previous version
+gh workflow run deploy-slack-gateway-prod.yml --field apply=true
+```
+
+*Scenario 3: Emergency - Restore Terraform state*
+```bash
+# List state backups
+gsutil ls -l gs://bobs-brain-terraform-state/default.tfstate*
+
+# Restore previous state (CAREFUL!)
+gsutil cp gs://bobs-brain-terraform-state/default.tfstate.BACKUP \
+  gs://bobs-brain-terraform-state/default.tfstate
+
+# Re-apply
+cd infra/terraform
+terraform apply -var-file=envs/prod.tfvars -target=module.slack_bob_gateway
+```
+
+**For Complete Documentation:**
+- **SOP**: `000-docs/6767-122-DR-STND-slack-gateway-deploy-pattern.md`
+- **Phase Plan**: `000-docs/171-AA-PLAN-phase-25-slack-bob-hardening.md`
+- **Phase AAR**: `000-docs/172-AA-REPT-phase-25-slack-bob-hardening.md` (after completion)
 
 ### Monitoring & Alerting
 

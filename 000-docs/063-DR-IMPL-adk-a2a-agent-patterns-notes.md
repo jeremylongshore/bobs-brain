@@ -136,11 +136,18 @@ CMD ["python", "main.py"]
 ```
 
 **Deploy to Cloud Run:**
+
+> ⚠️ **DEPRECATED (R4 Violation):** Manual `gcloud run deploy` commands are banned in Hard Mode.
+> ✅ **Use instead:** Terraform + GitHub Actions (see `6767-122-DR-STND-slack-gateway-deploy-pattern.md`)
+
 ```bash
+# ❌ DEPRECATED - DO NOT USE (R4 Violation)
 gcloud run deploy agent-service \
   --source . \
   --region us-central1 \
   --allow-unauthenticated
+
+# ✅ CORRECT: Use Terraform module (see infra/terraform/modules/)
 ```
 
 ## A2A Client Pattern (Consuming Remote Agents)
@@ -487,13 +494,21 @@ async def invoke(request: Request):
 ```
 
 3. **Deploy A2A Gateway:**
+
+> ⚠️ **DEPRECATED (R4 Violation):** Manual `gcloud run deploy` commands are banned in Hard Mode.
+> ✅ **Use instead:** Terraform + GitHub Actions (see `infra/terraform/cloud_run.tf` for A2A gateway config)
+
 ```bash
+# ❌ DEPRECATED - DO NOT USE (R4 Violation)
 cd service/a2a_gateway
 gcloud run deploy bobs-brain-a2a \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars PROJECT_ID=$PROJECT_ID,AGENT_ENGINE_URL=$AGENT_ENGINE_URL
+
+# ✅ CORRECT: Use Terraform (see infra/terraform/cloud_run.tf)
+# A2A gateway is deployed via terraform apply with proper state management
 ```
 
 **Benefits:**

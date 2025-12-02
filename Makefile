@@ -333,6 +333,24 @@ check-arv-config: ## Check configuration and feature flag defaults (SPEC-ALIGN-A
 	@$(PYTHON) scripts/check_arv_config.py
 	@echo ""
 
+check-slack-gateway-config: ## Validate Slack gateway Terraform config (Phase 25)
+	@echo "$(BLUE)🔍 Validating Slack gateway configuration (ENV=$${ENV:-dev})...$(NC)"
+	@$(PYTHON) scripts/ci/check_slack_gateway_config.py $${ENV:-dev}
+	@echo ""
+
+check-slack-gateway-config-all: ## Validate Slack gateway config for all environments
+	@echo "$(BLUE)🔍 Validating Slack gateway configuration (ALL ENVIRONMENTS)...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)=== Dev Environment ===$(NC)"
+	@$(PYTHON) scripts/ci/check_slack_gateway_config.py dev || true
+	@echo ""
+	@echo "$(YELLOW)=== Staging Environment ===$(NC)"
+	@$(PYTHON) scripts/ci/check_slack_gateway_config.py staging || true
+	@echo ""
+	@echo "$(YELLOW)=== Production Environment ===$(NC)"
+	@$(PYTHON) scripts/ci/check_slack_gateway_config.py prod || true
+	@echo ""
+
 check-arv-spec: check-arv-agents check-arv-services check-arv-config ## Run all ADK spec compliance checks (R1, R3, config)
 	@echo "$(BLUE)📋 Running ADK Spec Compliance Checks...$(NC)"
 	@echo "$(GREEN)✅ All ADK spec checks passed!$(NC)"

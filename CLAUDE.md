@@ -12,9 +12,9 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 
 **Current Status (v0.10.0):**
 - **Version**: v0.10.0 – Agent Engine / A2A Preview (Dev-Ready, Not Deployed)
-- **Branch**: Work on `feature/a2a-agentcards-foreman-worker` until merge to main
+- **Phase**: Phase 25 - Slack Bob Hardening (lock gateway to Terraform+CI only)
 - **Deployment**: Infrastructure ready, awaiting first dev deployment to Agent Engine
-- **Next**: Execute Phase 6 dev deployment when GCP access is available
+- **Roadmap**: See `000-docs/170-PP-PLAN-cto-roadmap-canonical-iam-template.md` for Phases 25-30
 
 **Key Documents:**
 - **6767 Global Catalog**: `000-docs/6767-000-DR-INDEX-bobs-brain-standards-catalog.md` (START HERE for all 6767 standards)
@@ -49,7 +49,7 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 
 ---
 
-## 2. Repo Context (Short)
+## 2. Repo Context & Architecture
 
 **Bob's Brain** is a production-grade **ADK agent department** built on Google's Agent Development Kit (ADK) and Vertex AI Agent Engine. It serves as:
 
@@ -57,10 +57,105 @@ This is the **live** guide for Claude Code when working in the `bobs-brain` repo
 - A Slack AI assistant powered by ADK agents
 - A reusable template for other product repositories
 
-**Key Components:**
-- `bob` - Global orchestrator agent
-- `iam-senior-adk-devops-lead` - Departmental foreman
-- `iam-*` specialists - ADK design, issues, fixes, QA, docs, cleanup, indexing
+### Three-Tier Agent Architecture
+
+**CRITICAL:** bobs-brain uses a strict hierarchy - understand this before making changes:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Tier 1: User Interface (Conversational)                    │
+│                                                             │
+│  User (via Slack)                                           │
+│       ↓                                                     │
+│  Bob - Conversational LLM Agent                             │
+│  • Uses Gemini to respond like Claude/GPT/Gemini           │
+│  • Friendly, helpful, answers questions naturally           │
+│  • Has ADK documentation search tools                       │
+│  • Delegates complex work to foreman via A2A               │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ A2A Protocol
+┌─────────────────────────────────────────────────────────────┐
+│ Tier 2: Orchestration Layer (Workflow Coordination)        │
+│                                                             │
+│  iam-senior-adk-devops-lead (Foreman)                       │
+│  • Orchestrates workflow across specialists                 │
+│  • NEVER executes specialist work itself                    │
+│  • Delegation patterns: single, sequential, parallel        │
+│  • Returns structured JSON to Bob                           │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ A2A Protocol
+┌─────────────────────────────────────────────────────────────┐
+│ Tier 3: Execution Layer (Strict Function Workers)          │
+│                                                             │
+│  iam-* Specialists (8 agents)                               │
+│  • iam-adk: ADK compliance checking                         │
+│  • iam-issue: GitHub issue creation                         │
+│  • iam-fix-plan: Fix planning                               │
+│  • iam-fix-impl: Fix implementation                         │
+│  • iam-qa: Testing and validation                           │
+│  • iam-doc: Documentation                                   │
+│  • iam-cleanup: Repository hygiene                          │
+│  • iam-index: Knowledge indexing                            │
+│                                                             │
+│  Each specialist:                                           │
+│  • Has STRICT input/output JSON schemas (in AgentCard)      │
+│  • Is deterministic (no planning loops, no self-reflection) │
+│  • Uses tools to execute (never generates without tools)    │
+│  • Returns structured results matching skill output schema  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Rules
+
+**User Interaction:**
+- ✅ Users ONLY talk to Bob (via Slack)
+- ❌ Users NEVER call foreman or specialists directly
+- ✅ Bob presents specialist results in friendly, conversational way
+
+**Bob's Role (Conversational LLM):**
+- Responds naturally to user questions (like Claude/GPT/Gemini)
+- Searches ADK documentation when needed
+- Delegates complex SWE work to foreman via A2A
+- Maintains conversational context within sessions
+
+**Foreman's Role (Orchestrator):**
+- Receives structured requests from Bob
+- Plans workflows (single specialist, sequential, parallel)
+- Calls specialists with strict JSON payloads (matching their AgentCard skills)
+- Validates specialist outputs
+- Aggregates results and returns to Bob
+
+**Specialists' Role (Function Workers):**
+- Accept strict JSON inputs (defined in `.well-known/agent-card.json`)
+- Execute using domain-specific tools
+- Return strict JSON outputs (matching output schemas)
+- NO conversational behavior - deterministic function execution only
+
+**Example Flow:**
+```
+User: "Check if iam-adk agent is ADK compliant"
+  ↓
+Bob: [Understands intent, delegates to foreman]
+  ↓ A2A call
+Foreman: [Plans workflow, calls iam-adk specialist]
+  ↓ A2A call with strict JSON
+iam-adk: {
+  "target": "agents/iam_adk",
+  "focus_rules": ["R1", "R2", "R5"]
+}
+  ↓ Returns strict JSON
+iam-adk: {
+  "compliance_status": "COMPLIANT",
+  "violations": [],
+  "risk_level": "LOW"
+}
+  ↓ Returns to foreman
+Foreman: [Validates, aggregates, returns to Bob]
+  ↓ Returns to Bob
+Bob: "Good news! iam-adk is fully compliant with ADK Hard Mode rules."
+  ↓
+User: [Sees friendly response]
+```
 
 **Architecture Pattern:** Agent Factory with strict "Hard Mode" rules (R1-R8) enforced via CI/CD.
 
@@ -227,18 +322,22 @@ ls 000-docs/127-*
 
 ## 6. Changelog / Maintenance
 
-**Last Update:** 2025-11-21
+**Last Update:** 2025-11-29
 
 **Recent Changes:**
-- Added 127-DR-STND-agent-engine-entrypoints.md (canonical entrypoints reference)
-- Updated Section 5 to emphasize 6767-series as SOPs
-- Added clear search commands for finding docs in 000-docs/
+- Added comprehensive three-tier architecture documentation (Section 2)
+- Updated current status to reflect Phase 25 (Slack Bob Hardening)
+- Added reference to 170-PP-PLAN-cto-roadmap-canonical-iam-template.md
+- Clarified Bob's conversational role vs specialists' strict function interfaces
+- Added example flow showing User → Bob → Foreman → Specialist interaction
+- Previous: Added 127-DR-STND-agent-engine-entrypoints.md (canonical entrypoints reference)
 
 **Maintenance Policy:**
 - **DON'T overcrowd CLAUDE.md** - it's a pointer doc, not a knowledge base
 - All detailed docs go in `000-docs/` following NNN-CC-ABCD naming
 - 6767-series docs = SOPs (Standard Operating Procedures)
-- CLAUDE.md should remain < 8k chars for performance
+- CLAUDE.md should remain concise (target ~15k chars)
+  - Exception: Section 2 (Architecture) is worth the space to prevent confusion
 - When adding new standards, update Section 5 with pointer, not full content
 
 ---

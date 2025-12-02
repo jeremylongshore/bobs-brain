@@ -412,8 +412,8 @@ gs://intent-org-knowledge-hub-{env}/
 4. Deployment workflow runs (ARV gate → deploy)
    - ARV: Comprehensive department readiness check
    - Agent Engine: adk deploy agent_engine
-   - Gateways: gcloud run deploy (A2A + Slack)
-   - Terraform: Apply to create/update infrastructure
+   - Gateways: Terraform apply (A2A + Slack via terraform-prod.yml)
+   - Infrastructure: Terraform apply to create/update all resources
    ↓
 5. Post-deployment validation
    - Health checks
@@ -1437,10 +1437,17 @@ git push origin main  # Retrigger CI/CD
 gcloud run services describe a2a-gateway --region=${LOCATION}
 
 # 2. Recreate service
-gcloud run deploy a2a-gateway \
-  --image=gcr.io/${PROJECT_ID}/a2a-gateway:0.10.0 \
-  --region=${LOCATION} \
-  --service-account=a2a-gateway@${PROJECT_ID}.iam.gserviceaccount.com
+# ⚠️ DEPRECATED (R4 Violation) - Use Terraform instead:
+# cd infra/terraform && terraform apply -var-file=envs/prod.tfvars
+#
+# ❌ DO NOT USE:
+# gcloud run deploy a2a-gateway \
+#   --image=gcr.io/${PROJECT_ID}/a2a-gateway:0.10.0 \
+#   --region=${LOCATION} \
+#   --service-account=a2a-gateway@${PROJECT_ID}.iam.gserviceaccount.com
+#
+# ✅ CORRECT: Use Terraform + GitHub Actions
+terraform -chdir=infra/terraform apply -var-file=envs/prod.tfvars -target=google_cloud_run_service.a2a_gateway
 
 # 3. Verify routing
 curl https://a2a-gateway-prod.run.app/health

@@ -1,0 +1,350 @@
+name: Deploy Slack Gateway (Production)
+
+# ========================================
+# SLACK GATEWAY PRODUCTION DEPLOYMENT (Phase 25)
+# ========================================
+# Terraform-based deployment of Slack Bob Gateway to production
+# Enforces R4 (CI-only deployments via Terraform + GitHub Actions)
+#
+# CRITICAL: Production deployment with multiple approval gates
+# Scope: ONLY deploys slack_bob_gateway module (targeted deployment)
+# Auth: Workload Identity Federation (WIF) - no service account keys
+# ARV Gate: Validates Slack configuration before deployment
+#
+# Approval Gates:
+#   1. Manual workflow dispatch (first gate)
+#   2. ARV validation (automated)
+#   3. Terraform plan review (manual approval required)
+#   4. Terraform apply (manual approval required via GitHub environment)
+#   5. Post-deployment verification
+#
+# See: 000-docs/6767-122-DR-STND-slack-gateway-deploy-pattern.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: '🚨 Apply Terraform changes to PRODUCTION (requires multiple approvals)'
+        required: true
+        type: boolean
+        default: false
+      skip_arv:
+        description: 'Skip ARV checks (USE ONLY FOR EMERGENCIES)'
+        required: false
+        default: false
+        type: boolean
+      verbose:
+        description: 'Verbose output'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation (R4)
+
+env:
+  DEPLOYMENT_ENV: production
+  TF_VERSION: '1.5.0'
+  TERRAFORM_DIR: 'infra/terraform'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ARV Gate: Slack gateway configuration validation
+  arv-slack-gateway:
+    name: ARV - Slack Gateway Config (Production)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_arv != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate Slack gateway config (PRODUCTION)
+        run: |
+          echo "🔍 Validating Slack gateway configuration for PRODUCTION..."
+          make check-slack-gateway-config ENV=prod
+
+      - name: ARV Gate Summary
+        run: |
+          echo "## ✅ ARV Gate Passed - Slack Gateway (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️  **PRODUCTION** configuration validated successfully." >> $GITHUB_STEP_SUMMARY
+          echo "Proceeding to Terraform plan..." >> $GITHUB_STEP_SUMMARY
+
+  # Terraform Plan: Preview infrastructure changes (ALWAYS runs)
+  terraform-plan:
+    name: Terraform Plan (Production - Slack Gateway Only)
+    runs-on: ubuntu-latest
+    needs: [arv-slack-gateway]
+    if: always() && (needs.arv-slack-gateway.result == 'success' || needs.arv-slack-gateway.result == 'skipped')
+
+    defaults:
+      run:
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init -backend-config="bucket=bobs-brain-terraform-state"
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan (Slack Gateway Target)
+        id: plan
+        run: |
+          echo "🔍 Planning Terraform changes for PRODUCTION Slack gateway..."
+          terraform plan \
+            -var-file="envs/prod.tfvars" \
+            -target=module.slack_bob_gateway \
+            -out=tfplan \
+            -no-color
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-slack-gateway-prod
+          path: ${{ env.TERRAFORM_DIR }}/tfplan
+          retention-days: 5
+
+      - name: Plan Summary
+        run: |
+          echo "## 🚨 Terraform Plan Summary (PRODUCTION - Slack Gateway)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** 🚨 **PRODUCTION** 🚨" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** module.slack_bob_gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- **Plan Status:** ${{ steps.plan.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️  Required Actions for Apply" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review plan output carefully" >> $GITHUB_STEP_SUMMARY
+          echo "2. Re-run workflow with **apply: true**" >> $GITHUB_STEP_SUMMARY
+          echo "3. Approve deployment in GitHub environment protection" >> $GITHUB_STEP_SUMMARY
+
+  # Terraform Apply: Deploy Slack gateway (MANUAL APPROVAL REQUIRED)
+  terraform-apply:
+    name: Terraform Apply (Production - Slack Gateway)
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: |
+      github.event.inputs.apply == 'true' &&
+      github.ref == 'refs/heads/main'
+    environment:
+      name: production  # GitHub environment with required reviewers
+      url: https://console.cloud.google.com/run?project=bobs-brain
+
+    defaults:
+      run:
+        working-directory: ${{ env.TERRAFORM_DIR }}
+
+    steps:
+      - name: 🚨 Production Deployment Warning
+        run: |
+          echo "========================================" >&2
+          echo "🚨 PRODUCTION DEPLOYMENT IN PROGRESS 🚨" >&2
+          echo "========================================" >&2
+          echo "" >&2
+          echo "Environment: PRODUCTION" >&2
+          echo "Target: Slack Bob Gateway (Cloud Run)" >&2
+          echo "Project: bobs-brain" >&2
+          echo "" >&2
+          echo "This deployment will affect live users." >&2
+          echo "Ensure you have reviewed the plan carefully." >&2
+          echo "========================================" >&2
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init -backend-config="bucket=bobs-brain-terraform-state"
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-slack-gateway-prod
+          path: ${{ env.TERRAFORM_DIR }}
+
+      - name: Terraform Apply (PRODUCTION)
+        id: apply
+        run: |
+          echo "🚀 Applying Terraform plan for Slack gateway (PRODUCTION)..."
+          terraform apply -auto-approve tfplan
+
+      - name: Apply Summary
+        if: always()
+        run: |
+          echo "## 🚨 Terraform Apply Summary (PRODUCTION)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** 🚨 **PRODUCTION** 🚨" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** module.slack_bob_gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- **Apply Status:** ${{ steps.apply.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Components" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.apply.outcome }}" == "success" ]; then
+            echo "- ✅ Slack Bob Gateway (Cloud Run - R3 compliant)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Deployment failed - see logs above" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Smoke Test: Verify production deployment
+  smoke-test:
+    name: Smoke Test (Production - Slack Gateway)
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    if: success()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get Service URL
+        id: get_url
+        run: |
+          SERVICE_URL=$(gcloud run services describe bobs-brain-slack-webhook-prod \
+            --project=${{ vars.PROD_PROJECT_ID }} \
+            --region=${{ vars.PROD_REGION }} \
+            --format='value(status.url)' 2>/dev/null || echo "")
+
+          if [ -z "$SERVICE_URL" ]; then
+            echo "❌ Slack gateway service not found"
+            exit 1
+          fi
+
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "✅ Service URL: $SERVICE_URL"
+
+      - name: Health Check
+        id: health
+        run: |
+          echo "Testing health endpoint..."
+          HEALTH_RESPONSE=$(curl -sS -f "${{ steps.get_url.outputs.service_url }}/health" || echo "FAILED")
+
+          if [ "$HEALTH_RESPONSE" != "FAILED" ]; then
+            echo "✅ Health check passed"
+            echo "Response: $HEALTH_RESPONSE"
+          else
+            echo "❌ Health check failed"
+            exit 1
+          fi
+
+      - name: Verify Infrastructure State
+        run: |
+          echo "🔍 Verifying production infrastructure state..."
+
+          # Check Cloud Run service status
+          gcloud run services describe bobs-brain-slack-webhook-prod \
+            --project=${{ vars.PROD_PROJECT_ID }} \
+            --region=${{ vars.PROD_REGION }} \
+            --format="table(metadata.name,status.url,status.conditions[0].status)"
+
+          # Check Secret Manager secrets
+          echo "Checking Secret Manager secrets..."
+          gcloud secrets list \
+            --project=${{ vars.PROD_PROJECT_ID }} \
+            --filter="name:(slack-bot-token OR slack-signing-secret)" \
+            --format="table(name,createTime)"
+
+          echo "✅ Infrastructure verification complete"
+
+      - name: Smoke Test Summary
+        run: |
+          echo "## 🚨 Smoke Test Results (PRODUCTION)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Slack gateway deployed and healthy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Service URL:** ${{ steps.get_url.outputs.service_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚨 Manual Verification Required (PRODUCTION)" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Test Slack Bot:** Mention @Bob in production Slack workspace" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Check Logs:** \`gcloud run services logs read bobs-brain-slack-webhook-prod --project=${{ vars.PROD_PROJECT_ID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Verify Secret Manager:** Ensure secrets are properly mounted" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Monitor for Errors:** Watch logs for 15 minutes post-deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Rollback Procedure (if needed)" >> $GITHUB_STEP_SUMMARY
+          echo "1. Revert Terraform code to previous version" >> $GITHUB_STEP_SUMMARY
+          echo "2. Re-run this workflow with previous plan" >> $GITHUB_STEP_SUMMARY
+          echo "3. Document incident in AAR" >> $GITHUB_STEP_SUMMARY
+
+  # Post-Deployment Notification
+  post-deployment:
+    name: Post-Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [terraform-apply, smoke-test]
+    if: always()
+
+    steps:
+      - name: Deployment Status Summary
+        run: |
+          echo "## 🚨 PRODUCTION DEPLOYMENT COMPLETE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Component:** Slack Bob Gateway" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.terraform-apply.result }}" == "success" ] && [ "${{ needs.smoke-test.result }}" == "success" ]; then
+            echo "**Status:** ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Monitor production Slack for user feedback" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Watch Cloud Run logs for errors" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Update runbook with any changes" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Document deployment in Phase 25 AAR" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ❌ FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Immediate Actions Required" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Review failure logs above" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Determine if rollback needed" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Notify team of production issues" >> $GITHUB_STEP_SUMMARY
+            echo "- [ ] Create incident report" >> $GITHUB_STEP_SUMMARY
+          fi

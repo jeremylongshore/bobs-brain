@@ -368,10 +368,18 @@ jobs:
    ```
 
 3. **Deploy webhook to Cloud Run:**
+
+   > ⚠️ **DEPRECATED (R4 Violation):** Manual `gcloud run deploy` commands are banned in Hard Mode.
+   > ✅ **Use instead:** Terraform + GitHub Actions (see `6767-122-DR-STND-slack-gateway-deploy-pattern.md`)
+
    ```bash
+   # ❌ DEPRECATED - DO NOT USE (R4 Violation)
    gcloud run deploy diagnosticpro-slack-webhook \
      --source service/slack_webhook \
      --region us-central1
+
+   # ✅ CORRECT: Use Terraform module (see infra/terraform/modules/slack_bob_gateway/)
+   # Deploy via GitHub Actions workflow: .github/workflows/deploy-slack-gateway-dev.yml
    ```
 
 4. **Configure Slack Events API** to point to Cloud Run URL

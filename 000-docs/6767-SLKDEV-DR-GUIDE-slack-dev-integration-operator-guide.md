@@ -144,18 +144,21 @@ make slack-dev-smoke
 #### Cloud Run Deployment
 
 ```bash
-# Option 1: Via GitHub Actions (recommended)
-gh workflow run deploy-slack-webhook.yml
+# ✅ CORRECT: Via GitHub Actions (Terraform-based deployment)
+gh workflow run deploy-slack-gateway-dev.yml
 
-# Option 2: Manual deployment
-gcloud run deploy slack-webhook \
-  --source service/slack_webhook \
-  --region us-central1 \
-  --set-env-vars="SLACK_BOB_ENABLED=true" \
-  --update-secrets="SLACK_BOT_TOKEN=SLACK_BOT_TOKEN:latest,SLACK_SIGNING_SECRET=SLACK_SIGNING_SECRET:latest" \
-  --allow-unauthenticated
+# ❌ DEPRECATED - DO NOT USE (R4 Violation)
+# Manual deployments violate Hard Mode R4 (CI-only deployments)
+# See 6767-122-DR-STND-slack-gateway-deploy-pattern.md for correct approach
 
-# Get service URL
+# gcloud run deploy slack-webhook \
+#   --source service/slack_webhook \
+#   --region us-central1 \
+#   --set-env-vars="SLACK_BOB_ENABLED=true" \
+#   --update-secrets="SLACK_BOT_TOKEN=SLACK_BOT_TOKEN:latest,SLACK_SIGNING_SECRET=SLACK_SIGNING_SECRET:latest" \
+#   --allow-unauthenticated
+
+# Get service URL (still valid for inspection)
 gcloud run services describe slack-webhook \
   --region=us-central1 \
   --format='value(status.url)'

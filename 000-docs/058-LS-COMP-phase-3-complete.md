@@ -192,12 +192,18 @@ AGENT_SPIFFE_ID=spiffe://intent.solutions/agent/bobs-brain/prod/us-central1/0.6.
 ```
 
 **Cloud Run Config:**
+> ⚠️ **DEPRECATED (R4 Violation):** Manual deploys replaced by Terraform.
+> See `6767-122-DR-STND-slack-gateway-deploy-pattern.md`
+
 ```bash
+# ❌ DEPRECATED - DO NOT USE
 gcloud run deploy a2a-gateway \
   --image gcr.io/bobs-brain/a2a-gateway:0.6.0 \
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars ...
+
+# ✅ CORRECT: Use infra/terraform/cloud_run.tf
 ```
 
 ### Slack Webhook
@@ -214,12 +220,18 @@ AGENT_ENGINE_ID=xxx
 ```
 
 **Cloud Run Config:**
+> ⚠️ **DEPRECATED (R4 Violation):** Manual deploys replaced by Terraform.
+> See `6767-122-DR-STND-slack-gateway-deploy-pattern.md`
+
 ```bash
+# ❌ DEPRECATED - DO NOT USE
 gcloud run deploy slack-webhook \
   --image gcr.io/bobs-brain/slack-webhook:0.6.0 \
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars ...
+
+# ✅ CORRECT: Use infra/terraform/modules/slack_bob_gateway/
 ```
 
 **Slack Configuration:**
