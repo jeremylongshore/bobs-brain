@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-12-01
+
+### Added
+- **Slack Gateway CI/CD Hardening (Phase 25)**
+  - Terraform-only deployment workflows for dev/prod (R4 compliance)
+  - Configuration validator (`scripts/ci/check_slack_gateway_config.py`)
+  - Multi-stage approval gates for production deployments
+  - Comprehensive 1,000+ line deployment SOP (6767-DR-STND-slack-gateway-deploy-pattern.md)
+  - Automated ARV validation gates before deployments
+
+### Changed
+- **Document Filing System v3.0 Compliance**
+  - Renamed 5 canonical 6767 files to remove numeric IDs
+  - Updated /doc-filing slash command with v3.0 guidance
+  - Fixed and updated README documentation links
+  - Organized loose project documents into 000-docs/
+
+### Security
+- **Service Account Security Improvements**
+  - Completed Phase 1 service account cleanup
+  - Added CTO-level migration analysis
+  - Updated DevOps audit playbook with security best practices
+  - Enforced Workload Identity Federation (no service account keys)
+
+### Documentation
+- Added Phase 25 AAR (After-Action Report)
+- Created canonical Slack gateway deployment guide
+- Updated CLAUDE.md with latest standards
+- Added comprehensive service consolidation sitrep
+
 ## [0.11.0] - 2025-11-23
 
 ### Added - Production-Ready A2A Protocol & Monitoring
