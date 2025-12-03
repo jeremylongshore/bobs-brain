@@ -4,7 +4,7 @@
 **Document ID:** 6767-000
 **Status:** Active
 **Purpose:** Global index and status catalog for all 6767-* standards, guides, and reference docs in bobs-brain
-**Last Updated:** 2025-11-21
+**Last Updated:** 2025-12-02
 
 ---
 
@@ -59,35 +59,33 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 | 6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md | DR-STND | inline-source-deployment-for-vertex-agent-engine.md | Active | Canonical pattern for deploying ADK agents to Agent Engine via inline source (not pickle) |
 | 6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md | DR-STND | adk-lazy-loading-app-pattern.md | Active | Lazy-loading App pattern for all ADK agents (module-level `app` variable) |
 | 6767-DR-STND-arv-minimum-gate.md | DR-STND | arv-minimum-gate.md | Active | Agent Readiness Verification (ARV) minimum gate standard for deployment safety |
-| 6767-116-DR-STND-config-and-feature-flags-standard-v1.md | DR-STND | config-and-feature-flags-standard-v1.md | Active | Configuration and feature flags standard v1.0 (cross-cutting) |
 | 6767-DR-STND-github-issue-creation-guardrails.md | DR-STND | github-issue-creation-guardrails.md | Active | Safety guardrails for GitHub issue creation (write operations disabled by default) |
+| 6767-DR-STND-document-filing-system-standard-v3.md | DR-STND | document-filing-system-standard-v3.md | Canonical | Universal standard for organizing project documentation with category-based classification v3.0 |
+| 6767-DR-STND-adk-cloud-run-tools-pattern.md | DR-STND | adk-cloud-run-tools-pattern.md | Active | Define how "tools live in Cloud Run" while staying 100% compliant with google-adk 1.18+ |
+| 6767-DR-STND-slack-gateway-deploy-pattern.md | DR-STND | slack-gateway-deploy-pattern.md | Active | Deployment pattern for Slack gateway service on Cloud Run |
 
 ### Agent Engine & Deployment
 
 | ID | Type | Filename | Status | Summary |
 |----|------|----------|--------|---------|
-| 6767-120-DR-STND-agent-engine-a2a-and-inline-deploy-index.md | DR-STND | agent-engine-a2a-and-inline-deploy-index.md | Active | **Sub-index** for Agent Engine, A2A, and inline deployment topics (START HERE for deployment work) |
+| 6767-DR-INDEX-agent-engine-a2a-inline-deploy.md | DR-INDEX | agent-engine-a2a-inline-deploy.md | Active | **Sub-index** for Agent Engine, A2A, and inline deployment topics (START HERE for deployment work) |
 | 6767-AEDEV-DR-GUIDE-agent-engine-dev-wiring-and-smoke-test.md | DR-GUIDE | agent-engine-dev-wiring-and-smoke-test.md | Complete (dev-only) | Guide for Agent Engine dev wiring and smoke test (Phase AE3) |
 | 6767-AECOMP-LS-SITR-ae-dev-wireup-complete.md | LS-SITR | ae-dev-wireup-complete.md | Complete (dev-only) | Status report: Agent Engine dev wiring complete (Slack → Cloud Run → Agent Engine) |
-| 6767-127-DR-STND-agent-engine-entrypoints.md | DR-STND | agent-engine-entrypoints.md | Active | Standard for Agent Engine entrypoint configuration |
 
 ### A2A Protocol & AgentCards
 
 | ID | Type | Filename | Status | Summary |
 |----|------|----------|--------|---------|
 | 6767-DR-STND-agentcards-and-a2a-contracts.md | DR-STND | agentcards-and-a2a-contracts.md | Active | AgentCard and A2A contract standard for ADK-based agent departments |
-| 6767-121-DR-STND-a2a-compliance-tck-and-inspector.md | DR-STND | a2a-compliance-tck-and-inspector.md | Active | A2A compliance tooling standard (a2a-inspector + a2a-tck) with phased adoption plan |
+| 6767-DR-STND-a2a-compliance-tck-inspector.md | DR-STND | a2a-compliance-tck-inspector.md | Active | A2A compliance tooling standard (a2a-inspector + a2a-tck) with phased adoption plan |
 | 6767-A2AINSP-AA-REPT-a2a-inspector-integration-for-department-adk-iam.md | AA-REPT | a2a-inspector-integration-for-department-adk-iam.md | Active | AAR: a2a-inspector integration with two-layer validation strategy |
-| 6767-123-DR-STND-a2a-inspector-usage-and-local-setup.md | DR-STND | a2a-inspector-usage-and-local-setup.md | Active | A2A Inspector usage and local setup standard |
-| 6767-124-DR-STND-a2a-quality-gate-for-department-adk-iam.md | DR-STND | a2a-quality-gate-for-department-adk-iam.md | Active | A2A quality gate standard for IAM department |
 
 ### Prompt Design & Agent Architecture
 
 | ID | Type | Filename | Status | Summary |
 |----|------|----------|--------|---------|
-| 6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md | DR-STND | prompt-design-and-a2a-contracts-for-department-adk-iam.md | Active | Canonical prompt design and A2A contract patterns for department adk iam (5-part template) |
+| 6767-DR-STND-prompt-design-a2a-contracts-iam-dept.md | DR-STND | prompt-design-a2a-contracts-iam-dept.md | Active | Canonical prompt design and A2A contract patterns for department adk iam |
 | 6767-DR-STND-prompt-design-and-agentcard-standard.md | DR-STND | prompt-design-and-agentcard-standard.md | Active | Contract-first prompt design standard with AgentCard integration |
-| 6767-125-DR-STND-prompt-design-for-bob-and-department-adk-iam.md | DR-STND | prompt-design-for-bob-and-department-adk-iam.md | Active | Prompt design standard for Bob and IAM department |
 
 ### Operations & Deployment
 
@@ -95,7 +93,6 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 |----|------|----------|--------|---------|
 | 6767-RB-OPS-adk-department-operations-runbook.md | RB-OPS | adk-department-operations-runbook.md | Active | Daily operational procedures, monitoring, and troubleshooting for IAM department |
 | 6767-DR-STND-live-rag-and-agent-engine-rollout-plan.md | DR-STND | live-rag-and-agent-engine-rollout-plan.md | Active | Rollout strategy for enabling live Vertex AI Search (RAG) and Agent Engine features |
-| 6767-118-DR-STND-cicd-pipeline-for-iam-department.md | DR-STND | cicd-pipeline-for-iam-department.md | Active | CI/CD pipeline standard for IAM department |
 
 ### Slack Integration
 
@@ -119,6 +116,12 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 | 6767-DR-STND-iam-department-template-scope-and-rules.md | DR-STND | iam-department-template-scope-and-rules.md | Reference | Scope and reusability boundaries for IAM department template |
 | 6767-DR-STND-iam-department-integration-checklist.md | DR-STND | iam-department-integration-checklist.md | Standard Checklist | Checklist for integrating IAM department into new repos (use with porting guide) |
 
+### Indexes & Catalogs
+
+| ID | Type | Filename | Status | Summary |
+|----|------|----------|--------|---------|
+| 6767-DR-INDEX-bobs-brain-standards-catalog.md | DR-INDEX | bobs-brain-standards-catalog.md | Active | **This document** - Global catalog of all 6767 standards |
+
 ### User & Developer Guides
 
 | ID | Type | Filename | Status | Summary |
@@ -126,77 +129,42 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 | 6767-DR-GUIDE-iam-department-user-guide.md | DR-GUIDE | iam-department-user-guide.md | User Guide | How to use Bob and IAM department for software engineering tasks |
 | 6767-ROADMAP-DR-ROADMAP-bobs-brain-you-are-here.md | DR-ROADMAP | bobs-brain-you-are-here.md | Active | Roadmap and "you are here" orientation for bobs-brain repo |
 
-**Total 6767 Documents:** 24
+**Total 6767 Documents:** 28
 
 ---
 
 ## IV. Suggested Status Adjustments
 
-### Potential Overlaps / Supersessions
+### Potential Overlaps / Consolidations
 
-**1. Prompt Design Standards (3 docs with overlap)**
+**1. Prompt Design Standards (2 docs with potential overlap)**
 
 **Files:**
-- `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md` (Active)
+- `6767-DR-STND-prompt-design-a2a-contracts-iam-dept.md` (Active)
 - `6767-DR-STND-prompt-design-and-agentcard-standard.md` (Active)
-- `6767-125-DR-STND-prompt-design-for-bob-and-department-adk-iam.md` (Active)
 
-**Analysis:** Three prompt design standards with overlapping scope
+**Analysis:** Two prompt design standards with potentially overlapping scope
 
 **Recommendation:**
-- ⏸️ **Review for consolidation** - Determine if 6767-115 and 6767-125 can be merged
-- ⏸️ **Or clarify scope** - E.g., 6767-115 = contracts focus, 6767-125 = general prompts
-- ✅ **Keep 6767-DR-STND-prompt-design-and-agentcard-standard.md** as foundational doc
+- ✅ **Keep both for now** - They may have different focus areas
+- ⏸️ **Review for consolidation in future** - After Linux Foundation PR
 
-**Action:** Review and either merge or clarify distinct purposes (deferred to future cleanup)
+**Action:** Review and clarify distinct purposes (deferred to future cleanup)
 
 ---
 
-**2. A2A Inspector Standards (2 docs with potential overlap)**
+**2. Index Documents**
 
 **Files:**
-- `6767-121-DR-STND-a2a-compliance-tck-and-inspector.md` (Active) - New, comprehensive
-- `6767-123-DR-STND-a2a-inspector-usage-and-local-setup.md` (Active) - Older, narrower scope
+- `6767-DR-INDEX-bobs-brain-standards-catalog.md` (This document - master index)
+- `6767-DR-INDEX-agent-engine-a2a-inline-deploy.md` (Sub-index for deployment topics)
 
-**Analysis:** 6767-121 was created recently and covers a2a-inspector + a2a-tck comprehensively
-
-**Recommendation:**
-- ✅ **Keep 6767-121 as primary** - More comprehensive, covers both tools
-- ⏸️ **Mark 6767-123 as "Superseded by 6767-121"** or merge into 6767-121 (deferred)
-
-**Action:** Update 6767-123 status header to reference 6767-121 (deferred to future cleanup)
-
----
-
-**3. Config & Feature Flags (potential duplicate ID)**
-
-**Files:**
-- `6767-116-DR-STND-config-and-feature-flags-standard-v1.md` (Active)
-- Also appears in NNN-series as `116-DR-STND-config-and-feature-flags-standard-v1.md`
-
-**Analysis:** Same doc with both 6767- and NNN- prefixes
+**Analysis:** Two index documents with clear hierarchical relationship
 
 **Recommendation:**
-- ✅ **Keep 6767-116 version** - Canonical standards should use 6767- prefix
-- ⏸️ **Remove or archive NNN-116 version** - Avoid duplicate copies (deferred)
+- ✅ **Keep both** - Master index + specialized sub-index is appropriate pattern
 
-**Action:** Verify which is authoritative, remove duplicate (deferred to future cleanup)
-
----
-
-**4. CI/CD Pipeline Standard (potential duplicate ID)**
-
-**Files:**
-- `6767-118-DR-STND-cicd-pipeline-for-iam-department.md` (Active)
-- Also appears in NNN-series as `118-DR-STND-cicd-pipeline-for-iam-department.md`
-
-**Analysis:** Same doc with both 6767- and NNN- prefixes
-
-**Recommendation:**
-- ✅ **Keep 6767-118 version** - Canonical standards should use 6767- prefix
-- ⏸️ **Remove or archive NNN-118 version** - Avoid duplicate copies (deferred)
-
-**Action:** Verify which is authoritative, remove duplicate (deferred to future cleanup)
+**Action:** None needed - working as designed
 
 ---
 
@@ -205,8 +173,8 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 ### Navigation Strategy
 
 **Start at the Top:**
-1. **6767-000** (this doc) - Global catalog
-2. **6767-120** - Agent Engine / A2A / Inline sub-index (if working on deployment topics)
+1. **6767-DR-INDEX-bobs-brain-standards-catalog.md** (this doc) - Global catalog
+2. **6767-DR-INDEX-agent-engine-a2a-inline-deploy.md** - Agent Engine / A2A / Inline sub-index (if working on deployment topics)
 3. Drill into specific standards/guides as needed
 
 **By Audience:**
@@ -222,7 +190,7 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 - **Deployment:** `6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md`
 - **Agents:** `6767-LAZY-DR-STND-adk-lazy-loading-app-pattern.md`
 - **A2A:** `6767-DR-STND-agentcards-and-a2a-contracts.md`
-- **Prompts:** `6767-115-DR-STND-prompt-design-and-a2a-contracts-for-department-adk-iam.md`
+- **Prompts:** `6767-DR-STND-prompt-design-a2a-contracts-iam-dept.md`
 
 **For Template Adopters:**
 - **Porting Guide:** `6767-DR-GUIDE-porting-iam-department-to-new-repo.md`
@@ -277,12 +245,12 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 
 ## VI. Relationship to Other Indexes
 
-**6767-000 (this doc):**
+**6767-DR-INDEX-bobs-brain-standards-catalog.md (this doc):**
 - **Scope:** All 6767-* docs across entire repo
 - **Purpose:** Global catalog and navigation aid
 - **Audience:** Everyone (developers, operators, template adopters, users)
 
-**6767-120 (Agent Engine / A2A / Inline sub-index):**
+**6767-DR-INDEX-agent-engine-a2a-inline-deploy.md (sub-index):**
 - **Scope:** Subset of 6767-* docs related to Agent Engine, A2A, and inline deployment
 - **Purpose:** Deep dive into deployment topics
 - **Audience:** Developers and operators working on deployment/A2A features
@@ -294,11 +262,11 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 
 **Hierarchy:**
 ```
-6767-000 (global 6767 catalog)
-  └─> 6767-120 (Agent Engine / A2A sub-index)
+6767-DR-INDEX-bobs-brain-standards-catalog.md (global catalog - this doc)
+  └─> 6767-DR-INDEX-agent-engine-a2a-inline-deploy.md (sub-index)
       └─> Individual 6767-* standards/guides
 
-000-AA-AUDT (NNN-series inventory)
+000-AA-AUDT-000-docs-inventory-and-gap-report.md (NNN-series inventory)
   └─> Individual NNN-* phase docs/AARs
 ```
 
@@ -307,25 +275,25 @@ This document serves as the **master catalog** for all 6767-prefixed documentati
 ## VII. Summary
 
 **6767 Series Highlights:**
-- **24 canonical documents** covering standards, guides, runbooks, and architecture
-- **6767-120 sub-index** provides deep dive into Agent Engine / A2A / inline deployment topics
+- **28 canonical documents** covering standards, guides, runbooks, and architecture
+- **2 index documents** for easy navigation (master + sub-index)
 - **Multiple audiences served:** Developers, operators, template adopters, end users
 - **Clear navigation paths** for each audience type
 
 **Key Takeaways:**
-1. Start with **6767-000** (this doc) for global orientation
-2. Use **6767-120** for Agent Engine / A2A / deployment work
-3. Check status column before relying on any 6767 doc
-4. Potential overlaps exist (prompt design, a2a-inspector) - deferred cleanup recommended
+1. Start with this master index for global orientation
+2. Use the Agent Engine sub-index for deployment/A2A work
+3. All 28 files now properly documented with summaries
+4. Ready for Linux Foundation review
 
 **Next Actions:**
-1. ✅ Link 6767-000 into existing indexes (6767-120, CLAUDE.md)
-2. ⏸️ Quarterly review for new 6767-* docs (next: 2026-02-21)
-3. ⏸️ Resolve prompt design overlap (consolidate or clarify scope)
-4. ⏸️ Mark 6767-123 as superseded by 6767-121 (or merge)
+1. ✅ All 28 6767 files documented in master index
+2. ✅ Ready for Linux Foundation AI Card PR submission
+3. ⏸️ Future: Quarterly review for new 6767-* docs (next: 2026-03-01)
+4. ⏸️ Future: Consider consolidating overlapping prompt design standards
 
 ---
 
-**Last Updated:** 2025-11-21
-**Status:** Active (initial catalog complete)
-**Next Review:** 2026-02-21 (quarterly) or when 5+ new 6767-* docs added
+**Last Updated:** 2025-12-02
+**Status:** Active (complete catalog of all 28 files)
+**Next Review:** 2026-03-01 (quarterly) or when 5+ new 6767-* docs added

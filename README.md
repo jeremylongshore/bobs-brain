@@ -74,7 +74,7 @@ We enforce 8 architectural rules (R1-R8) that prevent the usual agent chaos:
 - ✅ **Immutable identity** - SPIFFE IDs everywhere for clean tracing
 - ✅ **Drift detection** - CI fails if you try to sneak in forbidden imports
 
-**Tl;dr:** Bob's Brain is the agent system your CTO would approve, not yell about.
+**Tl;dr:** Production-grade multi-agent system with enforced architectural standards and compliance automation.
 
 ---
 
@@ -712,7 +712,7 @@ All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 ### 🎯 Start Here (New to the Repo?)
 
 **For Developers:**
-1. **[Master Index](000-docs/6767-DR-INDEX-agent-engine-a2a-inline-deploy.md)** - Complete reference map for Agent Engine/A2A/Inline Deployment
+1. **[Master Index](000-docs/6767-DR-INDEX-bobs-brain-standards-catalog.md)** - Complete reference map for Agent Engine/A2A/Inline Deployment
 2. **[ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md)** - Hard Mode rules (R1-R8) and architecture
 3. **[CLAUDE.md](CLAUDE.md)** - How Claude Code works with this repo
 
@@ -729,7 +729,7 @@ All docs live in `000-docs/` following the `NNN-CC-ABCD-name.md` format.
 ### Key Standards (6767 Canonical Docs)
 
 **Agent Engine & Deployment (v0.10.0):**
-- **[Master Index](000-docs/6767-DR-INDEX-agent-engine-a2a-inline-deploy.md)** - Complete reference map (START HERE)
+- **[Master Index](000-docs/6767-DR-INDEX-bobs-brain-standards-catalog.md)** - Complete reference map (START HERE)
 - [ADK/Agent Engine Spec](000-docs/6767-DR-STND-adk-agent-engine-spec-and-hardmode-rules.md) - Hard Mode rules (R1-R8)
 - [Inline Source Deployment](000-docs/6767-INLINE-DR-STND-inline-source-deployment-for-vertex-agent-engine.md) - Deploy pattern, ARV gates
 - [ARV Minimum Gate](000-docs/6767-DR-STND-arv-minimum-gate.md) - Agent Readiness Verification baseline

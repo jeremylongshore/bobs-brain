@@ -93,3 +93,4 @@ dist/
 agents/*/venv/
 agents/*/.venv/
 scripts/*/__pycache__/
+archive/
